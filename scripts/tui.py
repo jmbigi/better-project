@@ -73,6 +73,7 @@ class App:
     def cargar_requisitos(self) -> None:
         reqs = doc_validator.collect_req_files()
         refs = doc_validator.collect_code_refs()
+        doc_validator.analizar(reqs, refs)
         self.requisitos = [
             {
                 "id": rid,
@@ -102,7 +103,7 @@ class App:
         else:
             self.knowledge = self._busqueda_directa(consulta)
         if not self.knowledge:
-            self.mensaje = "sin resultados (o falta indice: pulsa i para indexar)"
+            self.mensaje = "sin resultados (borra la consulta y pulsa i para indexar)"
         else:
             self.mensaje = f"{len(self.knowledge)} resultados para: {consulta}"
 
@@ -200,7 +201,7 @@ class App:
             self._abrir_detalle()
             return
         if self.tab == 1:
-            if tecla == ord("i"):
+            if tecla == ord("i") and not self.consulta:
                 self.indexar()
             elif tecla == 8 or tecla == 127 or tecla == curses.KEY_BACKSPACE:
                 self.consulta = self.consulta[:-1]

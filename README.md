@@ -88,9 +88,23 @@ python3 scripts/lessons_extractor.py
 # Interfaz TUI (curses, sin dependencias)
 python3 scripts/tui.py
 
+# Suite de tests (30 casos, stdlib unittest)
+python3 -m unittest discover -s tests -q
+
 # Verificacion completa previa a commit
 bash scripts/verificar-proyecto.sh
 ```
+
+## Hook de pre-commit (local, sin CI)
+
+El hook ejecuta `verificar-proyecto.sh` antes de cada commit:
+
+```bash
+cp scripts/hooks/pre-commit .git/hooks/pre-commit
+```
+
+La verificacion cubre reglas, config, seguridad (P0.9/P0.10), trazabilidad
+REQ (`--strict`), lecciones, indice de conocimiento y la suite de tests.
 
 ## Dependencias opcionales
 

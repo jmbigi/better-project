@@ -86,7 +86,7 @@ def build_json_index() -> tuple[int, int]:
             docs.append(tokens)
             chunks_meta.append(
                 {
-                    "archivo": str(path.relative_to(ROOT)),
+                    "archivo": f".docs/knowledge/{path.relative_to(KNOWLEDGE_DIR)}",
                     "contenido": chunk,
                     "tokens": tokens,
                 }
@@ -225,12 +225,27 @@ def index_all(force: bool = False) -> None:
         )
 
 
+def check_fresh() -> bool:
+    """True si el indice existe y cubre todos los archivos con mtimes vigentes."""
+    if not MANIFEST.exists():
+        return False
+    if not (JSON_INDEX.exists() or CHROMA_DIR.is_dir()):
+        return False
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    files = _files()
+    if len(manifest) != len(files):
+        return False
+    return all(
+        manifest.get(str(p.relative_to(KNOWLEDGE_DIR))) == p.stat().st_mtime for p in files
+    )
+
+
 def main() -> int:
     if "--check" in sys.argv:
-        if JSON_INDEX.exists() or CHROMA_DIR.is_dir():
-            print("index_knowledge: indice OK")
+        if check_fresh():
+            print("index_knowledge: indice OK y fresco")
             return 0
-        print("index_knowledge: no hay indice; ejecuta sin flags para crearlo")
+        print("index_knowledge: indice ausente o desactualizado; ejecuta sin flags para indexar")
         return 1
 
     args = [a for a in sys.argv[1:] if not a.startswith("--")]

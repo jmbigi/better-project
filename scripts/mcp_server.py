@@ -157,6 +157,7 @@ def read_requirement(args: dict) -> list[dict]:
 def validate_requirements() -> list[dict]:
     reqs = doc_validator.collect_req_files()
     refs = doc_validator.collect_code_refs()
+    doc_validator.analizar(reqs, refs)
     report = {"requisitos": len(reqs), "referencias_codigo": len(refs)}
     if doc_validator.errors:
         report["errores"] = doc_validator.errors

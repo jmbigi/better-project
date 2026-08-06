@@ -13,6 +13,7 @@ Sin dependencias externas (solo stdlib).
 
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -23,6 +24,7 @@ EXCLUDE = {
     ".docs/.storage",
     "node_modules",
     "__pycache__",
+    "tests",
 }
 CODE_RE = re.compile(r"\b(?://\s*|#\s*|/\*\s*)?(?:IMPLEMENTS:\s*)?REQ-(\d{3})\b")
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.S)
@@ -35,7 +37,13 @@ warnings: list[str] = []
 
 
 def collect_req_files() -> dict[str, dict]:
-    """Lee .docs/requirements/REQ-XXX.md y devuelve {id: {frontmatter, ruta}}."""
+    """Lee .docs/requirements/REQ-XXX.md y devuelve {id: {frontmatter, ruta}}.
+
+    Idempotente: reinicia las listas de errores/advertencias para que
+    multiples invocaciones (TUI, MCP, tests) no acumulen resultados viejos.
+    """
+    errors.clear()
+    warnings.clear()
     found: dict[str, dict] = {}
     for path in sorted(REQ_DIR.glob("REQ-*.md")):
         text = path.read_text(encoding="utf-8")
@@ -67,6 +75,23 @@ def collect_req_files() -> dict[str, dict]:
             errors.append(
                 f"[ERROR] {path.relative_to(ROOT)}: estado '{meta.get('estado')}' no valido ({sorted(ALLOWED_STATES)})"
             )
+        if meta.get("prioridad") not in {"Alta", "Media", "Baja"}:
+            errors.append(
+                f"[ERROR] {path.relative_to(ROOT)}: prioridad '{meta.get('prioridad')}' no valida (Alta/Media/Baja)"
+            )
+        if not re.fullmatch(r"\d+(\.\d+)*", meta.get("version", "")):
+            errors.append(
+                f"[ERROR] {path.relative_to(ROOT)}: version '{meta.get('version')}' no valida (p.ej. 1.0)"
+            )
+        fecha = meta.get("fecha_creacion", "")
+        try:
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", fecha):
+                raise ValueError
+            datetime.strptime(fecha, "%Y-%m-%d")
+        except ValueError:
+            errors.append(
+                f"[ERROR] {path.relative_to(ROOT)}: fecha_creacion '{fecha}' no valida (AAAA-MM-DD)"
+            )
         found[req_id] = {"meta": meta, "path": path}
     return found
 
@@ -92,11 +117,8 @@ def collect_code_refs() -> dict[str, list[str]]:
     return refs
 
 
-def main() -> int:
-    reqs = collect_req_files()
-    refs = collect_code_refs()
-    strict = "--strict" in sys.argv
-
+def analizar(reqs: dict, refs: dict) -> None:
+    """Rellena errors/warnings a partir de requisitos y referencias de codigo."""
     for req_id, locations in sorted(refs.items()):
         if req_id not in reqs:
             errors.append(
@@ -124,6 +146,13 @@ def main() -> int:
             warnings.append(
                 f"[WARN] {req_id} marcado Aprobado pero no tiene ninguna referencia en código"
             )
+
+
+def main() -> int:
+    reqs = collect_req_files()
+    refs = collect_code_refs()
+    analizar(reqs, refs)
+    strict = "--strict" in sys.argv
 
     summary = f"{len(reqs)} REQs, {len(refs)} referencias en código"
     print(f"doc_validator: {summary}")

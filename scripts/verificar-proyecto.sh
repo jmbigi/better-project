@@ -138,10 +138,11 @@ else
 fi
 
 echo "== 5. Ecosistema (.docs + scripts) =="
-check "sintaxis python de los scripts" bash -c "python3 -m py_compile scripts/doc_validator.py scripts/index_knowledge.py scripts/lessons_extractor.py scripts/mcp_server.py"
-check "trazabilidad REQ valida (doc_validator)" bash -c "python3 scripts/doc_validator.py"
+check "sintaxis python de los scripts" bash -c "python3 -m py_compile scripts/doc_validator.py scripts/index_knowledge.py scripts/lessons_extractor.py scripts/mcp_server.py scripts/tui.py"
+check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 scripts/doc_validator.py --strict"
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py && python3 scripts/index_knowledge.py --check"
+check "suite de tests del ecosistema" bash -c "python3 -m unittest discover -s tests -q"
 
 echo
 echo "Resultado: $PASS OK, $FAIL FALLOS"

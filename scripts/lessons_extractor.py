@@ -11,7 +11,9 @@ Uso:
 """
 
 import json
+import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 try:
@@ -88,6 +90,15 @@ def validate() -> tuple[list[dict], list[str]]:
             if lesson.get("estado") not in ALLOWED_STATES:
                 problems.append(
                     f"{path.name}: {lesson.get('id', '?')} estado '{lesson.get('estado')}' invalido"
+                )
+            fecha = str(lesson.get("fecha", ""))
+            try:
+                if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", fecha):
+                    raise ValueError
+                datetime.strptime(fecha, "%Y-%m-%d")
+            except ValueError:
+                problems.append(
+                    f"{path.name}: {lesson.get('id', '?')} fecha '{fecha}' invalida (AAAA-MM-DD)"
                 )
             lessons.append(lesson)
     return lessons, problems
