@@ -7,6 +7,7 @@ Usa directorios temporales para no tocar el estado real del repo.
 """
 
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -125,6 +126,25 @@ class TestDocValidator(unittest.TestCase):
         self._req(estado="Malo")
         dv.collect_req_files()
         self.assertEqual(dv.main(), 1)
+
+    def test_demo_excluida_del_scan(self):
+        reqs = dv.collect_req_files()
+        refs = dv.collect_code_refs()
+        dv.analizar(reqs, refs)
+        self.assertEqual(dv.errors, [])
+        self.assertTrue(
+            all(not r.startswith("demo/") for locations in refs.values() for r in locations)
+        )
+
+    def test_root_demo_valida_proyecto_externo(self):
+        proc = subprocess.run(
+            [sys.executable, "scripts/doc_validator.py", "--root", "demo"],
+            capture_output=True,
+            text=True,
+            cwd=str(ROOT),
+        )
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("3 REQs", proc.stdout)
 
 
 class TestLessonsExtractor(unittest.TestCase):

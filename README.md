@@ -62,6 +62,11 @@ credenciales, y proveedores de modelo restringidos.
 │   ├── tui.py               # interfaz TUI minimalista (REQ-006)
 │   ├── verificar-proyecto.sh# verificacion de coherencia del repo
 │   └── hooks/pre-commit     # hook git local
+├── demo/                    # proyecto de ejemplo (gestor de notas CLI)
+│   ├── src/notas.py         # codigo con referencias REQ-XXX
+│   ├── .docs/requirements/  # REQ-001 (Implementado), REQ-002 (Aprobado), REQ-003 (Deprecado)
+│   ├── .docs/knowledge/     # arquitectura + glosario
+│   └── .docs/lessons/       # leccion de ejemplo
 ├── docs/                    # reglas completas, pruebas y lecciones del ruleset
 ├── AGENTS.md                # reglas IA + directivas del proyecto
 ├── opencode.json            # guardarrailes + MCP
@@ -81,6 +86,9 @@ python3 scripts/index_knowledge.py search "tiempo de espera"
 
 # Validar trazabilidad de requisitos
 python3 scripts/doc_validator.py --strict
+
+# Validar un proyecto externo (la demo)
+python3 scripts/doc_validator.py --root demo
 
 # Exportar lecciones para los agentes
 python3 scripts/lessons_extractor.py

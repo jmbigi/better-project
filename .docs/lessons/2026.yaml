@@ -14,3 +14,11 @@
   recomendacion: "Disenar con backend de reserva sin dependencias (stdlib) y mensajes de advertencia explicitos en stderr"
   estado: Resuelta
   fecha: 2026-08-06
+- id: LSN-003
+  proyecto: Ecosistema
+  fase: Implementacion
+  categoria: Proceso
+  problema: "Un proyecto demo dentro del repo contamina la trazabilidad: sus REQ-XXX aparecian como referencias rotas en el validador principal"
+  recomendacion: "Excluir demo/ del escaneo por defecto y validar proyectos externos con doc_validator --root <carpeta>"
+  estado: Resuelta
+  fecha: 2026-08-06

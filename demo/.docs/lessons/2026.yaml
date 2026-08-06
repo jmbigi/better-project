@@ -1,0 +1,8 @@
+- id: LSN-001
+  proyecto: Demo notas
+  fase: Implementacion
+  categoria: Riesgo_Tecnico
+  problema: "Escribir el archivo JSON en cada mutacion puede dejar el archivo a medias si falla el proceso"
+  recomendacion: "Escribir a un archivo temporal y renombrar al terminar (escritura atomica)"
+  estado: Resuelta
+  fecha: 2026-08-06

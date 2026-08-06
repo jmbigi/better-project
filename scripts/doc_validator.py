@@ -7,6 +7,7 @@ y el código que los implementa lleva una referencia `REQ-XXX` (o `// IMPLEMENTS
 Uso:
     python scripts/doc_validator.py            # errores -> exit 1
     python scripts/doc_validator.py --strict   # errores Y advertencias -> exit 1
+    python scripts/doc_validator.py --root demo  # valida otro proyecto (demo/)
 
 Sin dependencias externas (solo stdlib).
 """
@@ -17,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+ROOT_BASE = ROOT
 REQ_DIR = ROOT / ".docs" / "requirements"
 EXCLUDE = {
     ".git",
@@ -25,6 +27,7 @@ EXCLUDE = {
     "node_modules",
     "__pycache__",
     "tests",
+    "demo",
 }
 CODE_RE = re.compile(r"\b(?://\s*|#\s*|/\*\s*)?(?:IMPLEMENTS:\s*)?REQ-(\d{3})\b")
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.S)
@@ -149,6 +152,16 @@ def analizar(reqs: dict, refs: dict) -> None:
 
 
 def main() -> int:
+    global ROOT, REQ_DIR
+    args = [a for a in sys.argv if a != "--strict"]
+    if "--root" in args:
+        idx = args.index("--root")
+        if idx + 1 >= len(args):
+            print("doc_validator: --root requiere una ruta (p.ej. demo)")
+            return 1
+        ROOT = ROOT_BASE / args[idx + 1]
+        REQ_DIR = ROOT / ".docs" / "requirements"
+        EXCLUDE.discard("demo")
     reqs = collect_req_files()
     refs = collect_code_refs()
     analizar(reqs, refs)

@@ -319,8 +319,9 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
 
 ## Herramientas
 
-- `python scripts/doc_validator.py [--strict]` — valida trazabilidad REQ
-  (referencias REQ-XXX en el código vs archivos en `.docs/requirements/`).
+- `python scripts/doc_validator.py [--strict] [--root <carpeta>]` — valida
+  trazabilidad REQ (referencias REQ-XXX en el código vs archivos en
+  `.docs/requirements/`); `--root demo` valida un proyecto externo.
 - `python scripts/index_knowledge.py` — indexa `.docs/knowledge/` en
   `.docs/.storage/` (ChromaDB si está instalado; si no, índice JSON puro).
 - `python scripts/lessons_extractor.py [--check|--json]` — valida y exporta

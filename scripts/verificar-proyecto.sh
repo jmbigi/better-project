@@ -143,6 +143,7 @@ check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 script
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py && python3 scripts/index_knowledge.py --check"
 check "suite de tests del ecosistema" bash -c "python3 -m unittest discover -s tests -q"
+check "demo valida con --root" bash -c "python3 scripts/doc_validator.py --root demo"
 
 echo
 echo "Resultado: $PASS OK, $FAIL FALLOS"
