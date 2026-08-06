@@ -325,6 +325,8 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
   `.docs/.storage/` (ChromaDB si está instalado; si no, índice JSON puro).
 - `python scripts/lessons_extractor.py [--check|--json]` — valida y exporta
   lecciones a `lessons_context.txt`.
+- `python scripts/tui.py` — TUI minimalista (curses) para operar el ecosistema:
+  requisitos, conocimiento, lecciones y verificacion (REQ-006).
 - MCP (opencode lo lanza vía `opencode.json`): `search_knowledge`,
   `read_requirement`, `validate_requirements`, `create_lesson`.
 

@@ -59,6 +59,7 @@ credenciales, y proveedores de modelo restringidos.
 │   ├── index_knowledge.py   # indice de conocimiento (REQ-002)
 │   ├── lessons_extractor.py # exportacion de lecciones (REQ-003)
 │   ├── mcp_server.py        # servidor MCP para agentes (REQ-004)
+│   ├── tui.py               # interfaz TUI minimalista (REQ-006)
 │   ├── verificar-proyecto.sh# verificacion de coherencia del repo
 │   └── hooks/pre-commit     # hook git local
 ├── docs/                    # reglas completas, pruebas y lecciones del ruleset
@@ -83,6 +84,9 @@ python3 scripts/doc_validator.py --strict
 
 # Exportar lecciones para los agentes
 python3 scripts/lessons_extractor.py
+
+# Interfaz TUI (curses, sin dependencias)
+python3 scripts/tui.py
 
 # Verificacion completa previa a commit
 bash scripts/verificar-proyecto.sh
