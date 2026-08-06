@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: doc-validator
+        name: doc-validator (trazabilidad REQ)
+        entry: python3 scripts/doc_validator.py --strict
+        language: system
+        pass_filenames: false
+      - id: lessons-validator
+        name: lessons-extractor (validacion de lecciones)
+        entry: python3 scripts/lessons_extractor.py --check
+        language: system
+        pass_filenames: false
+      - id: index-knledge
+        name: index-knowledge (indice de conocimiento)
+        entry: python3 scripts/index_knowledge.py
+        language: system
+        pass_filenames: false
+      - id: py-syntax
+        name: python syntax check
+        entry: python3 -m py_compile
+        language: system
+        types: [python]

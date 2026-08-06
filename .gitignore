@@ -1,0 +1,20 @@
+# Generados por los scripts del ecosistema
+.docs/.storage/
+lessons_context.txt
+
+# Python
+__pycache__/
+*.pyc
+
+# Secretos (P0.10)
+.env
+.env.*
+!.env.example
+
+# Dependencias / herramientas
+node_modules/
+venv/
+.venv/
+
+# Sistema
+.DS_Store

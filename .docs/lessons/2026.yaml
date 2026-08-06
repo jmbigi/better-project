@@ -1,0 +1,16 @@
+- id: LSN-001
+  proyecto: Ecosistema
+  fase: Implementacion
+  categoria: Proceso
+  problema: "El validador de trazabilidad arranca sin indice de conocimiento y devuelve falsa alarma"
+  recomendacion: "Hacer que el servidor MCP caiga a busqueda directa sobre los Markdown cuando no existe indice, y avisar de que falta indexar"
+  estado: Resuelta
+  fecha: 2026-08-06
+- id: LSN-002
+  proyecto: Ecosistema
+  fase: Deploy
+  categoria: Seguridad
+  problema: "Scripts con dependencias opcionales fallaban en entornos limpios sin aviso claro"
+  recomendacion: "Disenar con backend de reserva sin dependencias (stdlib) y mensajes de advertencia explicitos en stderr"
+  estado: Resuelta
+  fecha: 2026-08-06
