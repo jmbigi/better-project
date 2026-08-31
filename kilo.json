@@ -1,12 +1,27 @@
 {
-  "$schema": "https://opencode.ai/config.json",
+  "$schema": "https://app.kilo.ai/config.json",
   "experimental": {
     "policies": [
-      { "effect": "deny", "action": "provider.use", "resource": "*" },
-      { "effect": "allow", "action": "provider.use", "resource": "opencode" },
-      { "effect": "allow", "action": "provider.use", "resource": "opencode-go" },
-      { "effect": "allow", "action": "provider.use", "resource": "kilo" },
-      { "effect": "allow", "action": "provider.use", "resource": "deepseek" }
+      {
+        "effect": "deny",
+        "action": "provider.use",
+        "resource": "*"
+      },
+      {
+        "effect": "allow",
+        "action": "provider.use",
+        "resource": "kilo"
+      },
+      {
+        "effect": "allow",
+        "action": "provider.use",
+        "resource": "deepseek"
+      },
+      {
+        "effect": "allow",
+        "action": "provider.use",
+        "resource": "openrouter"
+      }
     ]
   },
   "mcp": {
@@ -28,40 +43,34 @@
     },
     "verify-local": {
       "type": "local",
-      "command": ["bash", "scripts/verificar-proyecto.sh"],
+      "command": [
+        "bash",
+        "scripts/verificar-proyecto.sh"
+      ],
       "enabled": true,
       "cwd": "${workspace}"
     },
     "nemo-guardrails": {
       "type": "local",
-      "command": ["nemoguardrails", "server", "--config", ".opencode/guardrails"],
+      "command": [
+        "nemoguardrails",
+        "server",
+        "--config",
+        ".opencode/guardrails"
+      ],
       "enabled": false,
       "cwd": "${workspace}",
       "environment": {
         "NEMOGUARDRAILS_NO_USAGE_STATS": "1"
       }
-    },
-    "better-project": {
-      "type": "local",
-      "command": ["python3", "scripts/mcp_server.py"],
-      "enabled": true
     }
   },
-  "agent": {
-    "build": {
-      "mode": "primary",
-      "temperature": 0.3,
-      "top_p": 1.0
-    },
-    "plan": {
-      "mode": "primary",
-      "temperature": 0.1,
-      "top_p": 1.0
-    },
-    "audit": {
-      "mode": "primary",
-      "temperature": 0.0,
-      "top_p": 1.0
+  "provider": {
+    "kilo": {
+      "whitelist": [
+        "kilo-auto/free",
+        "kilo-auto/efficient"
+      ]
     }
   },
   "permission": {

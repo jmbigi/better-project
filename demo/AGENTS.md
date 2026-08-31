@@ -1,6 +1,10 @@
 # AGENTS.md — demo del ecosistema
 
-Mini-proyecto de ejemplo para better-project. Reglas aplicables:
+Mini-proyecto de ejemplo para better-project. Aplica el ruleset completo del
+proyecto (20 P0 / 36 P1); reglas detalladas, justificaciones y checklist en la
+raíz del repo y en `docs/`.
+
+Directivas aplicables a esta demo:
 
 1. Toda función que implemente un requisito lleva `# REQ-XXX` en su
    encabezado (directiva del proyecto).

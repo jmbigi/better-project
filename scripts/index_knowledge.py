@@ -200,6 +200,7 @@ def search_chroma(query: str, k: int = 5) -> list[dict]:
 
 
 def index_all(force: bool = False) -> None:
+    STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     manifest = {}
     if not force and MANIFEST.exists():
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
