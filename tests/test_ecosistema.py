@@ -338,6 +338,38 @@ class TestMCPServer(unittest.TestCase):
             finally:
                 mcp.AUDIT_LOG = old_log
 
+    def test_stdio_end_to_end(self):
+        """Protocolo MCP real por stdio: initialize + tools/call + limite."""
+        with tempfile.TemporaryDirectory() as tmp:
+            env = {**os.environ}
+            mensajes = [
+                {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+                {"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+                 "params": {"name": "read_requirement", "arguments": {"id": "REQ-001"}}},
+                {"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                 "params": {"name": "search_knowledge",
+                            "arguments": {"query": "x" * 501}}},
+            ]
+            entrada = "\n".join(json.dumps(m) for m in mensajes) + "\n"
+            proc = subprocess.run(
+                [sys.executable, str(SCRIPTS / "mcp_server.py")],
+                input=entrada, capture_output=True, text=True, timeout=30,
+                cwd=tmp, env=env,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            respuestas = {
+                m["id"]: m for m in
+                (json.loads(l) for l in proc.stdout.splitlines() if l.strip())
+            }
+            self.assertEqual(respuestas[1]["result"]["serverInfo"]["name"], "better-project")
+            self.assertFalse(respuestas[2]["result"]["isError"])
+            self.assertIn("REQ-001", respuestas[2]["result"]["content"][0]["text"])
+            # el limite de REQ-007 se aplica tambien por stdio
+            self.assertTrue(respuestas[3]["result"]["isError"])
+            self.assertIn("limite", respuestas[3]["result"]["content"][0]["text"])
+            # la auditoria se escribio (en .docs/.storage del repo real)
+            self.assertTrue(mcp.AUDIT_LOG.exists())
+
 
 class TestTUI(unittest.TestCase):
     def test_truncar(self):
