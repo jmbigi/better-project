@@ -14,7 +14,8 @@ con soporte retrocompatible de cabeceras Content-Length.
 import json
 import re
 import sys
-from datetime import date
+import time
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -22,6 +23,20 @@ SCRIPTS = ROOT / "scripts"
 KNOWLEDGE_DIR = ROOT / ".docs" / "knowledge"
 JSON_INDEX = ROOT / ".docs" / ".storage" / "index.json"
 LESSONS_DIR = ROOT / ".docs" / "lessons"
+AUDIT_LOG = ROOT / ".docs" / ".storage" / "mcp_audit.jsonl"
+
+# REQ-007: limites de entrada aplicados en servidor (el inputSchema es solo
+# declarativo). OWASP MCP Top 10: context injection / consumo no acotado.
+MAX_LENGTHS = {
+    "query": 500,
+    "problema": 2000,
+    "recomendacion": 2000,
+    "categoria": 100,
+    "fase": 100,
+    "proyecto": 200,
+    "id": 10,
+}
+K_MIN, K_MAX = 1, 20
 
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
@@ -36,8 +51,8 @@ TOOLS = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "Consulta en lenguaje natural"},
-                "k": {"type": "number", "description": "Numero de resultados (default 5)"},
+                "query": {"type": "string", "maxLength": 500, "description": "Consulta en lenguaje natural"},
+                "k": {"type": "number", "minimum": 1, "maximum": 20, "description": "Numero de resultados (default 5)"},
             },
             "required": ["query"],
         },
@@ -47,7 +62,7 @@ TOOLS = [
         "description": "Lee una especificacion de requisito completa de .docs/requirements/.",
         "inputSchema": {
             "type": "object",
-            "properties": {"id": {"type": "string", "description": "Formato REQ-XXX"}},
+            "properties": {"id": {"type": "string", "maxLength": 10, "description": "Formato REQ-XXX"}},
             "required": ["id"],
         },
     },
@@ -62,11 +77,11 @@ TOOLS = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "problema": {"type": "string", "description": "Que fallo o que se encontro"},
-                "recomendacion": {"type": "string", "description": "Como evitarlo"},
-                "categoria": {"type": "string", "description": "p.ej. Riesgo_Tecnico, Seguridad, Proceso"},
-                "fase": {"type": "string", "description": "p.ej. Testing, Implementacion, Deploy"},
-                "proyecto": {"type": "string", "description": "Modulo o proyecto afectado"},
+                "problema": {"type": "string", "maxLength": 2000, "description": "Que fallo o que se encontro"},
+                "recomendacion": {"type": "string", "maxLength": 2000, "description": "Como evitarlo"},
+                "categoria": {"type": "string", "maxLength": 100, "description": "p.ej. Riesgo_Tecnico, Seguridad, Proceso"},
+                "fase": {"type": "string", "maxLength": 100, "description": "p.ej. Testing, Implementacion, Deploy"},
+                "proyecto": {"type": "string", "maxLength": 200, "description": "Modulo o proyecto afectado"},
             },
             "required": ["problema", "recomendacion"],
         },
@@ -91,19 +106,60 @@ def _quote(value: str) -> str:
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def _validate_limits(name: str, args: dict) -> str | None:
+    # REQ-007: validacion en servidor; devuelve mensaje de error o None.
+    for key, limit in MAX_LENGTHS.items():
+        value = args.get(key)
+        if value is not None and len(str(value)) > limit:
+            return f"error: {key} excede el limite de {limit} caracteres"
+    if name == "search_knowledge" and "k" in args:
+        try:
+            k = int(args["k"])
+        except (TypeError, ValueError):
+            return "error: k debe ser un entero"
+        if not (K_MIN <= k <= K_MAX):
+            return f"error: k fuera de rango [{K_MIN}, {K_MAX}]"
+    return None
+
+
+def _audit(tool: str, ok: bool, elapsed_ms: int, args: dict) -> None:
+    # REQ-007: log de auditoria JSONL (OWASP MCP08, P1.30). Solo se registran
+    # claves y tamanos de argumentos, nunca sus contenidos (P0.9).
+    entry = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "tool": tool,
+        "ok": ok,
+        "ms": elapsed_ms,
+        "args": {k: len(str(v)) for k, v in args.items()},
+    }
+    AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with AUDIT_LOG.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
 def handle_call(name: str, arguments: dict) -> tuple[list[dict], bool]:
+    start = time.monotonic()
+    ok = False
     try:
-        if name == "search_knowledge":
-            return search_knowledge(arguments), False
-        if name == "read_requirement":
-            return read_requirement(arguments), False
-        if name == "validate_requirements":
-            return validate_requirements(), False
-        if name == "create_lesson":
-            return create_lesson(arguments), False
-        return [{"type": "text", "text": f"tool desconocida: {name}"}], True
+        error = _validate_limits(name, arguments)
+        if error is None:
+            if name == "search_knowledge":
+                content, ok = search_knowledge(arguments), True
+            elif name == "read_requirement":
+                content, ok = read_requirement(arguments), True
+            elif name == "validate_requirements":
+                content, ok = validate_requirements(), True
+            elif name == "create_lesson":
+                content, ok = create_lesson(arguments), True
+            else:
+                content = [{"type": "text", "text": f"tool desconocida: {name}"}]
+        else:
+            content = [{"type": "text", "text": error}]
+        return content, not ok
     except Exception as exc:  # noqa: BLE001 - el protocolo exige respuesta
         return [{"type": "text", "text": f"error: {exc}"}], True
+    finally:
+        _audit(name, ok, int((time.monotonic() - start) * 1000), arguments)
 
 
 def search_knowledge(args: dict) -> list[dict]:

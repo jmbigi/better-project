@@ -7,6 +7,8 @@ Usa directorios temporales para no tocar el estado real del repo.
 """
 
 import json
+import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -294,6 +296,48 @@ class TestMCPServer(unittest.TestCase):
         self.assertGreaterEqual(report["requisitos"], 6)
         self.assertEqual(report["estado"], "OK")
 
+    def test_query_demasiado_larga_es_error(self):
+        content, is_error = mcp.handle_call("search_knowledge", {"query": "x" * 501})
+        self.assertTrue(is_error)
+        self.assertIn("limite", content[0]["text"])
+
+    def test_query_en_el_limite_pasa_validacion(self):
+        self.assertIsNone(mcp._validate_limits("search_knowledge", {"query": "x" * 500}))
+
+    def test_k_fuera_de_rango_es_error(self):
+        for k in (0, 21, "grande"):
+            content, is_error = mcp.handle_call("search_knowledge", {"query": "pilar", "k": k})
+            self.assertTrue(is_error, k)
+
+    def test_campo_largo_en_create_lesson_es_error(self):
+        content, is_error = mcp.handle_call(
+            "create_lesson", {"problema": "p" * 2001, "recomendacion": "r"}
+        )
+        self.assertTrue(is_error)
+        self.assertIn("problema", content[0]["text"])
+
+    def test_audit_log_registra_llamadas(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old_log = mcp.AUDIT_LOG
+            mcp.AUDIT_LOG = Path(tmp) / "audit.jsonl"
+            try:
+                mcp.handle_call("read_requirement", {"id": "REQ-001"})
+                mcp.handle_call("no_existe", {})
+                lineas = mcp.AUDIT_LOG.read_text(encoding="utf-8").splitlines()
+                self.assertEqual(len(lineas), 2)
+                ok_entry = json.loads(lineas[0])
+                fail_entry = json.loads(lineas[1])
+                self.assertTrue(ok_entry["ok"])
+                self.assertFalse(fail_entry["ok"])
+                self.assertEqual(ok_entry["tool"], "read_requirement")
+                self.assertEqual(fail_entry["tool"], "no_existe")
+                # solo tamanos de argumentos, nunca contenidos (P0.9)
+                self.assertEqual(ok_entry["args"], {"id": 7})
+                for campo in ("ts", "ms"):
+                    self.assertIn(campo, ok_entry)
+            finally:
+                mcp.AUDIT_LOG = old_log
+
 
 class TestTUI(unittest.TestCase):
     def test_truncar(self):
@@ -325,6 +369,70 @@ class TestTUI(unittest.TestCase):
         app.buscar_conocimiento("pilar")
         self.assertGreater(len(app.knowledge), 0)
         self.assertTrue(any("pilar" in hit["contenido"].lower() for hit in app.knowledge))
+
+
+class TestIntegracionHook(unittest.TestCase):
+    """Test de integracion: el hook pre-commit ejecuta verificar-proyecto.sh
+    sobre una copia temporal del repo y ABORTA un commit roto (el safeguard se
+    prueba tambien en su modo de fallo, leccion de la ronda 16; P1.1).
+    """
+
+    def setUp(self):
+        if os.environ.get("BETTER_TEST_INTEGRACION"):
+            # El verificador ejecuta la propia suite dentro de la copia:
+            # la guarda evita recursion infinita de copias.
+            self.skipTest("dentro de la copia temporal de integracion")
+        self.tmp = Path(tempfile.mkdtemp())
+        self.repo = self.tmp / "repo"
+        ignore = shutil.ignore_patterns(
+            ".git", "node_modules", "__pycache__", ".storage", "*.pyc"
+        )
+        shutil.copytree(ROOT, self.repo, ignore=ignore)
+
+    def _git(self, *args):
+        return subprocess.run(
+            ["git", *args], cwd=self.repo, capture_output=True, text=True
+        )
+
+    def test_hook_aborta_commit_roto_y_permite_commit_verde(self):
+        # La guarda se exporta al entorno para que la suite que el verificador
+        # ejecuta DENTRO de la copia omita este mismo test (sin recursion).
+        os.environ["BETTER_TEST_INTEGRACION"] = "1"
+        try:
+            self.assertEqual(self._git("init", "-q").returncode, 0)
+            self._git("config", "user.email", "dummy@example.com")
+            self._git("config", "user.name", "dummy")
+            # Commit bootstrap SIN hook: con HEAD no nacido, git fsck emite
+            # avisos que el check "sin objetos huerfanos" tomaria como fallo.
+            self._git("add", "-A")
+            boot = self._git("commit", "-q", "--no-verify", "-m", "bootstrap")
+            self.assertEqual(boot.returncode, 0, boot.stdout + boot.stderr)
+            hooks = self.repo / ".git" / "hooks"
+            shutil.copy(self.repo / "scripts" / "hooks" / "pre-commit", hooks / "pre-commit")
+
+            # Commit verde: el hook debe dejar pasar el repo intacto.
+            with (self.repo / "scripts" / "tui.py").open("a", encoding="utf-8") as fh:
+                fh.write("\n# comentario inocuo para el commit verde\n")
+            self._git("add", "-A")
+            verde = self._git("commit", "-q", "-m", "verde")
+            self.assertEqual(verde.returncode, 0, verde.stdout + verde.stderr)
+
+            # Commit roto: referencia a un REQ inexistente (doc_validator falla).
+            with (self.repo / "scripts" / "tui.py").open("a", encoding="utf-8") as fh:
+                fh.write("\n# REQ-999 referencia rota para el test\n")
+            self._git("add", "-A")
+            roto = self._git("commit", "-q", "-m", "roto")
+            self.assertNotEqual(roto.returncode, 0, "el hook no aborto un commit roto")
+            salida = roto.stdout + roto.stderr
+            # check() no propaga la salida del comando: se verifica el check concreto
+            self.assertIn("[FALLO] trazabilidad REQ valida", salida)
+            self.assertIn("FALLOS", salida)
+
+            # HEAD intacto: solo quedan bootstrap + commit verde.
+            log = self._git("log", "--oneline").stdout.strip().splitlines()
+            self.assertEqual(len(log), 2)
+        finally:
+            os.environ.pop("BETTER_TEST_INTEGRACION", None)
 
 
 if __name__ == "__main__":

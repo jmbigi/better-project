@@ -22,3 +22,19 @@
   recomendacion: "Excluir demo/ del escaneo por defecto y validar proyectos externos con doc_validator --root <carpeta>"
   estado: Resuelta
   fecha: 2026-08-06
+- id: LSN-004
+  proyecto: Ecosistema
+  fase: Testing
+  categoria: Proceso
+  problema: "Una propuesta de mejora externa afirmaba que los scripts no tenian suite de pruebas; la afirmacion era falsa (tests/test_ecosistema.py ya cubria los cinco scripts) y aceptarla habria duplicado trabajo"
+  recomendacion: "Verificar cada premisa de una propuesta contra el repo real (leer los tests existentes) antes de aprobar o implementar mejoras"
+  estado: Resuelta
+  fecha: 2026-09-04
+- id: LSN-005
+  proyecto: Ecosistema
+  fase: Testing
+  categoria: Riesgo_Tecnico
+  problema: "El test de integracion del hook pre-commit fallaba en la copia temporal: con HEAD no nacido, git fsck emite avisos ('HEAD apunta a un branch no nacido') que el check 'sin objetos huerfanos' (test -z sobre la salida) toma como fallo; ademas la suite dentro de la copia re-ejecutaba el propio test de integracion (recursion)"
+  recomendacion: "En repos de prueba hacer un commit bootstrap con --no-verify antes de instalar el hook, y usar una variable de entorno guarda (BETTER_TEST_INTEGRACION) para que la suite anidada omita el test de integracion"
+  estado: Resuelta
+  fecha: 2026-09-04
