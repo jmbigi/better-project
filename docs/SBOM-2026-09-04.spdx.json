@@ -1,0 +1,1799 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "better-project-dependencias-opcionales",
+  "documentNamespace": "https://spdx.org/spdxdocs/better-project-opt-2026-09-04",
+  "creationInfo": {
+    "created": "2026-09-04T17:53:34Z",
+    "creators": [
+      "Tool: pip-audit (reporte transformado a SPDX-2.3)"
+    ],
+    "comment": "Cierre transitivo de requirements-optional.txt resuelto por pip-audit contra PyPI. Sin instalar en el proyecto."
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-aiohappyeyeballs",
+      "name": "aiohappyeyeballs",
+      "versionInfo": "2.7.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/aiohappyeyeballs/2.7.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/aiohappyeyeballs@2.7.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-aiohttp",
+      "name": "aiohttp",
+      "versionInfo": "3.14.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/aiohttp/3.14.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/aiohttp@3.14.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-aiosignal",
+      "name": "aiosignal",
+      "versionInfo": "1.4.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/aiosignal/1.4.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/aiosignal@1.4.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-annotated-doc",
+      "name": "annotated-doc",
+      "versionInfo": "0.0.5",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/annotated-doc/0.0.5/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/annotated-doc@0.0.5"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-annotated-types",
+      "name": "annotated-types",
+      "versionInfo": "0.8.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/annotated-types/0.8.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/annotated-types@0.8.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-anyio",
+      "name": "anyio",
+      "versionInfo": "4.15.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/anyio/4.15.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/anyio@4.15.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-async-timeout",
+      "name": "async-timeout",
+      "versionInfo": "5.0.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/async-timeout/5.0.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/async-timeout@5.0.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-attrs",
+      "name": "attrs",
+      "versionInfo": "26.1.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/attrs/26.1.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/attrs@26.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-bcrypt",
+      "name": "bcrypt",
+      "versionInfo": "5.0.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/bcrypt/5.0.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/bcrypt@5.0.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-build",
+      "name": "build",
+      "versionInfo": "1.6.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/build/1.6.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/build@1.6.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-certifi",
+      "name": "certifi",
+      "versionInfo": "2026.7.22",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/certifi/2026.7.22/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/certifi@2026.7.22"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-charset-normalizer",
+      "name": "charset-normalizer",
+      "versionInfo": "3.5.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/charset-normalizer/3.5.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/charset-normalizer@3.5.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-chromadb",
+      "name": "chromadb",
+      "versionInfo": "1.5.9",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/chromadb/1.5.9/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/chromadb@1.5.9"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-click",
+      "name": "click",
+      "versionInfo": "8.5.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/click/8.5.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/click@8.5.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cloudpickle",
+      "name": "cloudpickle",
+      "versionInfo": "3.1.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/cloudpickle/3.1.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/cloudpickle@3.1.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-coloredlogs",
+      "name": "coloredlogs",
+      "versionInfo": "15.0.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/coloredlogs/15.0.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/coloredlogs@15.0.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cuda-bindings",
+      "name": "cuda-bindings",
+      "versionInfo": "13.3.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/cuda-bindings/13.3.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/cuda-bindings@13.3.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cuda-pathfinder",
+      "name": "cuda-pathfinder",
+      "versionInfo": "1.8.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/cuda-pathfinder/1.8.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/cuda-pathfinder@1.8.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cuda-toolkit",
+      "name": "cuda-toolkit",
+      "versionInfo": "13.0.3.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/cuda-toolkit/13.0.3.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/cuda-toolkit@13.0.3.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-durationpy",
+      "name": "durationpy",
+      "versionInfo": "0.11",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/durationpy/0.11/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/durationpy@0.11"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-exceptiongroup",
+      "name": "exceptiongroup",
+      "versionInfo": "1.3.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/exceptiongroup/1.3.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/exceptiongroup@1.3.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-filelock",
+      "name": "filelock",
+      "versionInfo": "3.32.5",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/filelock/3.32.5/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/filelock@3.32.5"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-flatbuffers",
+      "name": "flatbuffers",
+      "versionInfo": "25.12.19",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/flatbuffers/25.12.19/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/flatbuffers@25.12.19"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-frozenlist",
+      "name": "frozenlist",
+      "versionInfo": "1.8.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/frozenlist/1.8.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/frozenlist@1.8.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-fsspec",
+      "name": "fsspec",
+      "versionInfo": "2026.7.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/fsspec/2026.7.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/fsspec@2026.7.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-googleapis-common-protos",
+      "name": "googleapis-common-protos",
+      "versionInfo": "1.75.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/googleapis-common-protos/1.75.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/googleapis-common-protos@1.75.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-grpcio",
+      "name": "grpcio",
+      "versionInfo": "1.83.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/grpcio/1.83.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/grpcio@1.83.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-h11",
+      "name": "h11",
+      "versionInfo": "0.16.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/h11/0.16.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/h11@0.16.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-hf-xet",
+      "name": "hf-xet",
+      "versionInfo": "1.6.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/hf-xet/1.6.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/hf-xet@1.6.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-httpcore",
+      "name": "httpcore",
+      "versionInfo": "1.0.9",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/httpcore/1.0.9/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/httpcore@1.0.9"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-httptools",
+      "name": "httptools",
+      "versionInfo": "0.8.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/httptools/0.8.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/httptools@0.8.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-httpx",
+      "name": "httpx",
+      "versionInfo": "0.28.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/httpx/0.28.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/httpx@0.28.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-huggingface-hub",
+      "name": "huggingface-hub",
+      "versionInfo": "1.30.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/huggingface-hub/1.30.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/huggingface-hub@1.30.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-humanfriendly",
+      "name": "humanfriendly",
+      "versionInfo": "10.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/humanfriendly/10.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/humanfriendly@10.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-idna",
+      "name": "idna",
+      "versionInfo": "3.19",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/idna/3.19/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/idna@3.19"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-importlib-resources",
+      "name": "importlib-resources",
+      "versionInfo": "7.1.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/importlib-resources/7.1.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/importlib-resources@7.1.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-jinja2",
+      "name": "jinja2",
+      "versionInfo": "3.1.6",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/jinja2/3.1.6/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/jinja2@3.1.6"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-joblib",
+      "name": "joblib",
+      "versionInfo": "1.6.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/joblib/1.6.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/joblib@1.6.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-jsonschema",
+      "name": "jsonschema",
+      "versionInfo": "4.26.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/jsonschema/4.26.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/jsonschema@4.26.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-jsonschema-specifications",
+      "name": "jsonschema-specifications",
+      "versionInfo": "2025.9.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/jsonschema-specifications/2025.9.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/jsonschema-specifications@2025.9.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-kubernetes",
+      "name": "kubernetes",
+      "versionInfo": "36.0.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/kubernetes/36.0.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/kubernetes@36.0.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-markdown-it-py",
+      "name": "markdown-it-py",
+      "versionInfo": "4.2.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/markdown-it-py/4.2.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/markdown-it-py@4.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-markupsafe",
+      "name": "markupsafe",
+      "versionInfo": "3.0.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/markupsafe/3.0.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/markupsafe@3.0.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-mdurl",
+      "name": "mdurl",
+      "versionInfo": "0.1.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/mdurl/0.1.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/mdurl@0.1.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-mmh3",
+      "name": "mmh3",
+      "versionInfo": "5.3.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/mmh3/5.3.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/mmh3@5.3.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-mpmath",
+      "name": "mpmath",
+      "versionInfo": "1.3.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/mpmath/1.3.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/mpmath@1.3.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-multidict",
+      "name": "multidict",
+      "versionInfo": "6.7.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/multidict/6.7.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/multidict@6.7.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-networkx",
+      "name": "networkx",
+      "versionInfo": "3.4.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/networkx/3.4.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/networkx@3.4.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-numpy",
+      "name": "numpy",
+      "versionInfo": "2.2.6",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/numpy/2.2.6/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/numpy@2.2.6"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cublas",
+      "name": "nvidia-cublas",
+      "versionInfo": "13.1.1.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cublas/13.1.1.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cublas@13.1.1.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cuda-cupti",
+      "name": "nvidia-cuda-cupti",
+      "versionInfo": "13.0.85",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cuda-cupti/13.0.85/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cuda-cupti@13.0.85"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cuda-nvrtc",
+      "name": "nvidia-cuda-nvrtc",
+      "versionInfo": "13.0.88",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cuda-nvrtc/13.0.88/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cuda-nvrtc@13.0.88"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cuda-runtime",
+      "name": "nvidia-cuda-runtime",
+      "versionInfo": "13.0.96",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cuda-runtime/13.0.96/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cuda-runtime@13.0.96"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cudnn-cu13",
+      "name": "nvidia-cudnn-cu13",
+      "versionInfo": "9.24.0.43",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cudnn-cu13/9.24.0.43/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cudnn-cu13@9.24.0.43"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cufft",
+      "name": "nvidia-cufft",
+      "versionInfo": "12.0.0.61",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cufft/12.0.0.61/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cufft@12.0.0.61"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cufile",
+      "name": "nvidia-cufile",
+      "versionInfo": "1.15.1.6",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cufile/1.15.1.6/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cufile@1.15.1.6"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-curand",
+      "name": "nvidia-curand",
+      "versionInfo": "10.4.0.35",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-curand/10.4.0.35/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-curand@10.4.0.35"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cusolver",
+      "name": "nvidia-cusolver",
+      "versionInfo": "12.0.4.66",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cusolver/12.0.4.66/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cusolver@12.0.4.66"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cusparse",
+      "name": "nvidia-cusparse",
+      "versionInfo": "12.6.3.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cusparse/12.6.3.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cusparse@12.6.3.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-cusparselt-cu13",
+      "name": "nvidia-cusparselt-cu13",
+      "versionInfo": "0.8.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-cusparselt-cu13/0.8.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-cusparselt-cu13@0.8.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-nccl-cu13",
+      "name": "nvidia-nccl-cu13",
+      "versionInfo": "2.30.7",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-nccl-cu13/2.30.7/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-nccl-cu13@2.30.7"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-nvjitlink",
+      "name": "nvidia-nvjitlink",
+      "versionInfo": "13.3.33",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-nvjitlink/13.3.33/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-nvjitlink@13.3.33"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-nvshmem-cu13",
+      "name": "nvidia-nvshmem-cu13",
+      "versionInfo": "3.4.5",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-nvshmem-cu13/3.4.5/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-nvshmem-cu13@3.4.5"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nvidia-nvtx",
+      "name": "nvidia-nvtx",
+      "versionInfo": "13.0.85",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/nvidia-nvtx/13.0.85/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/nvidia-nvtx@13.0.85"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-oauthlib",
+      "name": "oauthlib",
+      "versionInfo": "3.3.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/oauthlib/3.3.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/oauthlib@3.3.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-onnxruntime",
+      "name": "onnxruntime",
+      "versionInfo": "1.23.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/onnxruntime/1.23.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/onnxruntime@1.23.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-opentelemetry-api",
+      "name": "opentelemetry-api",
+      "versionInfo": "1.44.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/opentelemetry-api/1.44.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/opentelemetry-api@1.44.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-opentelemetry-exporter-otlp-proto-common",
+      "name": "opentelemetry-exporter-otlp-proto-common",
+      "versionInfo": "1.44.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/opentelemetry-exporter-otlp-proto-common/1.44.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/opentelemetry-exporter-otlp-proto-common@1.44.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-opentelemetry-exporter-otlp-proto-grpc",
+      "name": "opentelemetry-exporter-otlp-proto-grpc",
+      "versionInfo": "1.44.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/opentelemetry-exporter-otlp-proto-grpc/1.44.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/opentelemetry-exporter-otlp-proto-grpc@1.44.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-opentelemetry-proto",
+      "name": "opentelemetry-proto",
+      "versionInfo": "1.44.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/opentelemetry-proto/1.44.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/opentelemetry-proto@1.44.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-opentelemetry-sdk",
+      "name": "opentelemetry-sdk",
+      "versionInfo": "1.44.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/opentelemetry-sdk/1.44.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/opentelemetry-sdk@1.44.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-opentelemetry-semantic-conventions",
+      "name": "opentelemetry-semantic-conventions",
+      "versionInfo": "0.65b0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/opentelemetry-semantic-conventions/0.65b0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/opentelemetry-semantic-conventions@0.65b0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-orjson",
+      "name": "orjson",
+      "versionInfo": "3.12.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/orjson/3.12.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/orjson@3.12.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-overrides",
+      "name": "overrides",
+      "versionInfo": "7.7.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/overrides/7.7.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/overrides@7.7.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-propcache",
+      "name": "propcache",
+      "versionInfo": "0.5.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/propcache/0.5.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/propcache@0.5.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-protobuf",
+      "name": "protobuf",
+      "versionInfo": "7.36.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/protobuf/7.36.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/protobuf@7.36.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pybase64",
+      "name": "pybase64",
+      "versionInfo": "1.5.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/pybase64/1.5.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/pybase64@1.5.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pydantic",
+      "name": "pydantic",
+      "versionInfo": "2.13.5",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/pydantic/2.13.5/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/pydantic@2.13.5"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pydantic-core",
+      "name": "pydantic-core",
+      "versionInfo": "2.46.5",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/pydantic-core/2.46.5/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/pydantic-core@2.46.5"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pydantic-settings",
+      "name": "pydantic-settings",
+      "versionInfo": "2.15.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/pydantic-settings/2.15.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/pydantic-settings@2.15.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pygments",
+      "name": "pygments",
+      "versionInfo": "2.21.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/pygments/2.21.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/pygments@2.21.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pypika",
+      "name": "pypika",
+      "versionInfo": "0.51.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/pypika/0.51.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/pypika@0.51.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pyproject-hooks",
+      "name": "pyproject-hooks",
+      "versionInfo": "1.2.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/pyproject-hooks/1.2.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/pyproject-hooks@1.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-python-dateutil",
+      "name": "python-dateutil",
+      "versionInfo": "2.9.0.post0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/python-dateutil/2.9.0.post0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/python-dateutil@2.9.0.post0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-python-dotenv",
+      "name": "python-dotenv",
+      "versionInfo": "1.2.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/python-dotenv/1.2.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/python-dotenv@1.2.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pyyaml",
+      "name": "pyyaml",
+      "versionInfo": "6.0.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/pyyaml/6.0.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/pyyaml@6.0.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-referencing",
+      "name": "referencing",
+      "versionInfo": "0.37.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/referencing/0.37.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/referencing@0.37.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-regex",
+      "name": "regex",
+      "versionInfo": "2026.9.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/regex/2026.9.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/regex@2026.9.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-requests",
+      "name": "requests",
+      "versionInfo": "2.34.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/requests/2.34.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/requests@2.34.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-requests-oauthlib",
+      "name": "requests-oauthlib",
+      "versionInfo": "2.0.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/requests-oauthlib/2.0.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/requests-oauthlib@2.0.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-rich",
+      "name": "rich",
+      "versionInfo": "15.0.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/rich/15.0.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/rich@15.0.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-rpds-py",
+      "name": "rpds-py",
+      "versionInfo": "0.30.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/rpds-py/0.30.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/rpds-py@0.30.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-safetensors",
+      "name": "safetensors",
+      "versionInfo": "0.8.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/safetensors/0.8.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/safetensors@0.8.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-scikit-learn",
+      "name": "scikit-learn",
+      "versionInfo": "1.7.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/scikit-learn/1.7.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/scikit-learn@1.7.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-scipy",
+      "name": "scipy",
+      "versionInfo": "1.15.3",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/scipy/1.15.3/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/scipy@1.15.3"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-sentence-transformers",
+      "name": "sentence-transformers",
+      "versionInfo": "6.0.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/sentence-transformers/6.0.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/sentence-transformers@6.0.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-shellingham",
+      "name": "shellingham",
+      "versionInfo": "1.5.4",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/shellingham/1.5.4/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/shellingham@1.5.4"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-six",
+      "name": "six",
+      "versionInfo": "1.17.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/six/1.17.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/six@1.17.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-sympy",
+      "name": "sympy",
+      "versionInfo": "1.14.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/sympy/1.14.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/sympy@1.14.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-tenacity",
+      "name": "tenacity",
+      "versionInfo": "9.1.4",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/tenacity/9.1.4/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/tenacity@9.1.4"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-threadpoolctl",
+      "name": "threadpoolctl",
+      "versionInfo": "3.6.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/threadpoolctl/3.6.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/threadpoolctl@3.6.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-tokenizers",
+      "name": "tokenizers",
+      "versionInfo": "0.23.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/tokenizers/0.23.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/tokenizers@0.23.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-tomli",
+      "name": "tomli",
+      "versionInfo": "2.4.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/tomli/2.4.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/tomli@2.4.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-torch",
+      "name": "torch",
+      "versionInfo": "2.14.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/torch/2.14.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/torch@2.14.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-tqdm",
+      "name": "tqdm",
+      "versionInfo": "4.70.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/tqdm/4.70.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/tqdm@4.70.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-transformers",
+      "name": "transformers",
+      "versionInfo": "5.16.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/transformers/5.16.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/transformers@5.16.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-triton",
+      "name": "triton",
+      "versionInfo": "3.8.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/triton/3.8.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/triton@3.8.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-typer",
+      "name": "typer",
+      "versionInfo": "0.27.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/typer/0.27.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/typer@0.27.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-typing-extensions",
+      "name": "typing-extensions",
+      "versionInfo": "4.16.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/typing-extensions/4.16.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/typing-extensions@4.16.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-typing-inspection",
+      "name": "typing-inspection",
+      "versionInfo": "0.4.4",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/typing-inspection/0.4.4/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/typing-inspection@0.4.4"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-urllib3",
+      "name": "urllib3",
+      "versionInfo": "2.7.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/urllib3/2.7.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/urllib3@2.7.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-uvicorn",
+      "name": "uvicorn",
+      "versionInfo": "0.52.4",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/uvicorn/0.52.4/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/uvicorn@0.52.4"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-uvloop",
+      "name": "uvloop",
+      "versionInfo": "0.22.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/uvloop/0.22.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/uvloop@0.22.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-watchfiles",
+      "name": "watchfiles",
+      "versionInfo": "1.2.0",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/watchfiles/1.2.0/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/watchfiles@1.2.0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-websocket-client",
+      "name": "websocket-client",
+      "versionInfo": "1.9.2",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/websocket-client/1.9.2/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/websocket-client@1.9.2"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-websockets",
+      "name": "websockets",
+      "versionInfo": "16.1.1",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/websockets/16.1.1/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/websockets@16.1.1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-yarl",
+      "name": "yarl",
+      "versionInfo": "1.24.5",
+      "supplier": "Organization: PyPI",
+      "downloadLocation": "https://pypi.org/project/yarl/1.24.5/",
+      "filesAnalyzed": false,
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:pypi/yarl@1.24.5"
+        }
+      ]
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "paquete": "chromadb",
+      "version": "1.5.9",
+      "advisories": [
+        {
+          "id": "PYSEC-2026-311",
+          "fix_versions": [],
+          "descripcion": "A pre-authentication, code injection vulnerability in version 1.0.0 or later of the ChromaDB Python project allows an unauthenticated attacker to run arbitrary code on the server by sending a malicious model repository and trust_remote_code set to true in the /api/v2/tenants/{tenant}/databases/{db}/"
+        },
+        {
+          "id": "GHSA-2wm9-hf6c-p5cr",
+          "fix_versions": [],
+          "descripcion": "A lack of authorization validation in version 0.4.17 or later of the ChromaDB Python project allows any authenticated users to arbitrarily read, write, update, or delete data in any tenant's collection regardless of which tenant they belong to."
+        },
+        {
+          "id": "GHSA-36p7-vc44-83pf",
+          "fix_versions": [],
+          "descripcion": "A code injection vulnerability in version 0.4.17 or later of the ChromaDB Python project allows an authenticated attacker to run arbitrary code on the server by sending a malicious model repository and trust_remote_code set to true in the /api/v2/tenants/default_tenant/databases/default_database/col"
+        },
+        {
+          "id": "GHSA-xph7-9rjv-w5fr",
+          "fix_versions": [],
+          "descripcion": "The SimpleRBACAuthorizationProvider authorization provider in versions 0.5.0 or later of the ChromaDB Python project evaluates whether a user holds a given permission but never checks which tenant, database, or collection that permission applies to allowing users to perform cross tenant actions."
+        }
+      ]
+    }
+  ]
+}

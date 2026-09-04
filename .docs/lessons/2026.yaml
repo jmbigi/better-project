@@ -38,3 +38,19 @@
   recomendacion: "En repos de prueba hacer un commit bootstrap con --no-verify antes de instalar el hook, y usar una variable de entorno guarda (BETTER_TEST_INTEGRACION) para que la suite anidada omita el test de integracion"
   estado: Resuelta
   fecha: 2026-09-04
+- id: LSN-006
+  proyecto: Ecosistema
+  fase: Testing
+  categoria: Riesgo_Tecnico
+  problema: "Al anadir el SBOM (docs/SBOM-2026-09-04.spdx.json) dos checks del verificador fallaron: versiones de 4 partes (13.0.3.0) matchean el regex de IP y los purls (pkg:pypi/nombre@version) el de emails; ademas GNU grep 3.11 IGNORA --exclude cuando el archivo tambien casa con --include, y el primer intento de fix documento los literales en un comentario del propio verificador, que se auto-matcheo"
+  recomendacion: "Excluir los SBOM en el filtro final del pipeline (grep -v 'SBOM-') en vez de --exclude, y nunca escribir en comentarios de scripts verificados literales que un check de seguridad busca (IPs, purls con @, formatos de claves)"
+  estado: Resuelta
+  fecha: 2026-09-04
+- id: LSN-007
+  proyecto: Ecosistema
+  fase: Implementacion
+  categoria: Seguridad
+  problema: "pip-audit sobre requirements-optional.txt encontro 4 advisories ABIERTOS sin parche en chromadb 1.5.9 (PYSEC-2026-311, GHSA-2wm9-hf6c-p5cr, GHSA-36p7-vc44-83pf, GHSA-xph7-9rjv-w5fr; inyeccion de codigo y autorizacion en modo servidor)"
+  recomendacion: "Backend stdlib TF-IDF por defecto; chromadb solo local embebido (PersistentClient, sin servidor) y tras doble confirmacion de riesgo en setup.sh; SBOM registrado en docs/SBOM-2026-09-04.spdx.json (P0.18)"
+  estado: Resuelta
+  fecha: 2026-09-04

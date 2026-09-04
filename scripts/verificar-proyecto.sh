@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Verificación de coherencia del proyecto better-project (lección: revisión cruzada
 # como paso previo a cada commit). Uso: bash scripts/verificar-proyecto.sh
+# REQ-010: este verificador esta cubierto por TestVerificador en
+# tests/test_ecosistema.py (modo verde y modo fallo).
 # Instrumentado con OpenTelemetry (P1.30) para traces distribuidos
 set -u
 cd "$(dirname "$0")/.." || exit 1
@@ -240,6 +242,11 @@ for root, dirs, files in os.walk('.'):
         if not f.endswith(('.md', '.json', '.sh')):
             continue
         ruta = os.path.join(root, f)
+        # los SBOM generados (docs/SBOM-*.spdx.json) son evidencia P0.18 llena de
+        # versiones de paquetes: falsos positivos de IPs (versiones de 4 partes)
+        # y de emails (purls pkg:pypi/<nombre>@<version>). Se excluyen del check.
+        if f.startswith('SBOM-') and f.endswith('.spdx.json'):
+            continue
         for i, linea in enumerate(open(ruta, errors='ignore'), 1):
             if excl.search(linea):
                 continue
@@ -254,7 +261,7 @@ for root, dirs, files in os.walk('.'):
                     faltas.append((ruta, i, 'IP: ' + m))
 assert not faltas, faltas
 "
-check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example)'"
+check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example|SBOM-)'"
 check "sin formatos de claves API en archivos" bash -c "! grep -rnE --exclude-dir=node_modules '(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/'"
 # El unico 'eval'/'exec' esperado en scripts es el patron de este check en
 # verificar-proyecto.sh; el hook pre-commit no debe contener eval/exec.

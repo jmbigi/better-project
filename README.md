@@ -110,9 +110,11 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │   ├── doc_validator.py     # trazabilidad REQ (REQ-001)
 │   ├── index_knowledge.py   # indice de conocimiento (REQ-002)
 │   ├── lessons_extractor.py # exportacion de lecciones (REQ-003)
-│   ├── mcp_server.py        # servidor MCP para agentes (REQ-004)
+│   ├── mcp_server.py        # servidor MCP para agentes (REQ-004, endurecido REQ-007)
 │   ├── tui.py               # interfaz TUI minimalista (REQ-006)
-│   ├── verificar-proyecto.sh# verificacion de coherencia del repo
+│   ├── setup.sh             # onboarding guiado (REQ-008)
+│   ├── ci.sh                # CI local sin proveedores (REQ-009)
+│   ├── verificar-proyecto.sh# verificacion de coherencia del repo (tests: REQ-010)
 │   └── hooks/pre-commit     # hook git local
 ├── demo/                    # proyecto de ejemplo (gestor de notas CLI)
 │   ├── src/notas.py         # codigo con referencias REQ-XXX
@@ -130,6 +132,9 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 ## Uso rapido
 
 ```bash
+# Onboarding guiado: entorno, hook, deps opcionales y primera validacion
+bash scripts/setup.sh
+
 # Generar el indice de conocimiento (tras clonar)
 python3 scripts/index_knowledge.py
 
@@ -153,6 +158,9 @@ python3 -m unittest discover -s tests -q
 
 # Verificacion completa previa a commit
 bash scripts/verificar-proyecto.sh
+
+# CI local sin proveedores: exporta HEAD a copia limpia y verifica alli
+bash scripts/ci.sh
 ```
 
 ## Hook de pre-commit (local, sin CI)
@@ -169,11 +177,18 @@ REQ (`--strict`), lecciones, indice de conocimiento y la suite de tests.
 ## Dependencias opcionales
 
 Sin dependencias, el ecosistema funciona con stdlib (indice JSON TF-IDF). Para
-busqueda vectorial real:
+busqueda vectorial real (`requirements-optional.txt`):
 
 ```bash
-pip install chromadb sentence-transformers   # en venv del proyecto
+bash scripts/setup.sh    # las instala en .venv, solo tras doble confirmacion
 ```
+
+⚠️ P0.18: la auditoria `pip-audit` del 2026-09-04
+(`docs/SBOM-2026-09-04.spdx.json`, 117 paquetes resueltos) encontro 4
+advisories ABIERTOS en chromadb 1.5.9 sin version de parche (inyeccion de
+codigo y autorizacion en modo SERVIDOR). El uso local embebido no expone esa
+superficie, pero instalarlas implica aceptar el riesgo por escrito; el
+backend stdlib es el recomendado por defecto.
 
 ## Verificacion y seguridad
 

@@ -267,8 +267,17 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
   lecciones a `lessons_context.txt`.
 - `python scripts/tui.py` — TUI minimalista (curses) para operar el ecosistema:
   requisitos, conocimiento, lecciones y verificacion (REQ-006).
+- `bash scripts/setup.sh [--yes]` — onboarding guiado: entorno, hook,
+  dependencias opcionales (doble confirmación de riesgo, P0.18) y primera
+  validación (REQ-008).
+- `bash scripts/ci.sh` — CI local sin proveedores: exporta HEAD a una copia
+  limpia y ejecuta allí toda la verificación (REQ-009). No se usa GitHub
+  Actions ni servicios externos (decisión del programador, 2026-09-04).
+- Arquitectura de agentes y cómo extender el ruleset:
+  `docs/AGENT-ARCHITECTURE.md`.
 - MCP (opencode lo lanza vía `opencode.json`): `search_knowledge`,
-  `read_requirement`, `validate_requirements`, `create_lesson`.
+  `read_requirement`, `validate_requirements`, `create_lesson`. Auditoría de
+  llamadas en `.docs/.storage/mcp_audit.jsonl` (REQ-007).
 
 ## Constricciones de código
 

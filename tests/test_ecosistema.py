@@ -435,5 +435,53 @@ class TestIntegracionHook(unittest.TestCase):
             os.environ.pop("BETTER_TEST_INTEGRACION", None)
 
 
+class TestVerificador(unittest.TestCase):
+    """REQ-010: el propio verificador se prueba en modo fallo (P1.1):
+    debe pasar sobre una copia intacta y FALLAR sobre una copia corrupta.
+    """
+
+    def _copia(self):
+        if os.environ.get("BETTER_TEST_INTEGRACION"):
+            self.skipTest("dentro de la copia temporal de integracion")
+        tmp = Path(tempfile.mkdtemp())
+        repo = tmp / "repo"
+        ignore = shutil.ignore_patterns(
+            ".git", "node_modules", "__pycache__", ".storage", "*.pyc"
+        )
+        shutil.copytree(ROOT, repo, ignore=ignore)
+        subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "dummy@example.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "dummy"], cwd=repo, check=True)
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        # bootstrap sin hook: con HEAD no nacido git fsck emite avisos (LSN-005)
+        subprocess.run(["git", "commit", "-qm", "bootstrap", "--no-verify"], cwd=repo, check=True)
+        shutil.copy(repo / "scripts" / "hooks" / "pre-commit", repo / ".git" / "hooks" / "pre-commit")
+        return repo
+
+    def _verifica(self, repo):
+        env = {**os.environ, "BETTER_TEST_INTEGRACION": "1"}
+        return subprocess.run(
+            ["bash", "scripts/verificar-proyecto.sh", "--pre-commit"],
+            cwd=repo, capture_output=True, text=True, env=env,
+        )
+
+    def test_verificador_en_verde_sobre_copia_intacta(self):
+        proc = self._verifica(self._copia())
+        self.assertEqual(proc.returncode, 0, proc.stdout[-2000:] + proc.stderr[-2000:])
+
+    def test_verificador_detecta_regla_p0_eliminada(self):
+        repo = self._copia()
+        agents = repo / "AGENTS.md"
+        lineas = agents.read_text(encoding="utf-8").splitlines(keepends=True)
+        self.assertTrue(any(l.startswith("### P0.20") for l in lineas))
+        # eliminar la linea completa: el conteo de reglas P0 baja a 19
+        agents.write_text(
+            "".join(l for l in lineas if not l.startswith("### P0.20")), encoding="utf-8"
+        )
+        proc = self._verifica(repo)
+        self.assertEqual(proc.returncode, 1, "el verificador no detecto la corrupcion")
+        self.assertIn("[FALLO] 20 reglas P0 definidas en AGENTS.md", proc.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

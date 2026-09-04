@@ -1,0 +1,6 @@
+# Dependencias opcionales del ecosistema (busqueda vectorial, REQ-002).
+# Sin ellas todo funciona con stdlib (indice JSON TF-IDF).
+# Instalacion SOLO en .venv del proyecto y bajo confirmacion (P0.5):
+#   bash scripts/setup.sh
+chromadb
+sentence-transformers
