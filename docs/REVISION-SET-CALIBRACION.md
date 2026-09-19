@@ -179,16 +179,18 @@ recomienda un orden de magnitud más de casos por clase (cientos) [4][5].
 4. El set queda como base del requisito REQ-012 (integración de Jev con los
    tres pilares).
 
-Total original: **40 casos** (16 `noul`, 12 `choice`, 12 `score`). Tras la
-ampliación (sección 7): **58 casos** (22/18/18), set `version: 3`.
+Total original: **40 casos** (16 `noul`, 12 `choice`, 12 `score`). Tras las
+ampliaciones (sección 7): **76 casos** (28/24/24), set `version: 4`.
 
 ## 7. Ampliaciones posteriores
 
 - **Lote 2 (2026-09-19)**: 18 candidatos (N17-N22, C13-C18, S13-S18) revisados y
   aprobados por el programador sin correcciones y fusionados con el set mediante
-  `scripts/jev_calibration_merge.py` (REQ-018). El set pasa a `version: 3` con
-  **58 casos** (22 `noul`, 18 `choice`, 18 `score`).
-- **Lote 3 (pendiente de revisión)**: 18 candidatos (N23-N28, C19-C24, S19-S24)
+  `scripts/jev_calibration_merge.py` (REQ-018) → `version: 3`, 58 casos.
+- **Lote 3 (2026-09-19)**: 18 candidatos (N23-N28, C19-C24, S19-S24) aprobados y
+  fusionados (REQ-018) → `version: 4`, **76 casos** (28 `noul`, 24 `choice`,
+  24 `score`).
+- **Lote 4 (pendiente de revisión)**: 18 candidatos (N29-N34, C25-C30, S25-S30)
   en `.docs/knowledge/ai/jev_calibration_candidates.json`; se revisan con
   `python3 scripts/jev_review.py --calibracion`.
 - Objetivo a medio plazo: ≥100 casos por tipo para estabilizar ECE y la accuracy

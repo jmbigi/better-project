@@ -158,3 +158,11 @@
   recomendacion: "No presentar la ampliacion como mejora de exactitud (no lo es); reportar accuracy e IC junto a NLL/Brier/ECE. Seguir ampliando hacia >=100/tipo y no usar score como guardarrail hasta que supere ~0.6."
   estado: Abierta
   fecha: 2026-09-19
+- id: LSN-021
+  proyecto: "Ecosistema / Jev (REQ-011)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El lote 3 (set v4, 76 casos) bajo la accuracy global de 0.655 a 0.632 y subio la T recomendada a 2.1; choice 0.833, noul 0.607, score 0.458. Ampliar el set con casos mas exigentes no mejora la exactitud."
+  recomendacion: "No prometer mejoras de exactitud al ampliar el set; reportar accuracy, IC y metricas de calibracion. Mantener score como experimental y revisar si los casos nuevos son mas dificiles o menos representativos."
+  estado: Abierta
+  fecha: 2026-09-19

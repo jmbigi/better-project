@@ -76,31 +76,31 @@ Salida previa con un modelo local alternativo
 - `1f62e37` — feat(jev): calibracion por temperatura con NLL/Brier/ECE.
 - Push a `origin/main`: sincronizado.
 
-## Calibracion (2026-09-19, set v3 de 58 casos)
+## Calibracion (2026-09-19, set v4 de 76 casos)
 
 Se anadio `scripts/jev_calibration.py` y `JEV_TEMPERATURE` al motor. El set
-`.docs/knowledge/ai/jev_calibration_set.json` (v3, 58 casos: 22 noul, 18 choice,
-18 score) se basa en P0/P1, el estado de los REQ y las lecciones LSN; sus
-etiquetas fueron **revisadas y aprobadas** por el programador (v2 40/40 y lote 2
-de 18; P1.15).
+`.docs/knowledge/ai/jev_calibration_set.json` (v4, 76 casos: 28 noul, 24 choice,
+24 score) se basa en P0/P1, el estado de los REQ y las lecciones LSN; sus
+etiquetas fueron **revisadas y aprobadas** por el programador (lotes 2 y 3;
+P1.15).
 
 Metodologia segun Guo 2017 (arXiv:1706.04599), Nixon 2019 (arXiv:1904.01685) y
 Kadavath 2022 (arXiv:2207.05221): T por minimizacion de NLL, Brier/NLL
 primarios, ECE secundario, validacion cruzada k-fold.
 
-Resultado medido (Qwen3.5-4B Q4_K_M, 58 casos):
+Resultado medido (Qwen3.5-4B Q4_K_M, 76 casos):
 
-| Metrica | T=1 | T=1.8 | CV antes | CV despues |
+| Metrica | T=1 | T=2.1 | CV antes | CV despues |
 |---|---|---|---|---|
-| NLL | 0.783 | 0.734 | 0.778 | 0.747 |
-| Brier | 0.470 | 0.446 | 0.467 | 0.452 |
-| ECE | 0.120 | 0.119 | 0.232 | 0.228 |
-| Accuracy | 0.655 | 0.655 | 0.662 | 0.662 |
+| NLL | 0.879 | 0.788 | 0.881 | 0.796 |
+| Brier | 0.509 | 0.473 | 0.510 | 0.476 |
+| ECE | 0.141 | 0.123 | 0.256 | 0.248 |
+| Accuracy | 0.632 | 0.632 | 0.631 | 0.631 |
 
-Accuracy por tipo (T=1.8): choice 0.889 (n=18), noul 0.636 (n=22), score 0.444
-(n=18). T=1.8 reduce NLL/Brier/ECE sin cambiar la accuracy. Informe JSON
+Accuracy por tipo (T=2.1): choice 0.833 (n=24), noul 0.607 (n=28), score 0.458
+(n=24). T=2.1 reduce NLL/Brier/ECE sin cambiar la accuracy. Informe JSON
 (generado, no versionado) en `.docs/.storage/jev_calibration.json`. Aplicar con
-`JEV_TEMPERATURE=1.8`.
+`JEV_TEMPERATURE=2.1`.
 
 ## Etiquetas aprobadas (2026-09-19)
 
@@ -148,8 +148,8 @@ cautelas estadisticas del artefacto de revision.
 | `python3 scripts/mutation_check.py` (adr_validator) | 16 mutantes, 16 muertos, score 1.000 |
 | `cosmic-ray` 8.7.0 (adr_validator, copia aislada) | 160 mutantes, 124 muertos (77.5 %) |
 | `python3 scripts/jev_review.py --report --fake` (REQ-016) | OK (revision en JSON; no escribe en docs) |
-| `python3 scripts/jev_calibration_merge.py --aplicar` (REQ-018) | set v3, 58 casos (22 noul / 18 choice / 18 score) |
-| `.venv/bin/python scripts/jev_calibration.py --write` (v3, 58 casos) | T=1.8; acc 0.655; choice 0.889, noul 0.636, score 0.444 |
+| `python3 scripts/jev_calibration_merge.py --aplicar` (REQ-018) | set v4, 76 casos (28 noul / 24 choice / 24 score) |
+| `.venv/bin/python scripts/jev_calibration.py --write` (v4, 76 casos) | T=2.1; acc 0.632; choice 0.833, noul 0.607, score 0.458 |
 | `python3 scripts/diagnostico.py --root .` (REQ-017) | 100/100 (solido); dir vacio 0/100 sin escribir |
 | `pip-audit -f cyclonedx-json -r requirements-optional.txt` | `docs/SBOM-2026-09-19.cdx.json` (119 componentes, 5 advisories) |
 | `vale README.md docs .docs` (opcional, Pilar 4) | 0 errores, 0 alertas (34 archivos) |
@@ -168,14 +168,15 @@ cautelas estadisticas del artefacto de revision.
 
 ## Pendiente
 
-1. **Fusionar el lote 3 de candidatos**: revisar con
+1. **Fusionar el lote 4 de candidatos**: revisar con
    `python3 scripts/jev_review.py --calibracion` y fusionar con
-   `scripts/jev_calibration_merge.py --aplicar` (18 candidatos N23-N28,
-   C19-C24, S19-S24). Objetivo a medio plazo: >=100 casos por tipo.
+   `scripts/jev_calibration_merge.py --aplicar` (18 candidatos N29-N34,
+   C25-C30, S25-S30). Objetivo a medio plazo: >=100 casos por tipo.
 
 El programador confirmo el 2026-09-19 las clasificaciones de REQ-012
-presentadas y el lote 2 de candidatos (40 -> 58 casos, v3). La calibracion se
-re-ejecuto con el set v3: T recomendada `1.8`, accuracy global 0.655.
+presentadas y los lotes 2 y 3 de candidatos (40 -> 76 casos, v4). La
+calibracion se re-ejecuto con el set v4: T recomendada `2.1`, accuracy global
+0.632.
 
 ## Notas
 
