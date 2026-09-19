@@ -62,6 +62,7 @@ Variables de entorno:
 | `JEV_N_CTX` | `4096` | Contexto maximo |
 | `JEV_N_THREADS` | auto | Hilos CPU |
 | `JEV_TIMEOUT` | `300` | Timeout de carga del modelo (s) |
+| `JEV_TEMPERATURE` | `1.0` | Temperatura de calibracion > 0 (ver seccion Calibracion) |
 
 ## Formato de entrada
 
@@ -114,6 +115,46 @@ En todos los casos se devuelve `confidence = 1 - H(p)/ln(K)` (1 = certeza,
   calibrarse en la carga real antes de usarlas como guardarrail principal.
 - No reemplaza los guardarrailes deterministas (`opencode.json`, `kilo.json`,
   `analyze_shell.py`); es una capa de decision adicional.
+
+## Calibracion
+
+Las probabilidades de un LLM suelen ser **overconfident** (Guo et al. 2017,
+"On Calibration of Modern Neural Networks", ICML, arXiv:1706.04599).
+`scripts/jev_calibration.py` ajusta una unica **temperatura** T (dividir los
+logits por T antes del softmax) que reduce esa overconfidence sin alterar la
+opcion elegida (argmax). Se aplica al motor con `JEV_TEMPERATURE`.
+
+Metodologia:
+
+- T se ajusta minimizando el **NLL** sobre un set etiquetado
+  (`.docs/knowledge/ai/jev_calibration_set.json`), con casos cuya respuesta
+  correcta esta fijada por P0/P1, los estado de los REQ y las lecciones
+  LSN-001..008.
+- Se reporta **NLL** y **Brier** (norma L2) como metricas primarias, y **ECE**
+  top-label como secundaria con caveat, siguiendo Nixon et al. 2019
+  ("Measuring Calibration in Deep Learning", arXiv:1904.01685).
+- Se reporta **validacion cruzada k-fold** (T se ajusta en el train y se evalua
+  en el test held-out) para estimar generalizacion; Kadavath et al. 2022
+  (arXiv:2207.05221) documenta que los LLM son calibrables en eleccion multiple
+  y verdadero-falso.
+
+Resultado medido (Qwen3.5-4B Q4_K_M, 40 casos, 2026-09-19):
+
+| Metrica | T=1 | T=2.0 | CV (held-out) antes | CV despues |
+|---|---|---|---|---|
+| NLL | 0.808 | 0.741 | 0.808 | 0.745 |
+| Brier | 0.480 | 0.454 | 0.480 | 0.455 |
+| ECE | 0.135 | 0.116 | 0.269 | 0.226 |
+| Accuracy | 0.650 | 0.650 | 0.650 | 0.650 |
+
+Por tipo (T recomendada): `choice` acc 0.917, `noul` acc 0.625, `score` acc
+0.417. La temperatura no cambia la accuracy (correcto por diseno); solo
+recalibra la confianza. El tipo `score` (escala ordinal) es el menos fiable con
+el proxy de primer token y no debe usarse como guardarrail sin calibracion
+propia.
+
+La T recomendada es especifica del modelo y del set: re-ejecutar
+`python3 scripts/jev_calibration.py` al cambiar de modelo o de dominio.
 
 ## Licencias
 

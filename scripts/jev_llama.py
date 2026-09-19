@@ -13,6 +13,7 @@ Configuracion por entorno:
     JEV_N_CTX         contexto maximo (default: 4096)
     JEV_N_THREADS     hilos CPU (default: None -> auto)
     JEV_TIMEOUT       timeout de carga en segundos (default: 300)
+    JEV_TEMPERATURE   temperatura de calibracion > 0 (default: 1.0; ver jev_calibration.py)
 
 Dependencia opcional:
     pip install -r requirements-optional.txt
@@ -30,6 +31,7 @@ from typing import Any
 DEFAULT_MODEL = "Qwen_Qwen3.5-4B-Q4_K_M.gguf"
 DEFAULT_N_CTX = 4096
 DEFAULT_TIMEOUT = 300
+DEFAULT_TEMPERATURE = 1.0
 
 
 def _default_model_path() -> Path:
@@ -50,9 +52,16 @@ def _env_float(name: str, default: float) -> float:
     return float(raw) if raw is not None else default
 
 
-def _softmax(logits: Any) -> list[float]:
-    """Softmax sobre una secuencia numerica (lista o ndarray)."""
-    vals = [float(x) for x in logits]
+def _softmax(logits: Any, temperature: float = 1.0) -> list[float]:
+    """Softmax sobre una secuencia numerica (lista o ndarray).
+
+    Division por temperatura antes del softmax (Guo et al. 2017,
+    arXiv:1706.04599): T > 1 suaviza la distribucion (menos overconfidence),
+    T < 1 la agudiza. No altera el orden (argmax) de las opciones.
+    """
+    if temperature <= 0:
+        raise ValueError(f"temperature debe ser > 0, se recibio {temperature}")
+    vals = [float(x) / temperature for x in logits]
     mx = max(vals)
     ex = [math.exp(x - mx) for x in vals]
     s = sum(ex)
@@ -75,11 +84,17 @@ class JevLlama:
         n_ctx: int | None = None,
         n_threads: int | None = None,
         timeout: float | None = None,
+        temperature: float | None = None,
     ) -> None:
         self.model_path = Path(model_path) if model_path else _default_model_path()
         self.n_ctx = n_ctx if n_ctx is not None else _env_int("JEV_N_CTX", DEFAULT_N_CTX)
         self.n_threads = n_threads if n_threads is not None else os.getenv("JEV_N_THREADS")
         self.timeout = timeout if timeout is not None else _env_float("JEV_TIMEOUT", DEFAULT_TIMEOUT)
+        self.temperature = (
+            temperature if temperature is not None else _env_float("JEV_TEMPERATURE", DEFAULT_TEMPERATURE)
+        )
+        if self.temperature <= 0:
+            raise ValueError(f"JEV_TEMPERATURE debe ser > 0, se recibio {self.temperature}")
 
         if not self.model_path.exists():
             raise FileNotFoundError(
@@ -138,7 +153,7 @@ class JevLlama:
         self.model.eval(tokens)
         # scores es 2D (n_ctx, n_vocab): tomamos la fila del ultimo token evaluado.
         logits = self._np.array(self.model.scores[self.model.n_tokens - 1])
-        probs = _softmax(logits)
+        probs = _softmax(logits, self.temperature)
         return [float(probs[tid]) for tid in token_ids]
 
     @staticmethod

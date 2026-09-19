@@ -40,6 +40,9 @@ figurar como implementado. Bugs corregidos:
 | Inferencia real, `JEV_MODEL_PATH` a Llama-3.2-1B Q4 local | OK |
 | Descarga completa del modelo recomendado | OK (2.8 GB, `Qwen_Qwen3.5-4B-Q4_K_M.gguf`) |
 | Demo con el modelo recomendado | OK (ver abajo) |
+| `python3 -m py_compile` de `jev_calibration.py` | OK |
+| `python3 -m unittest` (10 tests nuevos de calibracion) | 59 tests OK |
+| Calibracion real (Qwen3.5-4B, 40 casos, k-fold) | OK (ver abajo) |
 
 Antes de la correccion, la ejecucion fallaba con
 `TypeError: only 0-dimensional arrays can be converted to Python scalars`.
@@ -71,11 +74,34 @@ Salida previa con un modelo local alternativo
 - `648f95f` — feat(jev): cliente Jev AI liviano con llama.cpp (REQ-011).
 - Correcciones posteriores: pendientes de commit.
 
+## Calibracion (2026-09-19)
+
+Se anadio `scripts/jev_calibration.py` y `JEV_TEMPERATURE` al motor. El set
+etiquetado `.docs/knowledge/ai/jev_calibration_set.json` (40 casos: 16 noul,
+12 choice, 12 score) se basa en P0/P1, el estado de los REQ y LSN-001..008; sus
+etiquetas son la verdad de referencia **propuesta** y deben ser revisadas.
+
+Metodologia segun Guo 2017 (arXiv:1706.04599), Nixon 2019 (arXiv:1904.01685) y
+Kadavath 2022 (arXiv:2207.05221): T por minimizacion de NLL, Brier/NLL
+primarios, ECE secundario, validacion cruzada k-fold.
+
+Resultado medido (Qwen3.5-4B Q4_K_M):
+
+| Metrica | T=1 | T=2.0 | CV antes | CV despues |
+|---|---|---|---|---|
+| NLL | 0.808 | 0.741 | 0.808 | 0.745 |
+| Brier | 0.480 | 0.454 | 0.480 | 0.455 |
+| ECE | 0.135 | 0.116 | 0.269 | 0.226 |
+| Accuracy | 0.650 | 0.650 | 0.650 | 0.650 |
+
+Accuracy por tipo (T=2.0): choice 0.917, noul 0.625, score 0.417. T=2.0 reduce
+NLL/Brier/ECE sin cambiar la accuracy. Informe JSON (generado, no versionado)
+en `.docs/.storage/jev_calibration.json`. Aplicar con `JEV_TEMPERATURE=2.0`.
+
 ## Pendiente
 
-1. **Calibracion de calidad**: las probabilidades deben calibrarse sobre un
-   conjunto de decisiones etiquetadas antes de usar el motor como capa de
-   decision/guardarrail.
+1. **Revision humana de las etiquetas** del set de calibracion (P1.15): la
+   propuesta actual es de la IA y requiere validacion del programador.
 2. **Ampliacion opcional**: integrar Jev con los tres pilares (clasificar
    requisitos, scorear conocimiento, clasificar lecciones) — no solicitado aun.
 

@@ -62,3 +62,11 @@
   recomendacion: "Los mocks deben reproducir la forma y semantica reales de la dependencia (dimensionalidad, indices, flags de configuracion) y deben fallar con el codigo defectuoso. Validar siempre una inferencia end-to-end con un modelo real pequeno antes de declarar un REQ implementado (P1.1/P1.21)."
   estado: Abierta
   fecha: 2026-09-19
+- id: LSN-009
+  proyecto: "Ecosistema / Jev (REQ-011)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "La calibracion real de REQ-011 (Qwen3.5-4B Q4_K_M, 40 casos basados en lecciones/historial) mostro accuracy 0.65 global: choice 0.917, noul 0.625, score 0.417. El tipo score (escala ordinal) es poco fiable con el proxy de primer token. La temperatura T=2.0 reduzco NLL/Brier/ECE pero no la accuracy (correcto por diseno: temperature scaling preserva el argmax)."
+  recomendacion: "No usar decisiones tipo score como guardarrail ni umbral de decision sin calibracion propia y revision humana de las etiquetas. Recalibrar la temperatura al cambiar de modelo o dominio. T puede mejorar la confianza sin mejorar la accuracy: reportar siempre ambas y no presentar la calibracion como mejora de exactitud."
+  estado: Abierta
+  fecha: 2026-09-19

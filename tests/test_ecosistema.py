@@ -22,6 +22,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 import doc_validator as dv  # noqa: E402
 import index_knowledge as ik  # noqa: E402
+import jev_calibration as jc  # noqa: E402
 import lessons_extractor as le  # noqa: E402
 import mcp_server as mcp  # noqa: E402
 import tui  # noqa: E402
@@ -535,6 +536,7 @@ class TestJevLlama(unittest.TestCase):
         self._real_llama = sys.modules.get("llama_cpp")
         self._real_numpy = sys.modules.get("numpy")
         self._real_model_env = os.environ.pop("JEV_MODEL_PATH", None)
+        self._real_temp_env = os.environ.pop("JEV_TEMPERATURE", None)
 
         vocab = self._VOCAB
         rows = self._N_ROWS
@@ -583,6 +585,8 @@ class TestJevLlama(unittest.TestCase):
             sys.modules.pop("numpy", None)
         if self._real_model_env is not None:
             os.environ["JEV_MODEL_PATH"] = self._real_model_env
+        if self._real_temp_env is not None:
+            os.environ["JEV_TEMPERATURE"] = self._real_temp_env
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def _client(self):
@@ -601,6 +605,25 @@ class TestJevLlama(unittest.TestCase):
         os.environ["JEV_MODEL_PATH"] = str(self.model_path)
         client = self.jl.JevLlama()
         self.assertEqual(client.model_path, self.model_path)
+
+    def test_jev_temperature_desde_entorno(self):
+        os.environ["JEV_TEMPERATURE"] = "2.5"
+        client = self._client()
+        self.assertAlmostEqual(client.temperature, 2.5)
+
+    def test_softmax_temperatura_suaviza_y_valida(self):
+        sharp = self.jl._softmax([0.0, 2.0], 1.0)
+        soft = self.jl._softmax([0.0, 2.0], 4.0)
+        self.assertLess(max(soft), max(sharp))
+        self.assertAlmostEqual(sum(soft), 1.0, places=9)
+        with self.assertRaises(ValueError):
+            self.jl._softmax([0.0, 1.0], 0.0)
+
+    def test_temperature_en_rango_desde_constructor(self):
+        client = self.jl.JevLlama(model_path=str(self.model_path), temperature=3.0)
+        self.assertAlmostEqual(client.temperature, 3.0)
+        with self.assertRaises(ValueError):
+            self.jl.JevLlama(model_path=str(self.model_path), temperature=-1.0)
 
     def test_noul_preferencia_yes(self):
         client = self._client()
@@ -662,6 +685,67 @@ class TestJevLlama(unittest.TestCase):
         missing = self.tmp / "no_existe.gguf"
         with self.assertRaises(FileNotFoundError):
             self.jl.JevLlama(model_path=str(missing))
+
+
+class TestJevCalibration(unittest.TestCase):
+    """REQ-011: matematicas de calibracion (NLL/Brier/ECE/temperatura)."""
+
+    def test_softmax_normaliza_y_temperatura(self):
+        p1 = jc.softmax([1.0, 1.0], 1.0)
+        self.assertAlmostEqual(sum(p1), 1.0, places=9)
+        self.assertAlmostEqual(p1[0], 0.5, places=9)
+        with self.assertRaises(ValueError):
+            jc.softmax([1.0], 0.0)
+
+    def test_temperature_scale_suaviza_sin_cambiar_argmax(self):
+        base = [0.9, 0.07, 0.03]
+        scaled = jc.temperature_scale(base, 3.0)
+        self.assertAlmostEqual(sum(scaled), 1.0, places=9)
+        self.assertEqual(base.index(max(base)), scaled.index(max(scaled)))
+        self.assertLess(max(scaled), max(base))
+
+    def test_brier_y_nll_valores_conocidos(self):
+        self.assertAlmostEqual(jc.brier([1.0, 0.0], 0), 0.0, places=12)
+        self.assertAlmostEqual(jc.nll([1.0, 0.0], 0), 0.0, places=6)
+        self.assertAlmostEqual(jc.brier([0.5, 0.5], 1), 0.5, places=12)
+        self.assertAlmostEqual(jc.nll([0.5, 0.5], 1), math.log(2), places=6)
+
+    def test_accuracy(self):
+        probs = [[0.9, 0.1], [0.2, 0.8], [0.6, 0.4]]
+        self.assertAlmostEqual(jc._accuracy(probs, [0, 1, 1]), 2 / 3, places=9)
+
+    def test_ece_valor_conocido(self):
+        probs = [[0.9, 0.1], [0.9, 0.1]]
+        self.assertAlmostEqual(jc.ece(probs, [0, 1]), 0.4, places=9)
+        self.assertAlmostEqual(jc.ece([], []), 0.0, places=9)
+
+    def test_fit_temperature_corrige_overconfidence(self):
+        # accuracy 0.5 con confianza 0.98 => T > 1 reduce el NLL.
+        probs = [[0.98, 0.02], [0.98, 0.02], [0.98, 0.02], [0.98, 0.02]]
+        records = [{"probs": p, "label_idx": y} for p, y in zip(probs, [0, 1, 0, 1])]
+        t = jc.fit_temperature(records)
+        self.assertGreater(t, 1.0)
+        self.assertLess(jc.evaluate(records, t)["nll"], jc.evaluate(records, 1.0)["nll"])
+
+    def test_load_set_y_validacion(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            good = tmp / "s.json"
+            good.write_text(json.dumps({"casos": [
+                {"id": "X1", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "yes"}
+            ]}), encoding="utf-8")
+            casos = jc.load_set(good)
+            self.assertEqual(len(casos), 1)
+            self.assertEqual(jc._options_and_label(casos[0]), (["yes", "no"], 0))
+
+            bad = tmp / "b.json"
+            bad.write_text(json.dumps({"casos": [
+                {"id": "X2", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "quizas"}
+            ]}), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                jc._options_and_label(jc.load_set(bad)[0])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
 
 if __name__ == "__main__":

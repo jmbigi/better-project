@@ -237,7 +237,7 @@ pat_home = re.compile(r'/home/[A-Za-z0-9_.-]+/')
 excl = re.compile(r'(deny|patrones|claves SSH|no leas|comitees|dummy|BLOQUEADO|127\.0\.0\.1)')
 faltas = []
 for root, dirs, files in os.walk('.'):
-    dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '.venv', 'venv')]
+    dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '.venv', 'venv', '.storage')]
     for f in files:
         if not f.endswith(('.md', '.json', '.sh')):
             continue
@@ -261,8 +261,8 @@ for root, dirs, files in os.walk('.'):
                     faltas.append((ruta, i, 'IP: ' + m))
 assert not faltas, faltas
 "
-check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example|SBOM-)'"
-check "sin formatos de claves API en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=venv '(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/'"
+check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example|SBOM-)'"
+check "sin formatos de claves API en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage '(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/'"
 # El unico 'eval'/'exec' esperado en scripts es el patron de este check en
 # verificar-proyecto.sh; el hook pre-commit no debe contener eval/exec.
 check "sin eval/exec en scripts" python3 -c "
