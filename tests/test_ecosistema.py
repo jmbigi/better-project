@@ -417,7 +417,7 @@ class TestIntegracionHook(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.repo = self.tmp / "repo"
         ignore = shutil.ignore_patterns(
-            ".git", "node_modules", "__pycache__", ".storage", "*.pyc"
+            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", "venv"
         )
         shutil.copytree(ROOT, self.repo, ignore=ignore)
 
@@ -478,7 +478,7 @@ class TestVerificador(unittest.TestCase):
         tmp = Path(tempfile.mkdtemp())
         repo = tmp / "repo"
         ignore = shutil.ignore_patterns(
-            ".git", "node_modules", "__pycache__", ".storage", "*.pyc"
+            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", "venv"
         )
         shutil.copytree(ROOT, repo, ignore=ignore)
         subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
