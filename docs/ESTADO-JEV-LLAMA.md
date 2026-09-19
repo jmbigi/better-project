@@ -131,18 +131,20 @@ cautelas estadisticas del artefacto de revision.
 
 - `scripts/adr_validator.py` (REQ-013): valida los ADR y audita sesgos de
   decision; registro en `docs/decisions/` (ADR-001, ADR-002, ADR-003).
-- `scripts/auto_audit.py` (REQ-014): cinco subcomandos (sesgos documentales,
-  frescura del SBOM, decisiones pendientes, tests debiles y trazabilidad de IA).
+- `scripts/auto_audit.py` (REQ-014): seis subcomandos (sesgos documentales,
+  frescura del SBOM, decisiones pendientes, tests debiles, trazabilidad de IA y
+  re-escaneo de vulnerabilidades).
 - `docs/SESGOS-Y-FALACIAS.md` y `docs/HERRAMIENTAS-Y-FUENTES.md` (referencia).
 - Ambos integrados en `scripts/verificar-proyecto.sh`.
 
 | Verificacion | Resultado |
 |---|---|
-| `python3 -m unittest discover -s tests -q` | 106 tests OK |
+| `python3 -m unittest discover -s tests -q` | 115 tests OK |
 | `python3 scripts/adr_validator.py --strict` | 3 ADR, 0 errores, 0 alertas |
 | `python3 scripts/auto_audit.py all` | 0 errores (1 alerta: LSN-009 abierta) |
 | `python3 scripts/auto_audit.py vulns` (pip-audit) | 0 errores, 5 advisories (chromadb 1.5.9 y diskcache 5.6.3, sin parche) |
 | `python3 scripts/mutation_check.py` (adr_validator) | 16 mutantes, 16 muertos, score 1.000 |
+| `vale README.md docs .docs` (opcional, Pilar 4) | 0 errores, 0 alertas (34 archivos) |
 | `bash scripts/verificar-proyecto.sh --pre-commit` | 40 OK, 0 fallos |
 
 ## Pendiente
@@ -153,14 +155,10 @@ cautelas estadisticas del artefacto de revision.
    (P1.17/P1.23).
 2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
    ECE y la accuracy de `score`; hoy n=12 y el intervalo de confianza es ancho.
-3. **Chequeo de mutaciones**: `scripts/mutation_check.py` (REQ-015) mide la
-   fuerza con una heuristica aislada (2026-09-19: 16/16 mutantes de
-   `adr_validator.py` muertos, tras cerrar un hueco que detecto). `mutmut` 3.6
-   se evaluo y no es viable aqui sin un layout pytest (su recoleccion de stats
-   falla sobre la suite unittest, LSN-015); `cosmic-ray` queda sin evaluar.
-4. **`vale` opcional** con estilos propios de "claims sin metrica" para reforzar
-   el Pilar 4 mas alla de la heuristica de `auto_audit sesgos`.
-5. **Regenerar el SBOM** (`docs/SBOM-2026-09-04.spdx.json`) con `syft` cuando
+3. **`cosmic-ray` sin evaluar**: `mutmut` se descarto (LSN-015) y se usa
+   `mutation_check.py` (REQ-015); queda probar `cosmic-ray` como alternativa
+   mas rica.
+4. **Regenerar el SBOM** (`docs/SBOM-2026-09-04.spdx.json`) con `syft` cuando
    este disponible. `auto_audit vulns` ya re-escanea a demanda con pip-audit
    (2026-09-19: 4 advisories sin parche en chromadb 1.5.9 y 1 en diskcache
    5.6.3; riesgo aceptado para uso local embebido, LSN-007).

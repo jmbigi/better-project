@@ -68,7 +68,7 @@
 | 1 | `scripts/auto_audit.py` (sesgos, evidencias, decisiones, tests, IA) + integración en el verificador | Implementado (REQ-014) |
 | 2 | `docs/HERRAMIENTAS-Y-FUENTES.md` (este documento) referenciado desde README/AGENTS | Implementado |
 | 3 | Chequeo de mutaciones stdlib (`scripts/mutation_check.py`, REQ-015); `mutmut`/`cosmic-ray` como alternativas maduras | Implementado (2026-09-19) |
-| 4 | `vale` opcional con estilos propios de "claims sin métrica" | Propuesto |
+| 4 | Linter de prosa `vale` con estilo propio de "claims sin métrica" (`.vale.ini` + `.vale/styles/BetterProject/Claims.yml`) | Implementado (2026-09-19) |
 | 5 | Re-escaneo de dependencias (`auto_audit vulns` con pip-audit/osv-scanner) | Implementado (2026-09-19) |
 
 **Hallazgo del re-escaneo (2026-09-19)**: `auto_audit vulns` detectó 4
@@ -84,6 +84,19 @@ falla sobre esta suite unittest (`BadTestExecutionCommandsException`), aunque
 pytest 9 sí recoge `TestADRValidator` por separado (14 passed). Se mantiene el
 chequeo stdlib `scripts/mutation_check.py`; `cosmic-ray` queda sin evaluar
 (LSN-015).
+
+**Linter de prosa `vale` (2026-09-19)**: instalado con `go install
+github.com/vale-cli/vale/v3/cmd/vale@latest` (MIT, usuario, sin sudo). Config en
+`.vale.ini` y estilo local `.vale/styles/BetterProject/Claims.yml` (claims sin
+métrica: garantías absolutas, porcentajes totales, superlativos). Uso:
+
+```bash
+vale README.md docs .docs    # rutas explícitas: 'vale .' rompe por el
+                             # frontmatter YAML de .kilo/.opencode (E201)
+```
+
+Es **opcional**: no entra en el verificador (puede no estar instalado en todos
+los entornos). Complementa `auto_audit sesgos` (heurística stdlib).
 
 ## 6. Para los proyectos que sigan estas reglas
 

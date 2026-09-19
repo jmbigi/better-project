@@ -1,0 +1,12 @@
+extends: existence
+message: "Claim sin metrica (Pilar 4): '%s'"
+level: warning
+ignorecase: true
+tokens:
+  - '(?<!no )garantiza'
+  - '100 ?%'
+  - nunca falla
+  - sin errores
+  - obviamente
+  - evidentemente
+  - todo el mundo

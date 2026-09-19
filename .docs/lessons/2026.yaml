@@ -118,3 +118,11 @@
   recomendacion: "Medir mutaciones con el chequeo stdlib scripts/mutation_check.py (REQ-015); si se quiere mutmut, migrar a un layout pytest con config dedicada y probarlo en copia aislada (P1.21). No adoptar una herramienta por popularidad (ad populum, Pilar 4)."
   estado: Resuelta
   fecha: 2026-09-19
+- id: LSN-016
+  proyecto: "Ecosistema"
+  fase: "Implementacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "Al integrar vale (Pilar 4) hubo dos fricciones: 'vale .' aborta con E201 al parsear el frontmatter YAML de los agentes en .kilo/.opencode y .valeignore no se respeto; y la regla 'garantiza' daba falso positivo en 'no garantiza' y en documentos normativos/catalogos/evidencia."
+  recomendacion: "Ejecutar vale sobre rutas explicitas (vale README.md docs .docs), excluir documentos normativos/catalogos/evidencia por seccion en .vale.ini, y refinar tokens con lookbehind ('(?<!no )garantiza') para no marcar negaciones. Instalar vale con 'go install' (usuario, sin sudo)."
+  estado: Resuelta
+  fecha: 2026-09-19
