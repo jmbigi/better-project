@@ -25,6 +25,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 import adr_validator as av  # noqa: E402
 import auto_audit as aa  # noqa: E402
+import diagnostico as diag  # noqa: E402
 import doc_validator as dv  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import jev_calibration as jc  # noqa: E402
@@ -1289,6 +1290,41 @@ class TestJevReview(unittest.TestCase):
         finally:
             os.environ.pop("JEV_REVIEW_REPORT", None)
         self.assertNotIn(".docs/requirements", str(out))  # no escribe en los documentos
+
+
+class TestDiagnostico(unittest.TestCase):
+    """REQ-017: diagnostico de los cuatro pilares en proyectos externos."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_repo_real_solido(self):
+        reporte = diag.evaluar(ROOT)
+        nombres = [p["pilar"] for p in reporte["pilares"]]
+        self.assertEqual(nombres, ["requisitos", "conocimiento", "lecciones", "pilar4", "higiene"])
+        self.assertGreaterEqual(reporte["puntuacion_global"], 80)
+
+    def test_dir_vacio_ausente_con_sugerencias(self):
+        reporte = diag.evaluar(self.tmp)
+        self.assertEqual(reporte["puntuacion_global"], 0)
+        self.assertTrue(reporte["sugerencias"])
+
+    def test_no_escribe_en_el_objetivo(self):
+        (self.tmp / "README.md").write_text("# x\n", encoding="utf-8")
+        antes = sorted(p.name for p in self.tmp.rglob("*"))
+        diag.evaluar(self.tmp)
+        despues = sorted(p.name for p in self.tmp.rglob("*"))
+        self.assertEqual(antes, despues)
+
+    def test_min_score(self):
+        self.assertEqual(diag.main(["--root", str(self.tmp), "--min-score", "50"]), 1)
+        self.assertEqual(diag.main(["--root", str(self.tmp)]), 0)
+
+    def test_dir_inexistente(self):
+        self.assertEqual(diag.main(["--root", str(self.tmp / "no_existe")]), 1)
 
 
 if __name__ == "__main__":

@@ -312,6 +312,9 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
 - `python scripts/jev_review.py [--report]` — UI (curses) para revisar y
   confirmar las clasificaciones de `jev_pillars.py` (REQ-016); no modifica los
   documentos.
+- `python scripts/diagnostico.py --root <carpeta>` — diagnostico, evaluacion y
+  sugerencias de los cuatro pilares en un proyecto externo (REQ-017); solo
+  lectura.
 - `bash scripts/setup.sh [--yes]` — onboarding guiado: entorno, hook,
   dependencias opcionales (doble confirmación de riesgo, P0.18) y primera
   validación (REQ-008).
