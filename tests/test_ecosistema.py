@@ -1224,6 +1224,19 @@ class TestAutoAudit(unittest.TestCase):
         errors, _ = aa.auditar_vulns(requirements=req, ejecutar=falla)
         self.assertTrue(any("fallo el escaneo" in e for e in errors))
 
+    def test_calibracion_set_valido(self):
+        errors, _ = aa.auditar_calibracion()
+        self.assertEqual(errors, [])
+
+    def test_calibracion_duplicado_es_error(self):
+        s = self._write("s.json", json.dumps({"casos": [
+            {"id": "N01", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "yes"},
+            {"id": "N01", "tipo": "noul", "estado": "otro", "instrucciones": "i", "esperado": "no"},
+        ]}))
+        c = self._write("c.json", json.dumps({"casos": []}))
+        errors, _ = aa.auditar_calibracion(s, c)
+        self.assertTrue(any("duplicado" in e for e in errors))
+
     def test_main_all_en_verde(self):
         self.assertEqual(aa.main(["all"]), 0)
 

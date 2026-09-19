@@ -276,6 +276,41 @@ def auditar_tests(test_file: Path = TEST_FILE, scripts_dir: Path = SCRIPTS_DIR) 
     return errors, warnings
 
 
+def auditar_calibracion(set_path=None, cand_path=None) -> tuple[list[str], list[str]]:
+    """Valida la integridad del set de calibracion y de los candidatos (REQ-011)."""
+    import jev_calibration_merge as jcm
+
+    set_path = Path(set_path or (ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_set.json"))
+    cand_path = Path(cand_path or (ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_candidates.json"))
+    errors: list[str] = []
+    warnings: list[str] = []
+    for path, etiqueta in ((set_path, "set"), (cand_path, "candidatos")):
+        if not path.exists():
+            if etiqueta == "set":
+                errors.append(f"no existe el {etiqueta}: {path}")
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            errors.append(f"{etiqueta}: JSON invalido ({exc})")
+            continue
+        ids: set[str] = set()
+        escenarios: dict[str, str] = {}
+        for caso in data.get("casos", []):
+            cid = str(caso.get("id"))
+            for problema in jcm.validar_caso(caso):
+                errors.append(f"{etiqueta}/{cid}: {problema}")
+            if cid in ids:
+                errors.append(f"{etiqueta}: id duplicado {cid}")
+            ids.add(cid)
+            escenario = jcm._normalizar(caso.get("estado"))
+            if escenario in escenarios and escenarios[escenario] != cid:
+                warnings.append(f"{etiqueta}: escenario duplicado {cid} ~ {escenarios[escenario]}")
+            else:
+                escenarios[escenario] = cid
+    return errors, warnings
+
+
 def _tiene_trailer(mensaje: str) -> bool:
     bajo = mensaje.lower()
     return "assisted-by:" in bajo or "generated-by:" in bajo
@@ -326,6 +361,10 @@ def _ejecutar(args: argparse.Namespace) -> dict[str, Any]:
         warn, info = auditar_ia()
         resultado["alertas"].extend(warn)
         resultado["info"].extend(info)
+    if args.subcomando in {"calibracion", "all"}:
+        err, warn = auditar_calibracion()
+        resultado["errores"].extend(err)
+        resultado["alertas"].extend(warn)
     if args.subcomando == "vulns":
         err, warn = auditar_vulns()
         resultado["errores"].extend(err)
@@ -336,7 +375,8 @@ def _ejecutar(args: argparse.Namespace) -> dict[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Auto-auditoria del proyecto (REQ-014)")
     parser.add_argument(
-        "subcomando", choices=["sesgos", "evidencias", "decisiones", "tests", "ia", "vulns", "all"]
+        "subcomando",
+        choices=["sesgos", "evidencias", "decisiones", "tests", "ia", "calibracion", "vulns", "all"],
     )
     parser.add_argument("--json", action="store_true", help="Salida JSON")
     parser.add_argument("--strict", action="store_true", help="Las alertas tambien fallan")

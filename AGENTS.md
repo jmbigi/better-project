@@ -304,7 +304,7 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
 - `python scripts/adr_validator.py [--strict]` — valida los ADR de
   `docs/decisions/` y audita sesgos/falacias de decision (REQ-013); base
   conceptual en `docs/SESGOS-Y-FALACIAS.md`.
-- `python scripts/auto_audit.py {sesgos|evidencias|decisiones|tests|ia|vulns|all}` —
+- `python scripts/auto_audit.py {sesgos|evidencias|decisiones|tests|ia|calibracion|vulns|all}` —
   auto-auditoria del proyecto (REQ-014); catalogo de herramientas y fuentes en
   `docs/HERRAMIENTAS-Y-FUENTES.md`.
 - `python scripts/mutation_check.py` — chequeo de mutaciones (fuerza de la
