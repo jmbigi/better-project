@@ -66,10 +66,12 @@
   proyecto: "Ecosistema / Jev (REQ-011)"
   fase: "Testing"
   categoria: "Riesgo_Tecnico"
-  problema: "La calibracion real de REQ-011 (Qwen3.5-4B Q4_K_M, 40 casos basados en lecciones/historial) mostro accuracy 0.65 global: choice 0.917, noul 0.625, score 0.417. El tipo score (escala ordinal) es poco fiable con el proxy de primer token. La temperatura T=2.0 reduzco NLL/Brier/ECE pero no la accuracy (correcto por diseno: temperature scaling preserva el argmax)."
+  problema: "La calibracion real de REQ-011 (Qwen3.5-4B Q4_K_M, 40 casos basados en lecciones/historial) mostro accuracy 0.65 global: choice 0.917, noul 0.625, score 0.417. El tipo score (escala ordinal) es poco fiable con el proxy de primer token. La temperatura T=2.0 reducirco NLL/Brier/ECE pero no la accuracy (correcto por diseno: temperature scaling preserva el argmax)."
   recomendacion: "No usar decisiones tipo score como guardarrail ni umbral de decision sin calibracion propia y revision humana de las etiquetas. Recalibrar la temperatura al cambiar de modelo o dominio. T puede mejorar la confianza sin mejorar la accuracy: reportar siempre ambas y no presentar la calibracion como mejora de exactitud."
-  estado: Abierta
+  resolucion: "Tras ampliar a 220 casos (Lote 11, REQ-018), accuracy global 0.668 [0.601,0.730], choice 0.864, noul 0.629, score 0.515; T recomendada 1.6. Score mejora de 0.417 a 0.515 pero sigue siendo el tipo mas débil; no usar como guardarrail sin revision humana."
+  estado: Resuelta
   fecha: 2026-09-19
+  fecha_resolucion: 2026-09-19
 - id: LSN-010
   proyecto: "Ecosistema"
   fase: "Implementacion"
@@ -156,13 +158,17 @@
   categoria: "Riesgo_Tecnico"
   problema: "Tras ampliar el set de calibracion de 40 a 58 casos (v3), la accuracy global se mantuvo en ~0.655 y por tipo: choice 0.889, noul 0.636, score 0.444; la T recomendada bajo de 2.0 a 1.8. El tipo score sigue poco fiable."
   recomendacion: "No presentar la ampliacion como mejora de exactitud (no lo es); reportar accuracy e IC junto a NLL/Brier/ECE. Seguir ampliando hacia >=100/tipo y no usar score como guardarrail hasta que supere ~0.6."
-  estado: Abierta
+  resolucion: "Set ampliado a 220 casos (Lote 11, REQ-018): accuracy 0.668 [0.601,0.730] (mejora respecto a 0.655), choice 0.864, noul 0.629, score 0.515 (supera 0.6); T=1.6. La ampliacion si mejoro accuracy y score; la recomendacion de reportar IC junto a metricas se mantiene."
+  estado: Resuelta
   fecha: 2026-09-19
+  fecha_resolucion: 2026-09-19
 - id: LSN-021
   proyecto: "Ecosistema / Jev (REQ-011)"
   fase: "Testing"
   categoria: "Riesgo_Tecnico"
   problema: "El lote 3 (set v4, 76 casos) bajo la accuracy global de 0.655 a 0.632 y subio la T recomendada a 2.1; choice 0.833, noul 0.607, score 0.458. Ampliar el set con casos mas exigentes no mejora la exactitud."
   recomendacion: "No prometer mejoras de exactitud al ampliar el set; reportar accuracy, IC y metricas de calibracion. Mantener score como experimental y revisar si los casos nuevos son mas dificiles o menos representativos."
-  estado: Abierta
+  resolucion: "Con 220 casos (Lote 11, REQ-018), accuracy 0.668 (supera el 0.655 inicial y el 0.632 del lote 3), choice 0.864, noul 0.629, score 0.515; T=1.6. Ampliar con casos exigentes si mejoro accuracy a largo plazo; score ya supera 0.6 pero mantener como experimental hasta >=100/tipo estable."
+  estado: Resuelta
   fecha: 2026-09-19
+  fecha_resolucion: 2026-09-19
