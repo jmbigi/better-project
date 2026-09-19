@@ -124,12 +124,15 @@ cautelas estadisticas del artefacto de revision.
 | `python3 -m unittest discover -s tests -q` | 73 tests OK |
 | `bash scripts/verificar-proyecto.sh --pre-commit` | 38 OK, 0 fallos |
 | `bash scripts/verificar-proyecto.sh` (completo) | 40 OK, 1 fallo esperado (arbol de trabajo con cambios) |
+| Inferencia real `.venv/bin/python scripts/jev_llama.py --demo` (Qwen3.5-4B Q4_K_M) | OK |
+| Inferencia real `scripts/jev_pillars.py lecciones --id LSN-008 --json` | OK (fase `Testing` correcta; categoria propuesta `Proceso` frente a la real `Riesgo_Tecnico`) |
 
 ## Pendiente
 
-1. **Prueba de integracion opcional de REQ-012** con un modelo real
-   (`JEV_MODEL_PATH`) sobre un REQ, un fragmento y una leccion: no ejecutada en
-   esta sesion por coste (P0.19); los tests unitarios cubren la logica.
+1. **Revision humana de las clasificaciones de REQ-012**: la integracion con el
+   modelo real funciona y **propone**; la categoria de `LSN-008` salio
+   equivocada, lo que confirma que la etiqueta definitiva es del humano
+   (P1.17/P1.23).
 2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
    ECE y la accuracy de `score`; hoy n=12 y el intervalo de confianza es ancho.
 

@@ -6,7 +6,7 @@ viven en el repositorio como archivos; Git es el versionado; los scripts de
 via reglas (`AGENTS.md`) y un servidor MCP local. Todo open source, local y
 gratuito: sin nubes, sin Jira, sin Notion.
 
-## Arquitectura: tres pilares
+## Arquitectura: cuatro pilares
 
 ## Pilar 1: requisitos (el contrato)
 
@@ -32,6 +32,34 @@ dependencias. Indizado incremental por mtimes.
 `categoria`, `problema`, `recomendacion`, `estado`, `fecha`).
 `scripts/lessons_extractor.py` valida y exporta `lessons_context.txt`, que
 los agentes leen antes de depurar.
+
+## Pilar 4: control de sesgos y falacias (la calidad)
+
+Toda decision de diseño e implementación es un **argumento**: tiene premisas,
+inferencias y conclusión. Por eso está expuesta a **sesgos cognitivos**
+(desviaciones sistemáticas que inclinan la elección sin justificación técnica)
+y a **falacias lógicas** (razonamientos defectuosos que la defienden). No son
+exclusivos de una fase: aparecen en requisitos, arquitectura, código, pruebas,
+despliegue y retrospectiva.
+
+Mitigarlos exige institucionalizar procesos verificables en lugar de confiar en
+la intuición:
+
+- **Registros de decisiones de arquitectura (ADR)**: qué se decidió, qué
+  alternativas había, con qué evidencia y qué se descartó.
+- **Pre-mortem**: imaginar el fallo antes de construir y buscar su causa.
+- **Revisión cruzada**: que otra persona (o un agente de solo lectura) intente
+  refutar la decisión (`@code-reviewer`, `@compliance-checker`).
+- **Métricas cuantitativas**: precisar lo que se afirma (cobertura, accuracy,
+  latencia) con evidencia reproducible (P0.1, P1.1).
+- **Auditorías de sesgos**: revisar anclaje, confirmación, autoridad,
+  disponibilidad y exceso de confianza, y falacias como hombre de paja, falsa
+  dicotomía, apelación a la autoridad o a la novedad.
+
+Tratar cada decisión como una **hipótesis falible sujeta a refutación** —no como
+una verdad— es la salvaguarda para construir software robusto y mantenible.
+Este pilar es transversal: controla la calidad de los tres pilares de datos
+(requisitos, conocimiento y lecciones).
 
 ## Los 50 errores de LLM que se previenen
 
