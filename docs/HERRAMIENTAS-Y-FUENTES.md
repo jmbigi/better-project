@@ -85,6 +85,29 @@ pytest 9 sí recoge `TestADRValidator` por separado (14 passed). Se mantiene el
 chequeo stdlib `scripts/mutation_check.py`; `cosmic-ray` queda sin evaluar
 (LSN-015).
 
+**Evaluación de `cosmic-ray` (2026-09-19)**: `cosmic-ray` 8.7.0 (MIT) se
+instaló en `.venv` y funcionó en copia aislada. Config mínima:
+
+```toml
+[cosmic-ray]
+module-path = "scripts/adr_validator.py"
+timeout = 30.0
+test-command = ".venv/bin/python -m unittest tests.test_ecosistema.TestADRValidator"
+[cosmic-ray.distributor]
+name = "local"
+```
+
+```bash
+.venv/bin/cosmic-ray init cr.toml session.sqlite
+.venv/bin/cosmic-ray exec cr.toml session.sqlite
+.venv/bin/cr-report session.sqlite
+```
+
+Resultado: **160 mutantes, 124 eliminados (77.5 %)**; los 36 supervivientes son
+relativos a ese único objetivo de test (con la suite completa bajarían). Es más
+rico que `mutation_check.py` (operadores como `ZeroIterationForLoop`) y se adopta
+como herramienta **opcional de desarrollo**; `mutmut` queda descartado (LSN-015).
+
 **Linter de prosa `vale` (2026-09-19)**: instalado con `go install
 github.com/vale-cli/vale/v3/cmd/vale@latest` (MIT, usuario, sin sudo). Config en
 `.vale.ini` y estilo local `.vale/styles/BetterProject/Claims.yml` (claims sin

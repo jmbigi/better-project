@@ -144,6 +144,7 @@ cautelas estadisticas del artefacto de revision.
 | `python3 scripts/auto_audit.py all` | 0 errores (1 alerta: LSN-009 abierta) |
 | `python3 scripts/auto_audit.py vulns` (pip-audit) | 0 errores, 5 advisories (chromadb 1.5.9 y diskcache 5.6.3, sin parche) |
 | `python3 scripts/mutation_check.py` (adr_validator) | 16 mutantes, 16 muertos, score 1.000 |
+| `cosmic-ray` 8.7.0 (adr_validator, copia aislada) | 160 mutantes, 124 muertos (77.5 %) |
 | `vale README.md docs .docs` (opcional, Pilar 4) | 0 errores, 0 alertas (34 archivos) |
 | `bash scripts/verificar-proyecto.sh --pre-commit` | 40 OK, 0 fallos |
 
@@ -155,13 +156,12 @@ cautelas estadisticas del artefacto de revision.
    (P1.17/P1.23).
 2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
    ECE y la accuracy de `score`; hoy n=12 y el intervalo de confianza es ancho.
-3. **`cosmic-ray` sin evaluar**: `mutmut` se descarto (LSN-015) y se usa
-   `mutation_check.py` (REQ-015); queda probar `cosmic-ray` como alternativa
-   mas rica.
-4. **Regenerar el SBOM** (`docs/SBOM-2026-09-04.spdx.json`) con `syft` cuando
+3. **Regenerar el SBOM** (`docs/SBOM-2026-09-04.spdx.json`) con `syft` cuando
    este disponible. `auto_audit vulns` ya re-escanea a demanda con pip-audit
    (2026-09-19: 4 advisories sin parche en chromadb 1.5.9 y 1 en diskcache
-   5.6.3; riesgo aceptado para uso local embebido, LSN-007).
+   5.6.3; riesgo aceptado para uso local embebido, LSN-007). Nota: el `.venv`
+   no tiene chromadb instalado, por lo que un SBOM por escaneo no refleja el
+   grafo resuelto de `requirements-optional.txt`.
 
 ## Notas
 

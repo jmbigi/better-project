@@ -126,3 +126,11 @@
   recomendacion: "Ejecutar vale sobre rutas explicitas (vale README.md docs .docs), excluir documentos normativos/catalogos/evidencia por seccion en .vale.ini, y refinar tokens con lookbehind ('(?<!no )garantiza') para no marcar negaciones. Instalar vale con 'go install' (usuario, sin sudo)."
   estado: Resuelta
   fecha: 2026-09-19
+- id: LSN-017
+  proyecto: "Ecosistema"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "mutmut 3.6 no era viable (LSN-015). Se evaluo cosmic-ray 8.7.0 en .venv y copia aislada: funciono con config minima (module-path, test-command, distributor local) y genero 160 mutantes de adr_validator, 124 eliminados (77.5%) usando un solo objetivo de test."
+  recomendacion: "Adoptar cosmic-ray como herramienta opcional de mutacion (mas rica que mutation_check.py) y usar un objetivo de test amplio (idealmente toda la suite) para reducir supervivientes; probarla en copia aislada (P1.21) y registrar la config minima."
+  estado: Resuelta
+  fecha: 2026-09-19
