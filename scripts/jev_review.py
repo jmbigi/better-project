@@ -90,26 +90,31 @@ def construir_items(pilares: list[str], limit: int | None = None) -> list[dict[s
     return items[:limit] if limit else items
 
 
+def filas_de_item(item: dict[str, Any], client: Any, accuracy: dict[str, float]) -> list[dict[str, Any]]:
+    """Clasifica UN item y devuelve sus filas de revision (una por decision)."""
+    salida = jp.ejecutar(item["pilar"], item["id"], item["texto"], client, UMBRAL, accuracy)
+    return [
+        {
+            "item": item["id"],
+            "pilar": item["pilar"],
+            "campo": decision["campo"],
+            "tipo": decision["tipo"],
+            "opciones": list(decision["probabilities"].keys()),
+            "propuesta": decision["propuesta"],
+            "confianza": decision["confidence"],
+            "revision_humana": decision["revision_humana"],
+            "estado": "pendiente",
+            "decision_final": None,
+        }
+        for decision in salida["decisiones"]
+    ]
+
+
 def clasificar(items: list[dict[str, Any]], client: Any, accuracy: dict[str, float]) -> list[dict[str, Any]]:
     """Convierte items en filas de revision (una por decision)."""
     filas: list[dict[str, Any]] = []
     for item in items:
-        salida = jp.ejecutar(item["pilar"], item["id"], item["texto"], client, UMBRAL, accuracy)
-        for decision in salida["decisiones"]:
-            filas.append(
-                {
-                    "item": item["id"],
-                    "pilar": item["pilar"],
-                    "campo": decision["campo"],
-                    "tipo": decision["tipo"],
-                    "opciones": list(decision["probabilities"].keys()),
-                    "propuesta": decision["propuesta"],
-                    "confianza": decision["confidence"],
-                    "revision_humana": decision["revision_humana"],
-                    "estado": "pendiente",
-                    "decision_final": None,
-                }
-            )
+        filas.extend(filas_de_item(item, client, accuracy))
     return filas
 
 
@@ -149,10 +154,10 @@ def imprimir_tabla(filas: list[dict[str, Any]]) -> None:
         )
 
 
-def _dibujar(stdscr, fila: dict[str, Any], idx: int, total: int, mensaje: str) -> None:
+def _dibujar(stdscr, fila: dict[str, Any], cabecera: str, mensaje: str) -> None:
     stdscr.clear()
     alto, ancho = stdscr.getmaxyx()
-    stdscr.addnstr(0, 0, f"REVISION JEV (REQ-016)  {idx + 1}/{total}", ancho - 1, curses.A_BOLD)
+    stdscr.addnstr(0, 0, f"REVISION JEV (REQ-016)  {cabecera}", ancho - 1, curses.A_BOLD)
     stdscr.addnstr(1, 0, f"{fila['item']}  [{fila['pilar']}/{fila['campo']}]  tipo={fila['tipo']}", ancho - 1)
     texto = f"Propuesta: {fila['propuesta']}   confianza={fila['confianza']:.2f}"
     stdscr.addnstr(2, 0, texto, ancho - 1)
@@ -164,33 +169,37 @@ def _dibujar(stdscr, fila: dict[str, Any], idx: int, total: int, mensaje: str) -
     stdscr.refresh()
 
 
-def repl_curses(filas: list[dict[str, Any]]) -> None:
+def repl_curses(items: list[dict[str, Any]], client: Any, accuracy: dict[str, float]) -> list[dict[str, Any]]:
+    """UI incremental: clasifica cada item y pregunta su confirmacion al momento."""
+    filas: list[dict[str, Any]] = []
+
     def _run(stdscr):
-        idx = 0
-        while idx < len(filas):
-            fila = filas[idx]
-            mensaje = "y=aceptar  n=corregir  s=saltar"
-            while True:
-                _dibujar(stdscr, fila, idx, len(filas), mensaje)
-                tecla = stdscr.getkey()
-                if tecla == "q":
-                    return
-                if tecla in ("y", "s"):
-                    aplicar_decision(fila, tecla)
-                    idx += 1
-                    break
-                if tecla == "n":
-                    _dibujar(stdscr, fila, idx, len(filas), "Pulsa el numero de la opcion correcta")
-                    num = stdscr.getkey()
-                    if num.isdigit() and 1 <= int(num) <= len(fila["opciones"]):
-                        aplicar_decision(fila, "n", fila["opciones"][int(num) - 1])
-                        idx += 1
+        for n_item, item in enumerate(items, 1):
+            nuevas = filas_de_item(item, client, accuracy)
+            filas.extend(nuevas)
+            for fila in nuevas:
+                cabecera = f"item {n_item}/{len(items)}  fila {len(filas)}"
+                mensaje = "y=aceptar  n=corregir  s=saltar"
+                while True:
+                    _dibujar(stdscr, fila, cabecera, mensaje)
+                    tecla = stdscr.getkey()
+                    if tecla == "q":
+                        return
+                    if tecla in ("y", "s"):
+                        aplicar_decision(fila, tecla)
                         break
-                    mensaje = "Opcion no valida"
-                else:
-                    mensaje = f"Tecla no valida: {tecla!r}"
+                    if tecla == "n":
+                        _dibujar(stdscr, fila, cabecera, "Pulsa el numero de la opcion correcta")
+                        num = stdscr.getkey()
+                        if num.isdigit() and 1 <= int(num) <= len(fila["opciones"]):
+                            aplicar_decision(fila, "n", fila["opciones"][int(num) - 1])
+                            break
+                        mensaje = "Opcion no valida"
+                    else:
+                        mensaje = f"Tecla no valida: {tecla!r}"
 
     curses.wrapper(_run)
+    return filas
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -216,12 +225,20 @@ def main(argv: list[str] | None = None) -> int:
     accuracy = jp.accuracy_por_tipo(
         Path(os.getenv("JEV_CALIBRATION_REPORT", str(jp.DEFAULT_CALIBRATION_REPORT)))
     )
-    filas = clasificar(items, client, accuracy)
-
+    filas: list[dict[str, Any]] = []
     if args.report or not sys.stdout.isatty():
-        imprimir_tabla(filas)
+        print(f"{'item':<14}{'pilar':<14}{'campo':<13}{'propuesta':<18}{'conf':>6}")
+        for item in items:
+            nuevas = filas_de_item(item, client, accuracy)
+            filas.extend(nuevas)
+            for f in nuevas:
+                print(
+                    f"{f['item']:<14}{f['pilar']:<14}{f['campo']:<13}"
+                    f"{str(f['propuesta']):<18}{f['confianza']:>6.2f}   {f['estado']}"
+                )
+            sys.stdout.flush()
     else:
-        repl_curses(filas)
+        filas = repl_curses(items, client, accuracy)
 
     out = Path(args.out or os.getenv("JEV_REVIEW_REPORT", str(DEFAULT_REPORT)))
     guardar_revision(filas, out)
