@@ -9,7 +9,7 @@ Uso:
     python3 scripts/jev_llama.py --input decisions.json
 
 Configuracion por entorno:
-    JEV_MODEL_PATH    ruta al modelo GGUF (default: ~/.cache/better-project/jev/Qwen3.5-4B-Q4_K_M.gguf)
+    JEV_MODEL_PATH    ruta al modelo GGUF (default: ~/.cache/better-project/jev/Qwen_Qwen3.5-4B-Q4_K_M.gguf)
     JEV_N_CTX         contexto maximo (default: 4096)
     JEV_N_THREADS     hilos CPU (default: None -> auto)
     JEV_TIMEOUT       timeout de carga en segundos (default: 300)
@@ -27,12 +27,16 @@ import sys
 from pathlib import Path
 from typing import Any
 
-DEFAULT_MODEL = "Qwen3.5-4B-Q4_K_M.gguf"
+DEFAULT_MODEL = "Qwen_Qwen3.5-4B-Q4_K_M.gguf"
 DEFAULT_N_CTX = 4096
 DEFAULT_TIMEOUT = 300
 
 
 def _default_model_path() -> Path:
+    """Ruta del modelo: JEV_MODEL_PATH si esta definida, si no la cache local."""
+    env = os.getenv("JEV_MODEL_PATH")
+    if env:
+        return Path(env).expanduser()
     return Path.home() / ".cache" / "better-project" / "jev" / DEFAULT_MODEL
 
 
@@ -96,6 +100,7 @@ class JevLlama:
         kwargs: dict[str, Any] = {
             "model_path": str(self.model_path),
             "n_ctx": self.n_ctx,
+            "logits_all": True,
             "verbose": False,
         }
         if self.n_threads is not None:
@@ -129,8 +134,10 @@ class JevLlama:
         donde las opciones comienzan con tokens distintivos.
         """
         tokens = self._tokenize(prompt, add_bos=True)
+        self.model.reset()
         self.model.eval(tokens)
-        logits = self._np.array(self.model.scores)
+        # scores es 2D (n_ctx, n_vocab): tomamos la fila del ultimo token evaluado.
+        logits = self._np.array(self.model.scores[self.model.n_tokens - 1])
         probs = _softmax(logits)
         return [float(probs[tid]) for tid in token_ids]
 

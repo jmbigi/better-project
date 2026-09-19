@@ -32,7 +32,7 @@ modelo y debe validarse empiricamente).
 
 | Modelo | Cuantizacion | Tamano aprox. | VRAM estimado |
 |---|---|---|---|
-| `bartowski/Qwen_Qwen3.5-4B-GGUF` | Q4_K_M | ~2.2 GB | ~3–4 GB |
+| `bartowski/Qwen_Qwen3.5-4B-GGUF` | Q4_K_M | ~3.0 GB | ~3–4 GB |
 
 Qwen3.5-4B es de codigo abierto. Las cuantizaciones GGUF son compatibles con
 llama.cpp y permiten fallback a CPU si no hay GPU disponible.
@@ -45,7 +45,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-optional.txt
 
-# 2. Descargar el modelo (~2.2 GB)
+# 2. Descargar el modelo (~3.0 GB)
 python3 scripts/download_jev_model.py
 
 # 3. Probar con el demo
@@ -58,7 +58,7 @@ Variables de entorno:
 
 | Variable | Default | Descripcion |
 |---|---|---|
-| `JEV_MODEL_PATH` | `~/.cache/better-project/jev/Qwen3.5-4B-Q4_K_M.gguf` | Ruta al modelo GGUF |
+| `JEV_MODEL_PATH` | `~/.cache/better-project/jev/Qwen_Qwen3.5-4B-Q4_K_M.gguf` | Ruta al modelo GGUF |
 | `JEV_N_CTX` | `4096` | Contexto maximo |
 | `JEV_N_THREADS` | auto | Hilos CPU |
 | `JEV_TIMEOUT` | `300` | Timeout de carga del modelo (s) |

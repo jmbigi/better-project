@@ -518,6 +518,9 @@ class TestVerificador(unittest.TestCase):
 class TestJevLlama(unittest.TestCase):
     """REQ-011: cliente Jev AI liviano con llama.cpp."""
 
+    _VOCAB = 1000
+    _N_ROWS = 256
+
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.model_path = self.tmp / "fake.gguf"
@@ -531,6 +534,10 @@ class TestJevLlama(unittest.TestCase):
 
         self._real_llama = sys.modules.get("llama_cpp")
         self._real_numpy = sys.modules.get("numpy")
+        self._real_model_env = os.environ.pop("JEV_MODEL_PATH", None)
+
+        vocab = self._VOCAB
+        rows = self._N_ROWS
 
         class _FakeNumpy:
             @staticmethod
@@ -546,16 +553,21 @@ class TestJevLlama(unittest.TestCase):
                 return max(range(len(x)), key=lambda i: x[i])
 
         class _FakeLlama:
+            # scores 2D (n_ctx, vocab) igual que llama-cpp-python real.
             def __init__(self, **kwargs):
-                self.scores = [0.0] * 1000
                 self._kwargs = kwargs
+                self.scores = [[0.0] * vocab for _ in range(rows)]
+                self.n_tokens = 0
+
+            def reset(self):
+                self.n_tokens = 0
 
             def tokenize(self, text, add_bos=False):
                 # Token id = primer byte del texto; suficiente para tests.
                 return [text[0] if isinstance(text, bytes) else ord(text[0])]
 
             def eval(self, tokens):
-                pass
+                self.n_tokens = len(tokens)
 
         sys.modules["numpy"] = _FakeNumpy()
         sys.modules["llama_cpp"] = type("_llama_cpp", (), {"Llama": _FakeLlama})()
@@ -569,25 +581,50 @@ class TestJevLlama(unittest.TestCase):
             sys.modules["numpy"] = self._real_numpy
         else:
             sys.modules.pop("numpy", None)
+        if self._real_model_env is not None:
+            os.environ["JEV_MODEL_PATH"] = self._real_model_env
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def _client(self):
         return self.jl.JevLlama(model_path=str(self.model_path), n_ctx=128)
 
+    @staticmethod
+    def _set_logit(client, token: str, value: float) -> None:
+        for row in client.model.scores:
+            row[ord(token)] = value
+
+    def test_constructor_activa_logits_all(self):
+        client = self._client()
+        self.assertIs(client.model._kwargs.get("logits_all"), True)
+
+    def test_jev_model_path_se_usa_por_defecto(self):
+        os.environ["JEV_MODEL_PATH"] = str(self.model_path)
+        client = self.jl.JevLlama()
+        self.assertEqual(client.model_path, self.model_path)
+
     def test_noul_preferencia_yes(self):
         client = self._client()
-        client.model.scores[ord("y")] = 5.0
-        client.model.scores[ord("n")] = 1.0
+        self._set_logit(client, "y", 5.0)
+        self._set_logit(client, "n", 1.0)
         result = client.decide("test", {"q": {"type": "noul", "instructions": "Is it yes?"}})
         self.assertEqual(result["q"]["type"], "noul")
         self.assertGreater(result["q"]["noul"], 0.5)
         self.assertIn("confidence", result["q"])
+        self.assertAlmostEqual(sum(result["q"]["probabilities"].values()), 1.0, places=5)
+
+    def test_confidence_en_rango(self):
+        client = self._client()
+        self._set_logit(client, "y", 5.0)
+        self._set_logit(client, "n", 1.0)
+        result = client.decide("test", {"q": {"type": "noul", "instructions": "Is it yes?"}})
+        self.assertGreaterEqual(result["q"]["confidence"], 0.0)
+        self.assertLessEqual(result["q"]["confidence"], 1.0)
 
     def test_choice_selecciona_opcion_con_mayor_logit(self):
         client = self._client()
-        client.model.scores[ord("a")] = 2.0
-        client.model.scores[ord("b")] = 5.0
-        client.model.scores[ord("c")] = 1.0
+        self._set_logit(client, "a", 2.0)
+        self._set_logit(client, "b", 5.0)
+        self._set_logit(client, "c", 1.0)
         result = client.decide("test", {
             "q": {
                 "type": "choice",
@@ -601,10 +638,10 @@ class TestJevLlama(unittest.TestCase):
 
     def test_score_calcula_puntuacion_ponderada(self):
         client = self._client()
-        client.model.scores[ord("0")] = 1.0
-        client.model.scores[ord("1")] = 2.0
-        client.model.scores[ord("2")] = 5.0
-        client.model.scores[ord("3")] = 1.0
+        self._set_logit(client, "0", 1.0)
+        self._set_logit(client, "1", 2.0)
+        self._set_logit(client, "2", 5.0)
+        self._set_logit(client, "3", 1.0)
         result = client.decide("test", {
             "q": {
                 "type": "score",

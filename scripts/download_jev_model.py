@@ -23,7 +23,7 @@ DEFAULT_REPO = "bartowski/Qwen_Qwen3.5-4B-GGUF"
 DEFAULT_FILE = "Qwen_Qwen3.5-4B-Q4_K_M.gguf"
 DEFAULT_URL = f"https://huggingface.co/{DEFAULT_REPO}/resolve/main/{DEFAULT_FILE}"
 DEFAULT_DEST = Path.home() / ".cache" / "better-project" / "jev" / DEFAULT_FILE
-EXPECTED_BYTES = 2_200_000_000  # ~2.2 GB; se verifica tamano minimo post-descarga
+EXPECTED_BYTES = 2_900_000_000  # ~3.0 GB reales; minimo para detectar descargas truncadas
 CHUNK_SIZE = 8192
 
 
@@ -37,14 +37,23 @@ def _human(size: int) -> str:
 
 def _download(url: str, dest: Path, yes: bool) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
-    req = urllib.request.Request(url, headers={"User-Agent": "better-project/jev-llama"})
+    existing = dest.stat().st_size if dest.exists() else 0
+
+    headers = {"User-Agent": "better-project/jev-llama"}
+    if existing:
+        headers["Range"] = f"bytes={existing}-"
+    req = urllib.request.Request(url, headers=headers)
 
     print(f"Origen:  {url}")
     print(f"Destino: {dest}")
 
     try:
         with urllib.request.urlopen(req, timeout=30) as response:
-            total = int(response.headers.get("Content-Length", 0))
+            # Si el servidor ignora Range responde 200 y hay que reiniciar.
+            if existing and getattr(response, "status", 200) != 206:
+                existing = 0
+            remaining = int(response.headers.get("Content-Length", 0))
+            total = existing + remaining
             if total:
                 print(f"Tamano:  {_human(total)}")
             if not yes:
@@ -52,9 +61,9 @@ def _download(url: str, dest: Path, yes: bool) -> None:
                 if answer.lower() not in {"s", "si", "yes", "y"}:
                     print("Descarga cancelada.")
                     return
-            print("Descargando...")
-            downloaded = 0
-            with open(dest, "wb") as f:
+            print("Reanudando..." if existing else "Descargando...")
+            downloaded = existing
+            with open(dest, "ab" if existing else "wb") as f:
                 while True:
                     chunk = response.read(CHUNK_SIZE)
                     if not chunk:
@@ -70,12 +79,13 @@ def _download(url: str, dest: Path, yes: bool) -> None:
     except urllib.error.URLError as exc:
         raise RuntimeError(f"Error de red descargando {url}: {exc.reason}") from exc
 
-    if dest.stat().st_size < EXPECTED_BYTES:
+    final_size = dest.stat().st_size
+    if final_size < EXPECTED_BYTES:
         raise RuntimeError(
-            f"El archivo descargado es demasiado pequeno ({_human(dest.stat().st_size)}). "
+            f"El archivo descargado es demasiado pequeno ({_human(final_size)}). "
             "Es posible que la URL haya cambiado o la descarga haya fallado."
         )
-    print(f"OK: {_human(dest.stat().st_size)} descargado en {dest}")
+    print(f"OK: {_human(final_size)} descargado en {dest}")
 
 
 def main() -> int:
@@ -86,9 +96,14 @@ def main() -> int:
     args = parser.parse_args()
 
     dest = Path(args.dest)
-    if dest.exists():
+    if dest.exists() and dest.stat().st_size >= EXPECTED_BYTES:
         print(f"El modelo ya existe: {dest} ({_human(dest.stat().st_size)})")
         return 0
+    if dest.exists():
+        print(
+            f"Descarga incompleta detectada: {dest} "
+            f"({_human(dest.stat().st_size)} de ~{_human(EXPECTED_BYTES)}). Se reanudara."
+        )
 
     try:
         _download(args.url, dest, args.yes)
