@@ -4,3 +4,8 @@
 #   bash scripts/setup.sh
 chromadb
 sentence-transformers
+
+# Cliente Jev AI liviano con llama.cpp (REQ-011).
+# Requiere modelo GGUF (~3 GB); descargar con:
+#   python3 scripts/download_jev_model.py
+llama-cpp-python

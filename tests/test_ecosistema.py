@@ -7,14 +7,14 @@ Usa directorios temporales para no tocar el estado real del repo.
 """
 
 import json
+import math
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
-
-import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
@@ -513,6 +513,118 @@ class TestVerificador(unittest.TestCase):
         proc = self._verifica(repo)
         self.assertEqual(proc.returncode, 1, "el verificador no detecto la corrupcion")
         self.assertIn("[FALLO] 20 reglas P0 definidas en AGENTS.md", proc.stdout)
+
+
+class TestJevLlama(unittest.TestCase):
+    """REQ-011: cliente Jev AI liviano con llama.cpp."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.model_path = self.tmp / "fake.gguf"
+        self.model_path.write_bytes(b"fake-model")
+
+        # Importamos jev_llama sin dependencias (los imports son diferidos),
+        # luego mockeamos llama_cpp y numpy solo para estas pruebas.
+        import jev_llama as jl
+
+        self.jl = jl
+
+        self._real_llama = sys.modules.get("llama_cpp")
+        self._real_numpy = sys.modules.get("numpy")
+
+        class _FakeNumpy:
+            @staticmethod
+            def array(x):
+                return list(x)
+
+            @staticmethod
+            def log(x):
+                return [math.log(v + 1e-12) for v in x]
+
+            @staticmethod
+            def argmax(x):
+                return max(range(len(x)), key=lambda i: x[i])
+
+        class _FakeLlama:
+            def __init__(self, **kwargs):
+                self.scores = [0.0] * 1000
+                self._kwargs = kwargs
+
+            def tokenize(self, text, add_bos=False):
+                # Token id = primer byte del texto; suficiente para tests.
+                return [text[0] if isinstance(text, bytes) else ord(text[0])]
+
+            def eval(self, tokens):
+                pass
+
+        sys.modules["numpy"] = _FakeNumpy()
+        sys.modules["llama_cpp"] = type("_llama_cpp", (), {"Llama": _FakeLlama})()
+
+    def tearDown(self):
+        if self._real_llama is not None:
+            sys.modules["llama_cpp"] = self._real_llama
+        else:
+            sys.modules.pop("llama_cpp", None)
+        if self._real_numpy is not None:
+            sys.modules["numpy"] = self._real_numpy
+        else:
+            sys.modules.pop("numpy", None)
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _client(self):
+        return self.jl.JevLlama(model_path=str(self.model_path), n_ctx=128)
+
+    def test_noul_preferencia_yes(self):
+        client = self._client()
+        client.model.scores[ord("y")] = 5.0
+        client.model.scores[ord("n")] = 1.0
+        result = client.decide("test", {"q": {"type": "noul", "instructions": "Is it yes?"}})
+        self.assertEqual(result["q"]["type"], "noul")
+        self.assertGreater(result["q"]["noul"], 0.5)
+        self.assertIn("confidence", result["q"])
+
+    def test_choice_selecciona_opcion_con_mayor_logit(self):
+        client = self._client()
+        client.model.scores[ord("a")] = 2.0
+        client.model.scores[ord("b")] = 5.0
+        client.model.scores[ord("c")] = 1.0
+        result = client.decide("test", {
+            "q": {
+                "type": "choice",
+                "instructions": "Pick one",
+                "criteria": {"a": "first", "b": "second", "c": "third"},
+            }
+        })
+        self.assertEqual(result["q"]["type"], "choice")
+        self.assertEqual(result["q"]["choice"], "b")
+        self.assertEqual(len(result["q"]["probabilities"]), 3)
+
+    def test_score_calcula_puntuacion_ponderada(self):
+        client = self._client()
+        client.model.scores[ord("0")] = 1.0
+        client.model.scores[ord("1")] = 2.0
+        client.model.scores[ord("2")] = 5.0
+        client.model.scores[ord("3")] = 1.0
+        result = client.decide("test", {
+            "q": {
+                "type": "score",
+                "instructions": "How severe?",
+                "criteria": ["low", "medium", "high", "critical"],
+            }
+        })
+        self.assertEqual(result["q"]["type"], "score")
+        self.assertGreater(result["q"]["score"], 1.0)
+        self.assertIn("legend", result["q"])
+
+    def test_tipo_desconocido_lanza_valueerror(self):
+        client = self._client()
+        with self.assertRaises(ValueError):
+            client.decide("test", {"q": {"type": "unknown"}})
+
+    def test_modelo_inexistente_lanza_filenotfound(self):
+        missing = self.tmp / "no_existe.gguf"
+        with self.assertRaises(FileNotFoundError):
+            self.jl.JevLlama(model_path=str(missing))
 
 
 if __name__ == "__main__":
