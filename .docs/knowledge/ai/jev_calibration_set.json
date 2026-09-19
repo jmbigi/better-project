@@ -1,6 +1,14 @@
 {
-  "version": 1,
-  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') son la verdad de referencia propuesta y deben ser revisadas por el programador antes de considerarse validas (P1.15).",
+  "version": 2,
+  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') fueron validadas por el programador el 2026-09-19 (40/40 aprobadas, 0 correcciones); los casos S03, S06, S11 y S12 conservan su criterio de adjudicacion documentado en docs/REVISION-SET-CALIBRACION.md.",
+  "revision_humana": {
+    "estado": "Aprobada",
+    "fecha": "2026-09-19",
+    "casos_aprobados": 40,
+    "correcciones": 0,
+    "casos_ambiguos_confirmados": ["S03", "S06", "S11", "S12"],
+    "referencia": "docs/REVISION-SET-CALIBRACION.md"
+  },
   "fuentes": [
     "AGENTS.md (P0/P1)",
     ".docs/lessons/2026.yaml (LSN-001..LSN-008)",

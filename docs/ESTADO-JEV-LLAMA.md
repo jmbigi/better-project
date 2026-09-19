@@ -100,15 +100,38 @@ Accuracy por tipo (T=2.0): choice 0.917, noul 0.625, score 0.417. T=2.0 reduce
 NLL/Brier/ECE sin cambiar la accuracy. Informe JSON (generado, no versionado)
 en `.docs/.storage/jev_calibration.json`. Aplicar con `JEV_TEMPERATURE=2.0`.
 
+## Etiquetas aprobadas (2026-09-19)
+
+El programador reviso y aprobo las 40 etiquetas **sin correcciones** (40/40). El
+set paso a `version: 2` con `revision_humana.estado = "Aprobada"`; los casos
+ambiguos S03, S06, S11 y S12 se confirmaron con el criterio de adjudicacion
+documentado. La precision por tarea es evidencia valida (P1.15), con las
+cautelas estadisticas del artefacto de revision.
+
+## Integracion con los tres pilares (REQ-012, 2026-09-19)
+
+- `scripts/jev_pillars.py`: clasificacion asistida de los tres pilares
+  (`requisitos` -> `prioridad`; `conocimiento` -> `relevancia` 0-3; `lecciones`
+  -> `fase` y `categoria`). Solo lee; nunca escribe en los documentos.
+- Umbral `JEV_MIN_CONFIDENCE` (default 0.5) y marca `experimental` automatica
+  cuando la accuracy de referencia < 0.6 (el tipo `score` queda experimental).
+- `tests/test_ecosistema.py`: tests de REQ-012 con cliente simulado (sin modelo).
+- Documentacion en `.docs/knowledge/ai/jev_pillars.md`.
+
+| Verificacion | Resultado |
+|---|---|
+| `python3 -m py_compile scripts/jev_pillars.py` | OK |
+| `python3 -m unittest discover -s tests -q` | 73 tests OK |
+| `bash scripts/verificar-proyecto.sh --pre-commit` | 38 OK, 0 fallos |
+| `bash scripts/verificar-proyecto.sh` (completo) | 40 OK, 1 fallo esperado (arbol de trabajo con cambios) |
+
 ## Pendiente
 
-1. **Revision humana de las etiquetas** del set de calibracion (P1.15):
-   artefacto de revision generado en `docs/REVISION-SET-CALIBRACION.md`.
-   Pendiente de que el programador marque OK/corregir; las etiquetas siguen
-   sin validar.
-2. **Integracion con los tres pilares**: especificacion en
-   `.docs/requirements/REQ-012.md` (estado `Draft`). Pendiente de aprobacion
-   del programador antes de implementar (P1.24).
+1. **Prueba de integracion opcional de REQ-012** con un modelo real
+   (`JEV_MODEL_PATH`) sobre un REQ, un fragmento y una leccion: no ejecutada en
+   esta sesion por coste (P0.19); los tests unitarios cubren la logica.
+2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
+   ECE y la accuracy de `score`; hoy n=12 y el intervalo de confianza es ancho.
 
 ## Notas
 

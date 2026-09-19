@@ -6,6 +6,7 @@ stdlib unittest, sin dependencias. Ejecutar:
 Usa directorios temporales para no tocar el estado real del repo.
 """
 
+import argparse
 import json
 import math
 import os
@@ -23,6 +24,7 @@ sys.path.insert(0, str(SCRIPTS))
 import doc_validator as dv  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import jev_calibration as jc  # noqa: E402
+import jev_pillars as jp  # noqa: E402
 import lessons_extractor as le  # noqa: E402
 import mcp_server as mcp  # noqa: E402
 import tui  # noqa: E402
@@ -744,6 +746,173 @@ class TestJevCalibration(unittest.TestCase):
             ]}), encoding="utf-8")
             with self.assertRaises(ValueError):
                 jc._options_and_label(jc.load_set(bad)[0])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+class _FakeJevClient:
+    """Cliente Jev simulado para REQ-012: probabilidades fijas, sin modelo."""
+
+    def __init__(self, confianza: float = 0.6):
+        self.confianza = confianza
+
+    def decide(self, state, questions):
+        respuestas = {}
+        for campo, question in questions.items():
+            if question["type"] == "choice":
+                opciones = list(question["criteria"])
+                ganador = opciones[-1]
+                probs = {
+                    o: (0.7 if o == ganador else 0.3 / (len(opciones) - 1)) for o in opciones
+                }
+                respuestas[campo] = {
+                    "type": "choice",
+                    "choice": ganador,
+                    "probabilities": probs,
+                    "confidence": self.confianza,
+                }
+            else:
+                probs = {str(i): [0.05, 0.1, 0.7, 0.15][i] for i in range(4)}
+                respuestas[campo] = {
+                    "type": "score",
+                    "score": 2.0,
+                    "probabilities": probs,
+                    "confidence": self.confianza,
+                }
+        return respuestas
+
+
+class TestJevPillars(unittest.TestCase):
+    """REQ-012: integracion de Jev con los tres pilares (sin modelo)."""
+
+    ACC = {"choice": 0.9167, "score": 0.4167}
+
+    @staticmethod
+    def _ns(req=None, lesson_id=None, file=None, text=None):
+        return argparse.Namespace(req=req, id=lesson_id, file=file, text=text)
+
+    def test_requisitos_esquema_y_decision(self):
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(), 0.5, self.ACC)
+        self.assertEqual(salida["tipo"], "choice")
+        self.assertFalse(salida["experimental"])
+        decision = salida["decisiones"][0]
+        self.assertEqual(
+            set(decision),
+            {
+                "id",
+                "campo",
+                "tipo",
+                "decision",
+                "propuesta",
+                "probabilities",
+                "confidence",
+                "revision_humana",
+                "accuracy_referencia",
+                "experimental",
+            },
+        )
+        self.assertEqual(decision["campo"], "prioridad")
+        self.assertEqual(decision["decision"], "Alta")
+        self.assertAlmostEqual(sum(decision["probabilities"].values()), 1.0, places=6)
+
+    def test_conocimiento_score_marca_experimental(self):
+        salida = jp.ejecutar("conocimiento", "frag", "texto", _FakeJevClient(), 0.5, self.ACC)
+        self.assertEqual(salida["tipo"], "score")
+        # accuracy score 0.417 < 0.6 => experimental (criterio 6).
+        self.assertTrue(salida["experimental"])
+        self.assertTrue(salida["decisiones"][0]["experimental"])
+
+    def test_lecciones_dos_decisiones(self):
+        salida = jp.ejecutar("lecciones", "LSN-008", "texto", _FakeJevClient(), 0.5, self.ACC)
+        campos = [d["campo"] for d in salida["decisiones"]]
+        self.assertEqual(campos, ["fase", "categoria"])
+        self.assertFalse(salida["experimental"])
+
+    def test_umbral_marca_revision_humana_y_decision_nula(self):
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(0.4), 0.5, self.ACC)
+        decision = salida["decisiones"][0]
+        self.assertIsNone(decision["decision"])
+        self.assertEqual(decision["propuesta"], "Alta")
+        self.assertTrue(decision["revision_humana"])
+
+    def test_umbral_limite_es_definitivo(self):
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(0.5), 0.5, self.ACC)
+        decision = salida["decisiones"][0]
+        self.assertFalse(decision["revision_humana"])
+        self.assertEqual(decision["decision"], "Alta")
+
+    def test_accuracy_desconocida_es_experimental(self):
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(), 0.5, {})
+        self.assertIsNone(salida["accuracy_referencia"])
+        self.assertTrue(salida["experimental"])
+
+    def test_pilar_desconocido_lanza(self):
+        with self.assertRaises(ValueError):
+            jp.ejecutar("otro", "X", "texto", _FakeJevClient(), 0.5, self.ACC)
+
+    def test_accuracy_por_tipo_lee_informe(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            report = tmp / "cal.json"
+            report.write_text(
+                json.dumps(
+                    {"por_tipo_Trecomendada": {"choice": {"accuracy": 0.9}, "score": {"accuracy": 0.4}}}
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                jp.accuracy_por_tipo(report), {"choice": 0.9, "score": 0.4}
+            )
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_accuracy_por_tipo_sin_informe(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            self.assertEqual(jp.accuracy_por_tipo(tmp / "no_existe.json"), {})
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_accuracy_por_tipo_informe_invalido(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            report = tmp / "roto.json"
+            report.write_text("{no json", encoding="utf-8")
+            with self.assertRaises(ValueError):
+                jp.accuracy_por_tipo(report)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_resolver_entrada_exige_opcion_unica(self):
+        with self.assertRaises(ValueError):
+            jp.resolver_entrada("requisitos", self._ns())
+        with self.assertRaises(ValueError):
+            jp.resolver_entrada("requisitos", self._ns(req="REQ-011", text="hola"))
+        with self.assertRaises(ValueError):
+            jp.resolver_entrada("conocimiento", self._ns(lesson_id="LSN-001"))
+        with self.assertRaises(ValueError):
+            jp.resolver_entrada("lecciones", self._ns())
+
+    def test_resolver_entrada_texto(self):
+        entry_id, texto = jp.resolver_entrada("conocimiento", self._ns(text="fragmento"))
+        self.assertEqual((entry_id, texto), ("texto", "fragmento"))
+
+    def test_resolver_entrada_lecciones_por_id(self):
+        entry_id, texto = jp.resolver_entrada("lecciones", self._ns(lesson_id="LSN-001"))
+        self.assertEqual(entry_id, "LSN-001")
+        self.assertIn("Problema:", texto)
+
+    def test_texto_desde_archivo_requisitos_no_filtra_prioridad(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            path = tmp / "REQ-999.md"
+            path.write_text(
+                "---\nid: REQ-999\nprioridad: Alta\n---\n# REQ-999\nCuerpo del requisito.\n",
+                encoding="utf-8",
+            )
+            _, texto = jp._texto_desde_archivo(path, "requisitos")
+            self.assertNotIn("prioridad", texto)
+            self.assertIn("Cuerpo del requisito.", texto)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
