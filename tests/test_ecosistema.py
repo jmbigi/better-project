@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+import adr_validator as av  # noqa: E402
 import doc_validator as dv  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import jev_calibration as jc  # noqa: E402
@@ -915,6 +916,96 @@ class TestJevPillars(unittest.TestCase):
             self.assertIn("Cuerpo del requisito.", texto)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+
+class TestADRValidator(unittest.TestCase):
+    """REQ-013: validacion de ADR y auditoria de sesgos (Pilar 4)."""
+
+    ADR_VALIDO = (
+        "---\nid: ADR-100\ntitulo: Prueba\nestado: Aceptado\nfecha: 2026-09-19\n---\n"
+        "# ADR-100: Prueba\n\n## Contexto\n\nProblema con 3 GB de datos.\n\n"
+        "## Alternativas consideradas\n\n- **A**: opcion 1.\n- **B**: opcion 2.\n\n"
+        "## Decision\n\nSe elige A por 2 razones.\n\n"
+        "## Consecuencias\n\n- Positivas: 1.\n\n"
+        "## Supuestos\n\n- Vale 1.\n\n"
+        "## Metricas de exito\n\n- p99 < 200 ms.\n"
+    )
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _adr(self, content: str, name: str = "ADR-100-prueba.md") -> Path:
+        path = self.tmp / name
+        path.write_text(content, encoding="utf-8")
+        return path
+
+    def test_repo_real_sin_errores(self):
+        errors, warnings = av.validate(ROOT / "docs" / "decisions")
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
+    def test_adr_valido_temporal(self):
+        self._adr(self.ADR_VALIDO)
+        errors, warnings = av.validate(self.tmp)
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
+    def test_sin_frontmatter_es_error(self):
+        self._adr("# sin frontmatter\n")
+        errors, _ = av.validate(self.tmp)
+        self.assertTrue(any("frontmatter" in e for e in errors))
+
+    def test_falta_seccion_es_error(self):
+        self._adr(self.ADR_VALIDO.replace("## Consecuencias\n\n- Positivas: 1.\n", ""))
+        errors, _ = av.validate(self.tmp)
+        self.assertTrue(any("consecuencias" in e.lower() for e in errors))
+
+    def test_id_no_coincide_es_error(self):
+        self._adr(self.ADR_VALIDO.replace("id: ADR-100", "id: ADR-999"))
+        errors, _ = av.validate(self.tmp)
+        self.assertTrue(any("no coincide" in e for e in errors))
+
+    def test_estado_invalido_es_error(self):
+        self._adr(self.ADR_VALIDO.replace("estado: Aceptado", "estado: Quizas"))
+        errors, _ = av.validate(self.tmp)
+        self.assertTrue(any("estado" in e for e in errors))
+
+    def test_fecha_invalida_es_error(self):
+        self._adr(self.ADR_VALIDO.replace("fecha: 2026-09-19", "fecha: 19-09-2026"))
+        errors, _ = av.validate(self.tmp)
+        self.assertTrue(any("fecha" in e for e in errors))
+
+    def test_id_duplicado_es_error(self):
+        self._adr(self.ADR_VALIDO, name="ADR-100-a.md")
+        self._adr(self.ADR_VALIDO, name="ADR-100-b.md")
+        errors, _ = av.validate(self.tmp)
+        self.assertTrue(any("duplicado" in e for e in errors))
+
+    def test_una_alternativa_alerta(self):
+        self._adr(self.ADR_VALIDO.replace("- **B**: opcion 2.\n", ""))
+        _, warnings = av.validate(self.tmp)
+        self.assertTrue(any("alternativas" in w for w in warnings))
+
+    def test_adjetivo_sin_metrica_alerta(self):
+        self._adr(self.ADR_VALIDO.replace("Problema con 3 GB de datos.", "El sistema es escalable."))
+        _, warnings = av.validate(self.tmp)
+        self.assertTrue(any("escalable" in w for w in warnings))
+
+    def test_afirmacion_absoluta_alerta(self):
+        self._adr(self.ADR_VALIDO.replace("Se elige A por 2 razones.", "Esto siempre funciona."))
+        _, warnings = av.validate(self.tmp)
+        self.assertTrue(any("siempre" in w for w in warnings))
+
+    def test_strict_falla_con_alertas(self):
+        self._adr(self.ADR_VALIDO.replace("- **B**: opcion 2.\n", ""))
+        self.assertEqual(av.main(["--dir", str(self.tmp), "--strict"]), 1)
+        self.assertEqual(av.main(["--dir", str(self.tmp)]), 0)
+
+    def test_dir_inexistente_falla(self):
+        self.assertEqual(av.main(["--dir", str(self.tmp / "no_existe")]), 1)
 
 
 if __name__ == "__main__":

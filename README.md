@@ -61,6 +61,13 @@ una verdad— es la salvaguarda para construir software robusto y mantenible.
 Este pilar es transversal: controla la calidad de los tres pilares de datos
 (requisitos, conocimiento y lecciones).
 
+El detalle (taxonomía de sesgos, catálogo de falacias, matriz por fase y plan de
+mitigación) está en `docs/SESGOS-Y-FALACIAS.md`. Se ejecuta con el registro de
+decisiones `docs/decisions/` y `scripts/adr_validator.py` (REQ-013): cada ADR
+documenta contexto, alternativas, decisión, consecuencias y supuestos, y el
+validador emite alertas de falsa dicotomía, adjetivos sin métrica, premisas
+ocultas y afirmaciones absolutas. El verificador lo ejecuta en cada pre-commit.
+
 ## Los 50 errores de LLM que se previenen
 
 1. **Alucinación**: inventar APIs, archivos, paquetes o resultados (P0.2)
@@ -143,13 +150,15 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │   ├── setup.sh             # onboarding guiado (REQ-008)
 │   ├── ci.sh                # CI local sin proveedores (REQ-009)
 │   ├── verificar-proyecto.sh# verificacion de coherencia del repo (tests: REQ-010)
+│   ├── adr_validator.py    # valida ADRs y audita sesgos (REQ-013)
 │   └── hooks/pre-commit     # hook git local
 ├── demo/                    # proyecto de ejemplo (gestor de notas CLI)
 │   ├── src/notas.py         # codigo con referencias REQ-XXX
 │   ├── .docs/requirements/  # REQ-001 (Implementado), REQ-002 (Aprobado), REQ-003 (Deprecado)
 │   ├── .docs/knowledge/     # arquitectura + glosario
 │   └── .docs/lessons/       # leccion de ejemplo
-├── docs/                    # reglas completas, pruebas y lecciones del ruleset
+├── docs/                    # reglas, pruebas, lecciones, ADR y sesgos/falacias
+│   └── decisions/           # ADRs del Pilar 4 (REQ-013)
 ├── AGENTS.md                # reglas IA + directivas del proyecto
 ├── opencode.json            # guardarrailes + MCP
 ├── .pre-commit-config.yaml  # hooks pre-commit (framework)
@@ -181,7 +190,10 @@ python3 scripts/lessons_extractor.py
 # Interfaz TUI (curses, sin dependencias)
 python3 scripts/tui.py
 
-# Suite de tests (30 casos, stdlib unittest)
+# Pilar 4: validar ADRs y auditar sesgos/falacias
+python3 scripts/adr_validator.py
+
+# Suite de tests (73 casos, stdlib unittest)
 python3 -m unittest discover -s tests -q
 
 # Verificacion completa previa a commit

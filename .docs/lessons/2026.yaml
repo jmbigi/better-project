@@ -70,3 +70,11 @@
   recomendacion: "No usar decisiones tipo score como guardarrail ni umbral de decision sin calibracion propia y revision humana de las etiquetas. Recalibrar la temperatura al cambiar de modelo o dominio. T puede mejorar la confianza sin mejorar la accuracy: reportar siempre ambas y no presentar la calibracion como mejora de exactitud."
   estado: Abierta
   fecha: 2026-09-19
+- id: LSN-010
+  proyecto: "Ecosistema"
+  fase: "Implementacion"
+  categoria: "Proceso"
+  problema: "Al implementar REQ-012 se dejo el requisito en estado Draft mientras el codigo ya lo referenciaba; doc_validator --strict emitio advertencia (REQ Draft/Aprobado referenciado en codigo), lo que rompio el hook pre-commit y la herramienta MCP validate_requirements (esperaba 'OK' sin advertencias)."
+  recomendacion: "Al implementar un requisito, cambiar su estado a Implementado en el mismo cambio que agrega la referencia en el codigo; el estado Draft/Aprobado es solo para especificaciones sin codigo (P1.24)."
+  estado: Resuelta
+  fecha: 2026-09-19

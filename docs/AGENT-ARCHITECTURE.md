@@ -74,7 +74,7 @@ contra las P0, donde la regla gana y se consulta.
 1. **Regla nueva**: solo si el mismo fallo se repitió 2+ veces documentado en
    `docs/LECCIONES-APRENDIDAS.md` (P1.20). Añadirla en `AGENTS.md` y en
    `docs/REGLAS-COMPLETAS.md` con el MISMO título (el verificador comprueba
-   IDs y conteos: 20 P0, 36 P1), referenciarla en `README.md`/`CHECKLIST.md`
+   IDs y conteos: 20 P0, 37 P1), referenciarla en `README.md`/`CHECKLIST.md`
    si aplica, y ejecutar `bash scripts/verificar-proyecto.sh`.
 2. **Feature nueva** (script, herramienta MCP, vista TUI): primero su
    `REQ-XXX` en `.docs/requirements/` con criterios medibles; el código lleva
@@ -85,6 +85,11 @@ contra las P0, donde la regla gana y se consulta.
    tokens y posición; los deny específicos van DESPUÉS de los ask genéricos
    de su familia — lecciones de las rondas 3/4/8). El verificador incluye un
    mini-matcher que comprueba que ningún ask posterior anula un deny.
+4. **Decisión de arquitectura nueva** (Pilar 4): registrarla como ADR en
+   `docs/decisions/` usando `PLANTILLA.md` y validarla con
+   `python3 scripts/adr_validator.py` (alertas de falsa dicotomía, adjetivos sin
+   métrica, premisas ocultas y afirmaciones absolutas). Base conceptual en
+   `docs/SESGOS-Y-FALACIAS.md` (REQ-013).
 
 ## 5. Verificación sin proveedores
 

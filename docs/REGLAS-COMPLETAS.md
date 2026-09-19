@@ -1189,6 +1189,12 @@ NASA NTRS; verificado 16-08-2026).
 El registro de pruebas ejecutadas se mantiene aparte, en `docs/PRUEBAS.md` (evidencia
 del proceso), para que este documento normativo no mezcle reglas con resultados.
 
+Como complemento normativo, `docs/SESGOS-Y-FALACIAS.md` desarrolla el Pilar 4
+(calidad de las decisiones): taxonomía de sesgos cognitivos, catálogo de
+falacias en argumentos técnicos, matriz de vulnerabilidad por fase del ciclo de
+vida y el **plan de mitigación ejecutable** del proyecto (registro de ADR en
+`docs/decisions/`, auditoría con `scripts/adr_validator.py`, REQ-013).
+
 ## 7. Mapeo de cobertura a taxonomías de la industria
 
 > Añadido en la ronda 38 (15-08-2026): better-ai se posiciona frente a las taxonomías

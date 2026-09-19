@@ -303,6 +303,15 @@
 - [ ] ¿Ejecuté benchmarks retrieval (recall@k, MRR, nDCG) en entorno aislado con casos límite?
 - [ ] ¿Bloqueé si recall@10 < 0.7, latencia p95 > 500ms, o modelo sin hash/firma?
 
+## Pilar 4 — Control de sesgos y falacias (calidad de las decisiones)
+
+- [ ] ¿La decisión está registrada en `docs/decisions/` (ADR) con contexto, alternativas, decisión, consecuencias y supuestos?
+- [ ] ¿Se evaluaron al menos dos alternativas reales (no una falsa dicotomía)?
+- [ ] ¿Los atributos de calidad son métricas verificables (p. ej., p99, accuracy) y no adjetivos ambiguos ("escalable")?
+- [ ] ¿Hice pre-mortem y la decisión tiene criterios de parada/reversión para los cambios de alto impacto? (P1.23)
+- [ ] ¿Ejecuté `python3 scripts/adr_validator.py` y revisé sus alertas de sesgo?
+- [ ] ¿La revisión cruzada buscó contraejemplos y no solo confirmación de la hipótesis? (P1.15)
+
 ---
 
 **Resultado**:  TODAS P0 marcadas y con evidencia → tarea verificada.
