@@ -7,6 +7,7 @@ Usa directorios temporales para no tocar el estado real del repo.
 """
 
 import argparse
+import ast
 import json
 import math
 import os
@@ -30,6 +31,7 @@ import jev_calibration as jc  # noqa: E402
 import jev_pillars as jp  # noqa: E402
 import lessons_extractor as le  # noqa: E402
 import mcp_server as mcp  # noqa: E402
+import mutation_check as mc  # noqa: E402
 import tui  # noqa: E402
 
 REQ_BODY = (
@@ -996,6 +998,13 @@ class TestADRValidator(unittest.TestCase):
         _, warnings = av.validate(self.tmp)
         self.assertTrue(any("escalable" in w for w in warnings))
 
+    def test_sin_adjetivo_en_contexto_no_alerta(self):
+        # Sin adjetivo ambiguo ni metrica en Contexto no debe haber alerta (mata
+        # el mutante and->or de la linea 128).
+        self._adr(self.ADR_VALIDO.replace("Problema con 3 GB de datos.", "Problema sencillo."))
+        _, warnings = av.validate(self.tmp)
+        self.assertEqual(warnings, [])
+
     def test_afirmacion_absoluta_alerta(self):
         self._adr(self.ADR_VALIDO.replace("Se elige A por 2 razones.", "Esto siempre funciona."))
         _, warnings = av.validate(self.tmp)
@@ -1153,6 +1162,69 @@ class TestAutoAudit(unittest.TestCase):
 
     def test_main_all_en_verde(self):
         self.assertEqual(aa.main(["all"]), 0)
+
+
+class TestMutationCheck(unittest.TestCase):
+    """REQ-015: generacion de mutantes y agregacion del chequeo."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_descripciones_mutantes(self):
+        descs = mc.descripciones_mutantes("def f(a, b):\n    return a == b\n")
+        self.assertEqual(len(descs), 1)
+        self.assertIn("comparador", descs[0])
+
+    def test_mutante_cambia_comparador(self):
+        mutantes = mc.generar_mutantes("def f(a, b):\n    return a == b\n")
+        self.assertEqual(len(mutantes), 1)
+        self.assertIn("!=", mutantes[0][1])
+
+    def test_mutante_booleano(self):
+        mutantes = mc.generar_mutantes("FLAG = True\n")
+        self.assertTrue(any("False" in codigo for _, codigo in mutantes))
+
+    def test_mutante_operador_logico(self):
+        mutantes = mc.generar_mutantes("def f(a, b):\n    return a and b\n")
+        self.assertTrue(any(" or " in codigo for _, codigo in mutantes))
+
+    def test_mutantes_sintacticamente_validos(self):
+        source = "def f(a, b):\n    return a == b and True\n"
+        for _, codigo in mc.generar_mutantes(source):
+            ast.parse(codigo)
+
+    def test_medir_agrega_y_restaura(self):
+        scripts = self.tmp / "scripts"
+        scripts.mkdir()
+        modulo = scripts / "foo.py"
+        original = "def f(a, b):\n    return a == b\n"
+        modulo.write_text(original, encoding="utf-8")
+        resultado = mc.medir(self.tmp, "scripts/foo.py", "test_x", ejecutar=lambda desc: 0)
+        self.assertEqual(resultado["total"], 1)
+        self.assertEqual(resultado["mutantes_muertos"], 0)
+        self.assertEqual(modulo.read_text(encoding="utf-8"), original)
+
+    def test_medir_mutante_muerto(self):
+        scripts = self.tmp / "scripts"
+        scripts.mkdir()
+        (scripts / "foo.py").write_text("def f(a, b):\n    return a == b\n", encoding="utf-8")
+        resultado = mc.medir(self.tmp, "scripts/foo.py", "test_x", ejecutar=lambda desc: 1)
+        self.assertEqual(resultado["score"], 1.0)
+
+    def test_repo_score_sobre_umbral(self):
+        # Chequeo real acotado sobre una copia temporal (no toca el repo).
+        copia = mc._copia_temporal(ROOT)
+        try:
+            resultado = mc.medir(
+                copia, "scripts/adr_validator.py",
+                "test_ecosistema.TestADRValidator", max_mutantes=8,
+            )
+        finally:
+            shutil.rmtree(copia, ignore_errors=True)
+        self.assertGreaterEqual(resultado["score"], 0.8)
 
 
 if __name__ == "__main__":

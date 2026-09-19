@@ -67,7 +67,7 @@
 |---|---|---|
 | 1 | `scripts/auto_audit.py` (sesgos, evidencias, decisiones, tests, IA) + integración en el verificador | Implementado (REQ-014) |
 | 2 | `docs/HERRAMIENTAS-Y-FUENTES.md` (este documento) referenciado desde README/AGENTS | Implementado |
-| 3 | Mutation testing opcional (mutmut/cosmic-ray) para medir la fuerza de los tests | Propuesto |
+| 3 | Chequeo de mutaciones stdlib (`scripts/mutation_check.py`, REQ-015); `mutmut`/`cosmic-ray` como alternativas maduras | Implementado (2026-09-19) |
 | 4 | `vale` opcional con estilos propios de "claims sin métrica" | Propuesto |
 | 5 | Re-escaneo de dependencias (`auto_audit vulns` con pip-audit/osv-scanner) | Implementado (2026-09-19) |
 

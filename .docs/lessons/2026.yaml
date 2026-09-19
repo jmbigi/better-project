@@ -102,3 +102,11 @@
   recomendacion: "Ademas de auditar la antiguedad del SBOM, re-escanear con pip-audit/osv-scanner (auto_audit vulns) antes de releases y regenerar el SBOM con syft; aceptar el riesgo por escrito solo para uso local embebido (LSN-007)."
   estado: Resuelta
   fecha: 2026-09-19
+- id: LSN-014
+  proyecto: "Ecosistema"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El chequeo de mutaciones (REQ-015) encontro un mutante supervivente en adr_validator.py: 'if hit and not re.search(...)' mutado a 'or'. La suite no distinguia el caso 'sin adjetivo ambiguo y sin metrica', que el mutante convertia en una alerta espuria."
+  recomendacion: "Usar el chequeo de mutaciones para hallar huecos que la cobertura de lineas no ve; al cerrar cada hueco, anadir el caso que mate al mutante y re-ejecutar hasta score 1.0 en el modulo."
+  estado: Resuelta
+  fecha: 2026-09-19

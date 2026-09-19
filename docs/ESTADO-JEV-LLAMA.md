@@ -142,6 +142,7 @@ cautelas estadisticas del artefacto de revision.
 | `python3 scripts/adr_validator.py --strict` | 3 ADR, 0 errores, 0 alertas |
 | `python3 scripts/auto_audit.py all` | 0 errores (1 alerta: LSN-009 abierta) |
 | `python3 scripts/auto_audit.py vulns` (pip-audit) | 0 errores, 5 advisories (chromadb 1.5.9 y diskcache 5.6.3, sin parche) |
+| `python3 scripts/mutation_check.py` (adr_validator) | 16 mutantes, 16 muertos, score 1.000 |
 | `bash scripts/verificar-proyecto.sh --pre-commit` | 40 OK, 0 fallos |
 
 ## Pendiente
@@ -152,9 +153,10 @@ cautelas estadisticas del artefacto de revision.
    (P1.17/P1.23).
 2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
    ECE y la accuracy de `score`; hoy n=12 y el intervalo de confianza es ancho.
-3. **Mutation testing opcional** (mutmut/cosmic-ray) para medir la fuerza real de
-   los tests; hoy `auto_audit tests` solo detecta tests sin asercion y
-   tautologicos (P1.1).
+3. **Chequeo de mutaciones**: `scripts/mutation_check.py` (REQ-015) ya mide la
+   fuerza de la suite con una heuristica aislada (2026-09-19: 16/16 mutantes de
+   `adr_validator.py` muertos, tras cerrar un hueco que detecto). Pendiente:
+   evaluar `mutmut`/`cosmic-ray` para mutaciones mas ricas.
 4. **`vale` opcional** con estilos propios de "claims sin metrica" para reforzar
    el Pilar 4 mas alla de la heuristica de `auto_audit sesgos`.
 5. **Regenerar el SBOM** (`docs/SBOM-2026-09-04.spdx.json`) con `syft` cuando
