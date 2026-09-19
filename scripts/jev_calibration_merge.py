@@ -26,10 +26,40 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SET = ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_set.json"
 DEFAULT_CANDIDATOS = ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_candidates.json"
 ESTADOS_APROBADOS = {"aprobado", "aprobado_por_programador"}
+TIPOS = {"noul", "choice", "score"}
 
 
 def _leer(path: Path) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def validar_caso(caso: dict[str, Any]) -> list[str]:
+    """Valida el esquema minimo de un caso de calibracion."""
+    problemas: list[str] = []
+    if not str(caso.get("id", "")).strip():
+        problemas.append("sin id")
+    tipo = caso.get("tipo")
+    if tipo not in TIPOS:
+        problemas.append(f"tipo invalido: {tipo!r}")
+    for campo in ("estado", "instrucciones", "esperado"):
+        if campo not in caso:
+            problemas.append(f"falta '{campo}'")
+    esperado = str(caso.get("esperado"))
+    if tipo == "noul" and esperado not in {"yes", "no"}:
+        problemas.append(f"esperado invalido para noul: {esperado!r}")
+    elif tipo == "choice":
+        criterios = caso.get("criterios")
+        if not isinstance(criterios, dict) or not criterios:
+            problemas.append("choice sin 'criterios'")
+        elif esperado not in criterios:
+            problemas.append(f"esperado '{esperado}' no esta en criterios")
+    elif tipo == "score":
+        niveles = caso.get("niveles")
+        if not isinstance(niveles, list) or not niveles:
+            problemas.append("score sin 'niveles'")
+        elif esperado not in [str(i) for i in range(len(niveles))]:
+            problemas.append(f"esperado '{esperado}' fuera de niveles")
+    return problemas
 
 
 def fusionar(
@@ -47,6 +77,10 @@ def fusionar(
     nuevos: list[dict[str, Any]] = []
     for caso in cand_data.get("casos", []):
         cid = str(caso.get("id"))
+        problemas = validar_caso(caso)
+        if problemas:
+            errores.append(f"{cid}: " + "; ".join(problemas))
+            continue
         if cid in ids_set:
             errores.append(f"id duplicado en el set: {cid}")
         elif cid in vistos:

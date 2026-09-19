@@ -724,6 +724,18 @@ class TestJevCalibration(unittest.TestCase):
         probs = [[0.9, 0.1], [0.2, 0.8], [0.6, 0.4]]
         self.assertAlmostEqual(jc._accuracy(probs, [0, 1, 1]), 2 / 3, places=9)
 
+    def test_wilson_ci(self):
+        lo, hi = jc.wilson_ci(8, 10)
+        self.assertLess(lo, 0.8)
+        self.assertGreater(hi, 0.8)
+        self.assertEqual(jc.wilson_ci(0, 0), (0.0, 0.0))
+
+    def test_evaluate_incluye_ci(self):
+        records = [{"probs": [0.9, 0.1], "label_idx": 0}, {"probs": [0.2, 0.8], "label_idx": 0}]
+        metricas = jc.evaluate(records, 1.0)
+        self.assertIn("accuracy_ci95", metricas)
+        self.assertEqual(len(metricas["accuracy_ci95"]), 2)
+
     def test_ece_valor_conocido(self):
         probs = [[0.9, 0.1], [0.9, 0.1]]
         self.assertAlmostEqual(jc.ece(probs, [0, 1]), 0.4, places=9)
@@ -1398,8 +1410,9 @@ class TestJevCalibrationMerge(unittest.TestCase):
         self.cand_path.write_text(json.dumps({
             "estado": estado,
             "casos": casos if casos is not None else [
-                {"id": "N99", "tipo": "noul", "esperado": "yes"},
-                {"id": "C99", "tipo": "choice", "esperado": "requisitos"},
+                {"id": "N99", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "yes"},
+                {"id": "C99", "tipo": "choice", "estado": "e", "instrucciones": "i",
+                 "criterios": {"requisitos": "x", "verificacion": "y"}, "esperado": "requisitos"},
             ],
         }), encoding="utf-8")
 
@@ -1422,7 +1435,7 @@ class TestJevCalibrationMerge(unittest.TestCase):
         self.assertEqual(len(set_data["revision_humana"]["lotes_fusionados"]), 1)
 
     def test_duplicado_es_error(self):
-        self._cand(casos=[{"id": "N01", "tipo": "noul", "esperado": "yes"}])
+        self._cand(casos=[{"id": "N01", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "yes"}])
         resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path), aplicar=True)
         self.assertTrue(any("duplicado" in e for e in resultado["errores"]))
 
@@ -1437,6 +1450,17 @@ class TestJevCalibrationMerge(unittest.TestCase):
         self._cand()
         self.assertEqual(jcm.main(["--set", str(self.set_path), "--candidatos", str(self.cand_path)]), 0)
         self.assertEqual(self.set_path.read_text(encoding="utf-8").count('"version": 2'), 1)
+
+    def test_caso_invalido_es_error(self):
+        self._cand(casos=[{"id": "X1", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "quizas"}])
+        resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path), aplicar=True)
+        self.assertTrue(any("esperado invalido" in e for e in resultado["errores"]))
+
+    def test_score_invalido_es_error(self):
+        self._cand(casos=[{"id": "X2", "tipo": "score", "estado": "e", "instrucciones": "i",
+                            "niveles": ["a", "b"], "esperado": 9}])
+        resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path), aplicar=True)
+        self.assertTrue(any("fuera de niveles" in e for e in resultado["errores"]))
 
 
 if __name__ == "__main__":

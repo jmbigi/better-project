@@ -110,19 +110,40 @@ def _accuracy(probs_list: list[list[float]], labels: list[int]) -> float:
     return hits / len(probs_list)
 
 
+def _hits(probs_list: list[list[float]], labels: list[int]) -> int:
+    return sum(1 for probs, label in zip(probs_list, labels) if probs.index(max(probs)) == label)
+
+
+def wilson_ci(hits: int, n: int, z: float = 1.96) -> tuple[float, float]:
+    """Intervalo de confianza de Wilson al 95 % para una proporcion (P0.1)."""
+    if n == 0:
+        return (0.0, 0.0)
+    p = hits / n
+    denom = 1 + z * z / n
+    centro = (p + z * z / (2 * n)) / denom
+    margen = z * math.sqrt((p * (1 - p) + z * z / (4 * n)) / n) / denom
+    return (max(0.0, centro - margen), min(1.0, centro + margen))
+
+
 def evaluate(records: list[dict[str, Any]], temperature: float) -> dict[str, float]:
     """Metricas agregadas de un conjunto de records con temperatura T."""
     probs_list = [temperature_scale(r["probs"], temperature) for r in records]
     labels = [r["label_idx"] for r in records]
     n = len(records)
     if n == 0:
-        return {"n": 0, "nll": 0.0, "brier": 0.0, "ece": 0.0, "accuracy": 0.0, "confianza_media": 0.0}
+        return {
+            "n": 0, "nll": 0.0, "brier": 0.0, "ece": 0.0,
+            "accuracy": 0.0, "accuracy_ci95": [0.0, 0.0], "confianza_media": 0.0,
+        }
+    hits = _hits(probs_list, labels)
+    ci = wilson_ci(hits, n)
     return {
         "n": n,
         "nll": sum(nll(p, y) for p, y in zip(probs_list, labels)) / n,
         "brier": sum(brier(p, y) for p, y in zip(probs_list, labels)) / n,
         "ece": ece(probs_list, labels),
-        "accuracy": _accuracy(probs_list, labels),
+        "accuracy": hits / n,
+        "accuracy_ci95": [round(ci[0], 4), round(ci[1], 4)],
         "confianza_media": sum(max(p) for p in probs_list) / n,
     }
 
@@ -269,7 +290,11 @@ def _print_human(report: dict[str, Any]) -> None:
     print()
     print("Por tipo (T recomendada):")
     for tipo, m in report["por_tipo_Trecomendada"].items():
-        print(f"  {tipo:<8} n={m['n']:<3} acc={m['accuracy']:.3f} ece={m['ece']:.3f} nll={m['nll']:.3f}")
+        ci = m.get("accuracy_ci95", [0.0, 0.0])
+        print(
+            f"  {tipo:<8} n={m['n']:<3} acc={m['accuracy']:.3f} "
+            f"[{ci[0]:.3f},{ci[1]:.3f}] ece={m['ece']:.3f} nll={m['nll']:.3f}"
+        )
     print()
     print(f"Para aplicar: export JEV_TEMPERATURE={report['T_recomendada']}")
 
