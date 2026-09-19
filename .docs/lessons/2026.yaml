@@ -94,3 +94,11 @@
   recomendacion: "Separar siempre lo verificado (URL/licencia comprobadas) de lo candidato; adoptar una herramienta solo con ADR de >= 2 alternativas y tras pasar P0.18 (SBOM, escaneo, licencia)."
   estado: Resuelta
   fecha: 2026-09-19
+- id: LSN-013
+  proyecto: "Ecosistema"
+  fase: "Deploy"
+  categoria: "Seguridad"
+  problema: "El re-escaneo de dependencias del 2026-09-19 (auto_audit vulns, pip-audit) encontro advisories nuevos respecto del SBOM del 2026-09-04: 4 en chromadb 1.5.9 y 1 en diskcache 5.6.3, todos sin parche. Un SBOM fechado caduca: comprobar solo su antiguedad no detecta advisories nuevos."
+  recomendacion: "Ademas de auditar la antiguedad del SBOM, re-escanear con pip-audit/osv-scanner (auto_audit vulns) antes de releases y regenerar el SBOM con syft; aceptar el riesgo por escrito solo para uso local embebido (LSN-007)."
+  estado: Resuelta
+  fecha: 2026-09-19

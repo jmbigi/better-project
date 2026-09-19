@@ -69,7 +69,14 @@
 | 2 | `docs/HERRAMIENTAS-Y-FUENTES.md` (este documento) referenciado desde README/AGENTS | Implementado |
 | 3 | Mutation testing opcional (mutmut/cosmic-ray) para medir la fuerza de los tests | Propuesto |
 | 4 | `vale` opcional con estilos propios de "claims sin métrica" | Propuesto |
-| 5 | Auditoría de frescura P0.18 automatizada (pip-audit/OSV) vía skill `dependency-check` | Propuesto |
+| 5 | Re-escaneo de dependencias (`auto_audit vulns` con pip-audit/osv-scanner) | Implementado (2026-09-19) |
+
+**Hallazgo del re-escaneo (2026-09-19)**: `auto_audit vulns` detectó 4
+advisories sin parche en chromadb 1.5.9 y 1 en diskcache 5.6.3. Son
+dependencias opcionales y el riesgo se acepta para uso **local embebido**
+(LSN-007); el backend stdlib sigue siendo el recomendado por defecto. El SBOM
+versionado (`docs/SBOM-2026-09-04.spdx.json`) queda desactualizado: regenerarlo
+con `syft` cuando esté disponible (P0.18).
 
 ## 6. Para los proyectos que sigan estas reglas
 

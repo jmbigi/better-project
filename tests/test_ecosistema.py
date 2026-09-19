@@ -16,6 +16,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
@@ -1111,6 +1112,44 @@ class TestAutoAudit(unittest.TestCase):
     def test_repo_real_sin_errores_de_tests(self):
         errors, _ = aa.auditar_tests()
         self.assertEqual(errors, [])
+
+    def test_vulns_con_fix(self):
+        req = self._write("requirements.txt", "x\n")
+        hallazgos = [{"name": "x", "version": "1.0", "id": "CVE-1", "fix_versions": ["1.1"]}]
+        errors, warnings = aa.auditar_vulns(requirements=req, ejecutar=lambda: hallazgos)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("CVE-1" in w and "fix: 1.1" in w for w in warnings))
+
+    def test_vulns_sin_parche(self):
+        req = self._write("requirements.txt", "x\n")
+        hallazgos = [{"name": "x", "version": "1.0", "id": "CVE-2", "fix_versions": []}]
+        _, warnings = aa.auditar_vulns(requirements=req, ejecutar=lambda: hallazgos)
+        self.assertTrue(any("sin parche" in w for w in warnings))
+
+    def test_vulns_dedupe(self):
+        req = self._write("requirements.txt", "x\n")
+        dup = {"name": "x", "version": "1.0", "id": "CVE-3", "fix_versions": []}
+        _, warnings = aa.auditar_vulns(requirements=req, ejecutar=lambda: [dup, dict(dup)])
+        self.assertEqual(len(warnings), 1)
+
+    def test_vulns_sin_escaner(self):
+        req = self._write("requirements.txt", "x\n")
+        with mock.patch.object(aa, "_scanner_disponible", return_value=(None, None)):
+            errors, warnings = aa.auditar_vulns(requirements=req)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("sin escaner" in w for w in warnings))
+
+    def test_vulns_archivo_inexistente(self):
+        errors, _ = aa.auditar_vulns(requirements=self.tmp / "no_existe.txt")
+        self.assertTrue(any("no existe" in e for e in errors))
+
+    def test_vulns_fallo_scanner(self):
+        def falla():
+            raise RuntimeError("boom")
+
+        req = self._write("requirements.txt", "x\n")
+        errors, _ = aa.auditar_vulns(requirements=req, ejecutar=falla)
+        self.assertTrue(any("fallo el escaneo" in e for e in errors))
 
     def test_main_all_en_verde(self):
         self.assertEqual(aa.main(["all"]), 0)

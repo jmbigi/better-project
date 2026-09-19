@@ -3,13 +3,14 @@
 
 # REQ-014
 
-Cinco auditorias heuristicas sobre el propio repositorio (sin dependencias):
+Auditorias heuristicas sobre el propio repositorio (sin dependencias):
 
     python3 scripts/auto_audit.py sesgos       # afirmaciones/sesgos en docs
     python3 scripts/auto_audit.py evidencias   # frescura del SBOM (P0.18)
     python3 scripts/auto_audit.py decisiones   # REQ/ADR/lecciones pendientes
     python3 scripts/auto_audit.py tests        # tests falsos y except: pass (P1.1/P1.26)
     python3 scripts/auto_audit.py ia           # trailer Assisted-by en commits (P1.14)
+    python3 scripts/auto_audit.py vulns        # re-escaneo de dependencias (P0.18, usa red)
     python3 scripts/auto_audit.py all [--json] [--strict] [--max-dias N]
 
 La auditoria asiste la revision humana, no la sustituye (P1.15).
@@ -21,6 +22,7 @@ import argparse
 import ast
 import json
 import re
+import shutil
 import subprocess
 import sys
 from datetime import date, datetime
@@ -119,6 +121,77 @@ def auditar_evidencias(docs_dir: Path = DOCS_DIR, max_dias: int = 90) -> tuple[l
         if edad > max_dias:
             warnings.append(f"{sbom.name}: SBOM de {edad} dias (> {max_dias}); re-escanear (P0.18)")
     return errors, warnings
+
+
+def _scanner_disponible():
+    """Devuelve (nombre, constructor de comando) del primer escaner disponible."""
+    if shutil.which("pip-audit"):
+        return "pip-audit", lambda req: [
+            "pip-audit", "-r", str(req), "-f", "json",
+            "--progress-spinner", "off", "--timeout", "15",
+        ]
+    if shutil.which("osv-scanner"):
+        return "osv-scanner", lambda req: ["osv-scanner", "--format", "json", "--lockfile", str(req)]
+    return None, None
+
+
+def _parse_pip_audit(payload: dict) -> list[dict]:
+    hallazgos: list[dict] = []
+    for dep in payload.get("dependencies", []):
+        for vuln in dep.get("vulns", []) or []:
+            hallazgos.append(
+                {
+                    "name": dep.get("name"),
+                    "version": dep.get("version"),
+                    "id": vuln.get("id"),
+                    "fix_versions": vuln.get("fix_versions", []) or [],
+                }
+            )
+    return hallazgos
+
+
+def _runner_pip_audit(cmd: list[str]):
+    def run() -> list[dict]:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        # pip-audit devuelve 1 cuando encuentra vulnerabilidades (no es un fallo).
+        if proc.returncode not in (0, 1):
+            raise RuntimeError(proc.stderr.strip()[:200] or f"exit {proc.returncode}")
+        return _parse_pip_audit(json.loads(proc.stdout or "{}"))
+
+    return run
+
+
+def auditar_vulns(requirements=None, ejecutar=None) -> tuple[list[str], list[str]]:
+    """Re-escanea vulnerabilidades (P0.18). Requiere pip-audit/osv-scanner.
+
+    No silencia la ausencia de escaner: devuelve una alerta explicita (P1.19).
+    Se ejecuta a demanda (usa red); no forma parte de `all` ni del pre-commit.
+    """
+    requirements = Path(requirements or (ROOT / "requirements-optional.txt"))
+    if not requirements.exists():
+        return [f"no existe el archivo de dependencias {requirements}"], []
+    if ejecutar is None:
+        nombre, builder = _scanner_disponible()
+        if builder is None:
+            return [], [
+                "sin escaner de vulnerabilidades disponible (pip-audit/osv-scanner); "
+                "adoptar bajo ADR y P0.18"
+            ]
+        ejecutar = _runner_pip_audit(builder(requirements))
+    try:
+        hallazgos = ejecutar()
+    except (RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired, OSError) as exc:
+        return [f"fallo el escaneo de vulnerabilidades: {exc}"], []
+    warnings: list[str] = []
+    vistos: set[tuple] = set()
+    for h in hallazgos:
+        clave = (h.get("name"), h.get("version"), h.get("id"))
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+        fix = ",".join(h.get("fix_versions", [])) or "sin parche"
+        warnings.append(f"{h.get('name')} {h.get('version')}: {h.get('id')} (fix: {fix})")
+    return [], warnings
 
 
 def auditar_decisiones(
@@ -251,13 +324,17 @@ def _ejecutar(args: argparse.Namespace) -> dict[str, Any]:
         warn, info = auditar_ia()
         resultado["alertas"].extend(warn)
         resultado["info"].extend(info)
+    if args.subcomando == "vulns":
+        err, warn = auditar_vulns()
+        resultado["errores"].extend(err)
+        resultado["alertas"].extend(warn)
     return resultado
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Auto-auditoria del proyecto (REQ-014)")
     parser.add_argument(
-        "subcomando", choices=["sesgos", "evidencias", "decisiones", "tests", "ia", "all"]
+        "subcomando", choices=["sesgos", "evidencias", "decisiones", "tests", "ia", "vulns", "all"]
     )
     parser.add_argument("--json", action="store_true", help="Salida JSON")
     parser.add_argument("--strict", action="store_true", help="Las alertas tambien fallan")

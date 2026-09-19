@@ -138,9 +138,10 @@ cautelas estadisticas del artefacto de revision.
 
 | Verificacion | Resultado |
 |---|---|
-| `python3 -m unittest discover -s tests -q` | 100 tests OK |
+| `python3 -m unittest discover -s tests -q` | 106 tests OK |
 | `python3 scripts/adr_validator.py --strict` | 3 ADR, 0 errores, 0 alertas |
 | `python3 scripts/auto_audit.py all` | 0 errores (1 alerta: LSN-009 abierta) |
+| `python3 scripts/auto_audit.py vulns` (pip-audit) | 0 errores, 5 advisories (chromadb 1.5.9 y diskcache 5.6.3, sin parche) |
 | `bash scripts/verificar-proyecto.sh --pre-commit` | 40 OK, 0 fallos |
 
 ## Pendiente
@@ -156,9 +157,10 @@ cautelas estadisticas del artefacto de revision.
    tautologicos (P1.1).
 4. **`vale` opcional** con estilos propios de "claims sin metrica" para reforzar
    el Pilar 4 mas alla de la heuristica de `auto_audit sesgos`.
-5. **Frescura P0.18 automatizada** (pip-audit/OSV) que re-escane el SBOM y
-   actualice `docs/SBOM-<fecha>.spdx.json` vencido (hoy se comprueba la
-   antiguedad, no se re-escanea).
+5. **Regenerar el SBOM** (`docs/SBOM-2026-09-04.spdx.json`) con `syft` cuando
+   este disponible. `auto_audit vulns` ya re-escanea a demanda con pip-audit
+   (2026-09-19: 4 advisories sin parche en chromadb 1.5.9 y 1 en diskcache
+   5.6.3; riesgo aceptado para uso local embebido, LSN-007).
 
 ## Notas
 
