@@ -745,6 +745,46 @@ class TestJevCalibration(unittest.TestCase):
         self.assertIn("ece_adaptativo", jc.evaluate(
             [{"probs": [0.9, 0.1], "label_idx": 0}], 1.0))
 
+    def test_run_cases_cache(self):
+        class _Fake:
+            def __init__(self):
+                self.model_path = Path("m.gguf")
+                self.llamadas = 0
+
+            def decide(self, state, questions):
+                self.llamadas += 1
+                return {"q": {"probabilities": {"yes": 0.6, "no": 0.4}}}
+
+        caso = {"id": "N01", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "yes"}
+        fake, cache = _Fake(), {}
+        jc.run_cases(fake, [caso], cache)
+        jc.run_cases(fake, [caso], cache)
+        self.assertEqual(fake.llamadas, 1)
+
+    def test_sembrar_cache_desde_informe(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            informe = tmp / "r.json"
+            informe.write_text(json.dumps({
+                "modelo": "m.gguf",
+                "records": [{"id": "N01", "probs": [0.6, 0.4], "label_idx": 0}],
+            }), encoding="utf-8")
+            cache: dict = {}
+            self.assertEqual(jc.sembrar_cache_desde_informe(cache, informe), 1)
+            self.assertIn("m.gguf|N01", cache)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_cache_roundtrip_calibracion(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            path = tmp / "c.json"
+            jc.guardar_cache({"k": 1}, path)
+            self.assertEqual(jc.cargar_cache(path), {"k": 1})
+            self.assertEqual(jc.cargar_cache(tmp / "no.json"), {})
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_ece_valor_conocido(self):
         probs = [[0.9, 0.1], [0.9, 0.1]]
         self.assertAlmostEqual(jc.ece(probs, [0, 1]), 0.4, places=9)

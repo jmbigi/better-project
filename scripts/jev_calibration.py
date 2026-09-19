@@ -37,6 +37,7 @@ from jev_llama import JevLlama
 
 DEFAULT_SET = Path(__file__).resolve().parent.parent / ".docs" / "knowledge" / "ai" / "jev_calibration_set.json"
 DEFAULT_REPORT = Path(__file__).resolve().parent.parent / ".docs" / ".storage" / "jev_calibration.json"
+DEFAULT_CACHE = Path(__file__).resolve().parent.parent / ".docs" / ".storage" / "jev_calibration_cache.json"
 EPS = 1e-12
 # Grid de temperatura: suficiente para overconfidence tipica de LLM (T > 1).
 GRID = [round(0.1 * i, 1) for i in range(1, 51)]  # 0.1 .. 5.0
@@ -238,14 +239,67 @@ def _options_and_label(caso: dict[str, Any]) -> tuple[list[str], int]:
     return options, options.index(esperado)
 
 
-def run_cases(client: JevLlama, casos: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Ejecuta el motor sobre el set y devuelve records con probabilidades."""
+def _clave_caso(modelo: str, caso: dict[str, Any]) -> str:
+    return f"{modelo}|{caso['id']}"
+
+
+def cargar_cache(path: Path | None = None) -> dict[str, Any]:
+    ruta = Path(path or DEFAULT_CACHE)
+    if ruta.exists():
+        try:
+            return json.loads(ruta.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def guardar_cache(cache: dict[str, Any], path: Path | None = None) -> None:
+    ruta = Path(path or DEFAULT_CACHE)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    ruta.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+
+def sembrar_cache_desde_informe(cache: dict[str, Any], informe: Path | None = None) -> int:
+    """Rellena la cache con las predicciones del ultimo informe (si existe)."""
+    ruta = Path(informe or DEFAULT_REPORT)
+    if not ruta.exists():
+        return 0
+    try:
+        datos = json.loads(ruta.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return 0
+    modelo = str(datos.get("modelo", ""))
+    n = 0
+    for record in datos.get("records", []):
+        clave = _clave_caso(modelo, record)
+        if clave not in cache:
+            cache[clave] = {"probs": record["probs"], "label_idx": record["label_idx"]}
+            n += 1
+    return n
+
+
+def run_cases(
+    client: JevLlama, casos: list[dict[str, Any]], cache: dict[str, Any] | None = None,
+    modelo: str | None = None,
+) -> list[dict[str, Any]]:
+    """Ejecuta el motor sobre el set y devuelve records con probabilidades.
+
+    Con `cache` reutiliza las predicciones previas (clave `<modelo>|<id>`), lo
+    que acelera las re-calibraciones cuando solo cambian algunos casos.
+    """
+    nombre = modelo or Path(client.model_path).name
     records: list[dict[str, Any]] = []
     for caso in casos:
         options, label_idx = _options_and_label(caso)
-        result = client.decide(caso["estado"], {"q": _question(caso)})["q"]
-        probs_map = result["probabilities"]
-        probs = [float(probs_map[o]) for o in options]
+        clave = _clave_caso(nombre, caso)
+        if cache is not None and clave in cache:
+            probs = [float(p) for p in cache[clave]["probs"]]
+        else:
+            result = client.decide(caso["estado"], {"q": _question(caso)})["q"]
+            probs_map = result["probabilities"]
+            probs = [float(probs_map[o]) for o in options]
+            if cache is not None:
+                cache[clave] = {"probs": probs, "label_idx": label_idx}
         records.append({
             "id": caso["id"],
             "tipo": caso["tipo"],
@@ -262,8 +316,11 @@ def _por_tipo(records: list[dict[str, Any]], temperature: float) -> dict[str, di
     return {t: evaluate([r for r in records if r["tipo"] == t], temperature) for t in tipos}
 
 
-def calibrate(client: JevLlama, casos: list[dict[str, Any]], folds: int = 5) -> dict[str, Any]:
-    records = run_cases(client, casos)
+def calibrate(
+    client: JevLlama, casos: list[dict[str, Any]], folds: int = 5,
+    cache: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    records = run_cases(client, casos, cache)
     t_full = fit_temperature(records)
     return {
         "modelo": client.model_path.name,
@@ -313,17 +370,25 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Salida JSON")
     parser.add_argument("--write", action="store_true", help=f"Escribe informe en {DEFAULT_REPORT}")
     parser.add_argument("--model", default=None, help="Ruta al GGUF (default: JEV_MODEL_PATH o cache)")
+    parser.add_argument("--no-cache", action="store_true", help="Ignorar la cache de predicciones")
     args = parser.parse_args()
 
     casos = load_set(Path(args.set))
     client = JevLlama(model_path=args.model)
-    report = calibrate(client, casos, folds=args.folds)
+    cache: dict[str, Any] | None = None
+    if not args.no_cache:
+        cache = cargar_cache()
+        if not cache:
+            sembrar_cache_desde_informe(cache)
+    report = calibrate(client, casos, folds=args.folds, cache=cache)
 
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
     else:
         _print_human(report)
 
+    if cache is not None:
+        guardar_cache(cache)
     if args.write:
         DEFAULT_REPORT.parent.mkdir(parents=True, exist_ok=True)
         DEFAULT_REPORT.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
