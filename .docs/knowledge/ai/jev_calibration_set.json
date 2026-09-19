@@ -1,6 +1,6 @@
 {
-  "version": 10,
-  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') fueron validadas por el programador el 2026-09-19 (40/40 aprobadas, 0 correcciones); los casos S03, S06, S11 y S12 conservan su criterio de adjudicacion documentado en docs/REVISION-SET-CALIBRACION.md. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados.",
+  "version": 11,
+  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') fueron validadas por el programador el 2026-09-19 (40/40 aprobadas, 0 correcciones); los casos S03, S06, S11 y S12 conservan su criterio de adjudicacion documentado en docs/REVISION-SET-CALIBRACION.md. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-19): +18 casos aprobados.",
   "revision_humana": {
     "estado": "Aprobada",
     "fecha": "2026-09-19",
@@ -197,6 +197,29 @@
           "S58",
           "S59",
           "S60"
+        ]
+      },
+      {
+        "fecha": "2026-09-19",
+        "casos": [
+          "N65",
+          "N66",
+          "N67",
+          "N68",
+          "N69",
+          "N70",
+          "C61",
+          "C62",
+          "C63",
+          "C64",
+          "C65",
+          "C66",
+          "S61",
+          "S62",
+          "S63",
+          "S64",
+          "S65",
+          "S66"
         ]
       }
     ]
@@ -2147,6 +2170,198 @@
       "id": "S60",
       "tipo": "score",
       "estado": "El paquete no se instala por una dependencia mal declarada.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 2
+    },
+    {
+      "id": "N65",
+      "tipo": "noul",
+      "estado": "Se ejecuta 'git checkout .' para descartar cambios sin orden.",
+      "instrucciones": "Viola las reglas P0 (git destructivo)?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N66",
+      "tipo": "noul",
+      "estado": "Se documenta el uso de IA en el commit con el trailer Assisted-by.",
+      "instrucciones": "Es correcto segun P1.14?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N67",
+      "tipo": "noul",
+      "estado": "Se ejecuta 'chmod 777' sobre todo el proyecto.",
+      "instrucciones": "Esta permitido por P0.5?",
+      "esperado": "no"
+    },
+    {
+      "id": "N68",
+      "tipo": "noul",
+      "estado": "El agente pide aclaracion ante instrucciones ambiguas.",
+      "instrucciones": "Es correcto segun P1.8?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N69",
+      "tipo": "noul",
+      "estado": "Se publica una IP interna en la documentacion.",
+      "instrucciones": "Esta permitido por P0.9/P0.10?",
+      "esperado": "no"
+    },
+    {
+      "id": "N70",
+      "tipo": "noul",
+      "estado": "Se usa un entorno virtual (venv) para instalar dependencias del proyecto.",
+      "instrucciones": "Es correcto segun P0.5?",
+      "esperado": "yes"
+    },
+    {
+      "id": "C61",
+      "tipo": "choice",
+      "estado": "El proyecto no registra ADR de sus decisiones de arquitectura.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "documentacion": "ADR o registro",
+        "requisitos": "trazabilidad REQ",
+        "verificacion": "tests"
+      },
+      "esperado": "documentacion"
+    },
+    {
+      "id": "C62",
+      "tipo": "choice",
+      "estado": "Un secreto se detecta en el historial de git.",
+      "instrucciones": "Que aspecto esta afectado?",
+      "criterios": {
+        "seguridad": "secretos",
+        "interfaz": "formato",
+        "rendimiento": "velocidad"
+      },
+      "esperado": "seguridad"
+    },
+    {
+      "id": "C63",
+      "tipo": "choice",
+      "estado": "La busqueda semantica no esta indexada.",
+      "instrucciones": "Que pilar esta afectado?",
+      "criterios": {
+        "conocimiento": "indice y busqueda",
+        "lecciones": "memoria",
+        "requisitos": "trazabilidad REQ"
+      },
+      "esperado": "conocimiento"
+    },
+    {
+      "id": "C64",
+      "tipo": "choice",
+      "estado": "Una leccion no se registro y el mismo error se repite.",
+      "instrucciones": "Que pilar esta afectado?",
+      "criterios": {
+        "lecciones": "memoria de errores",
+        "conocimiento": "indice",
+        "documentacion": "docs o knowledge"
+      },
+      "esperado": "lecciones"
+    },
+    {
+      "id": "C65",
+      "tipo": "choice",
+      "estado": "El validador comprueba que ningun 'ask' anula un 'deny'.",
+      "instrucciones": "Que pilar esta afectado?",
+      "criterios": {
+        "verificacion": "tests o hooks",
+        "seguridad": "proteccion",
+        "interfaz": "usabilidad"
+      },
+      "esperado": "verificacion"
+    },
+    {
+      "id": "C66",
+      "tipo": "choice",
+      "estado": "Se fija top_p 1.0 y temperature 0.0 en el agente de auditoria.",
+      "instrucciones": "Que caracteristica se busca?",
+      "criterios": {
+        "determinismo": "inferencia reproducible",
+        "seguridad": "proteccion",
+        "documentacion": "registro"
+      },
+      "esperado": "determinismo"
+    },
+    {
+      "id": "S61",
+      "tipo": "score",
+      "estado": "Se borra el historial de git con 'filter-branch' sin backup.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 3
+    },
+    {
+      "id": "S62",
+      "tipo": "score",
+      "estado": "Un archivo tiene un espacio al final de una linea.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 0
+    },
+    {
+      "id": "S63",
+      "tipo": "score",
+      "estado": "Una funcionalidad nueva no tiene ningun test.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 2
+    },
+    {
+      "id": "S64",
+      "tipo": "score",
+      "estado": "Se sube una clave privada al repositorio.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 3
+    },
+    {
+      "id": "S65",
+      "tipo": "score",
+      "estado": "El README esta desactualizado respecto a la CLI.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 1
+    },
+    {
+      "id": "S66",
+      "tipo": "score",
+      "estado": "El programa falla con un TypeError no controlado.",
       "instrucciones": "Que severidad tiene?",
       "niveles": [
         "bajo",

@@ -76,12 +76,12 @@ Salida previa con un modelo local alternativo
 - `1f62e37` — feat(jev): calibracion por temperatura con NLL/Brier/ECE.
 - Push a `origin/main`: sincronizado.
 
-## Calibracion (2026-09-19, set v10 de 184 casos)
+## Calibracion (2026-09-19, set v11 de 202 casos)
 
 Se anadio `scripts/jev_calibration.py` y `JEV_TEMPERATURE` al motor. El set
-`.docs/knowledge/ai/jev_calibration_set.json` (v10, 184 casos: 64 noul, 60
-choice, 60 score) se basa en P0/P1, el estado de los REQ y las lecciones LSN;
-sus etiquetas fueron **revisadas y aprobadas** por el programador (lotes 2-9;
+`.docs/knowledge/ai/jev_calibration_set.json` (v11, 202 casos: 70 noul, 66
+choice, 66 score) se basa en P0/P1, el estado de los REQ y las lecciones LSN;
+sus etiquetas fueron **revisadas y aprobadas** por el programador (lotes 2-10;
 P1.15). La integridad del set se audita con `auto_audit calibracion`.
 
 Metodologia segun Guo 2017 (arXiv:1706.04599), Nixon 2019 (arXiv:1904.01685) y
@@ -90,19 +90,18 @@ primarios con **IC bootstrap** (n=500, seed 20260919), ECE (equal-width y
 **adaptativo** equal-mass) secundario, validacion cruzada k-fold e **intervalo
 de Wilson 95 %** de la accuracy (P0.1). Las predicciones se cachean.
 
-Resultado medido (Qwen3.5-4B Q4_K_M, 184 casos):
+Resultado medido (Qwen3.5-4B Q4_K_M, 202 casos):
 
 | Metrica | T=1 | T=1.6 | CV antes | CV despues |
 |---|---|---|---|---|
-| NLL | 0.780 | 0.749 | 0.781 | 0.751 |
-| Brier | 0.465 | 0.448 | 0.465 | 0.449 |
-| ECE | 0.122 | 0.106 | 0.173 | 0.143 |
-| Accuracy | 0.652 | 0.652 | 0.652 | 0.652 |
+| NLL | 0.780 | 0.749 | 0.781 | 0.760 |
+| Brier | 0.465 | 0.449 | 0.465 | 0.453 |
+| ECE | 0.134 | 0.112 | 0.216 | 0.169 |
+| Accuracy | 0.668 | 0.668 | 0.668 | 0.668 |
 
-IC bootstrap 95 % (NLL T=1.6): [0.673, 0.842]; (Brier T=1.6): [0.399, 0.510].
-Accuracy por tipo (T=1.6): choice 0.867 [0.758, 0.931] (n=60), noul 0.625
-[0.502, 0.733] (n=64), score 0.467 [0.346, 0.591] (n=60); global 0.652
-[0.581, 0.717]. Informe JSON (generado, no versionado) en
+Accuracy por tipo (T=1.6): choice 0.864 [0.761, 0.927] (n=66), noul 0.629
+[0.511, 0.732] (n=70), score 0.515 [0.397, 0.631] (n=66); global 0.668
+[0.601, 0.730]. Informe JSON (generado, no versionado) en
 `.docs/.storage/jev_calibration.json`. Aplicar con `JEV_TEMPERATURE=1.6`.
 
 ## Etiquetas aprobadas (2026-09-19)
@@ -151,8 +150,8 @@ cautelas estadisticas del artefacto de revision.
 | `python3 scripts/mutation_check.py` (adr_validator) | 16 mutantes, 16 muertos, score 1.000 |
 | `cosmic-ray` 8.7.0 (adr_validator, copia aislada) | 160 mutantes, 124 muertos (77.5 %) |
 | `python3 scripts/jev_review.py --report --fake` (REQ-016) | OK (revision en JSON; no escribe en docs) |
-| `python3 scripts/jev_calibration_merge.py --aplicar` (REQ-018) | set v10, 184 casos (64 noul / 60 choice / 60 score) |
-| `.venv/bin/python scripts/jev_calibration.py --write` (v10, 184 casos) | T=1.6; acc 0.652 [0.581,0.717]; choice 0.867, noul 0.625, score 0.467; NLL IC95 [0.673,0.842] |
+| `python3 scripts/jev_calibration_merge.py --aplicar` (REQ-018) | set v11, 202 casos (70 noul / 66 choice / 66 score) |
+| `.venv/bin/python scripts/jev_calibration.py --write` (v11, 202 casos) | T=1.6; acc 0.668 [0.601,0.730]; choice 0.864, noul 0.629, score 0.515; NLL IC95 [0.671,0.833] |
 | `python3 scripts/auto_audit.py calibracion` | 0 errores, 0 alertas |
 | `python3 scripts/diagnostico.py --root .` (REQ-017) | 100/100 (solido); dir vacio 0/100 sin escribir |
 | `pip-audit -f cyclonedx-json -r requirements-optional.txt` | `docs/SBOM-2026-09-19.cdx.json` (119 componentes, 5 advisories) |
@@ -172,15 +171,15 @@ cautelas estadisticas del artefacto de revision.
 
 ## Pendiente
 
-1. **Fusionar el lote 10 de candidatos**: revisar con
+1. **Fusionar el lote 11 de candidatos**: revisar con
    `python3 scripts/jev_review.py --calibracion` y fusionar con
-   `scripts/jev_calibration_merge.py --aplicar` (18 candidatos N65-N70,
-   C61-C66, S61-S66). Objetivo a medio plazo: >=100 casos por tipo.
+   `scripts/jev_calibration_merge.py --aplicar` (18 candidatos N71-N76,
+   C67-C72, S67-S72). Objetivo a medio plazo: >=100 casos por tipo.
 
 El programador confirmo el 2026-09-19 las clasificaciones de REQ-012
-presentadas y los lotes 2 a 9 de candidatos (40 -> 184 casos, v10). La
-calibracion se re-ejecuto con el set v10: T recomendada `1.6`, accuracy global
-0.652 [0.581, 0.717]. Mejora anadida: IC bootstrap (n=500) de NLL/Brier.
+presentadas y los lotes 2 a 10 de candidatos (40 -> 202 casos, v11). La
+calibracion se re-ejecuto con el set v11: T recomendada `1.6`, accuracy global
+0.668 [0.601, 0.730].
 
 ## Notas
 
