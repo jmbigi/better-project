@@ -56,7 +56,7 @@ SESGOS_PATRONES = (
     (re.compile(r"\blo usan todas?\b", re.I), "ad populum"),
     (re.compile(r"\bla mejor\b", re.I), "superlativo sin metrica"),
 )
-SBOM_RE = re.compile(r"SBOM-(\d{4}-\d{2}-\d{2})\.spdx\.json$")
+SBOM_RE = re.compile(r"SBOM-(\d{4}-\d{2}-\d{2})\.(?:spdx|cdx)\.json$")
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.S)
 ASSERT_METODOS = ("assert", "fail")
 
@@ -108,7 +108,9 @@ def auditar_sesgos(paths=None) -> list[str]:
 def auditar_evidencias(docs_dir: Path = DOCS_DIR, max_dias: int = 90) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
-    sboms = sorted(Path(docs_dir).glob("SBOM-*.spdx.json"))
+    sboms = sorted(Path(docs_dir).glob("SBOM-*.spdx.json")) + sorted(
+        Path(docs_dir).glob("SBOM-*.cdx.json")
+    )
     if not sboms:
         errors.append("no hay SBOM en docs/ (P0.18)")
     for sbom in sboms:

@@ -309,6 +309,9 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
   `docs/HERRAMIENTAS-Y-FUENTES.md`.
 - `python scripts/mutation_check.py` — chequeo de mutaciones (fuerza de la
   suite) en copia temporal, sin dependencias (REQ-015).
+- `python scripts/jev_review.py [--report]` — UI (curses) para revisar y
+  confirmar las clasificaciones de `jev_pillars.py` (REQ-016); no modifica los
+  documentos.
 - `bash scripts/setup.sh [--yes]` — onboarding guiado: entorno, hook,
   dependencias opcionales (doble confirmación de riesgo, P0.18) y primera
   validación (REQ-008).

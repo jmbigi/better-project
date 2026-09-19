@@ -156,6 +156,7 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │   ├── adr_validator.py    # valida ADRs y audita sesgos (REQ-013)
 │   ├── auto_audit.py       # auto-auditoria del proyecto (REQ-014)
 │   ├── mutation_check.py   # chequeo de mutaciones (REQ-015)
+│   ├── jev_review.py       # revision humana UI de clasificaciones (REQ-016)
 │   └── hooks/pre-commit     # hook git local
 ├── demo/                    # proyecto de ejemplo (gestor de notas CLI)
 │   ├── src/notas.py         # codigo con referencias REQ-XXX
@@ -204,7 +205,10 @@ python3 scripts/auto_audit.py all
 # Chequeo de mutaciones: mide la fuerza de los tests (copia temporal)
 python3 scripts/mutation_check.py
 
-# Suite de tests (115 casos, stdlib unittest)
+# Revisar clasificaciones Jev con UI (REQ-016): OK / corregir / saltar
+python3 scripts/jev_review.py
+
+# Suite de tests (121 casos, stdlib unittest)
 python3 -m unittest discover -s tests -q
 
 # Verificacion completa previa a commit

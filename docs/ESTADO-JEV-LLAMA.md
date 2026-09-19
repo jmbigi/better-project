@@ -139,29 +139,41 @@ cautelas estadisticas del artefacto de revision.
 
 | Verificacion | Resultado |
 |---|---|
-| `python3 -m unittest discover -s tests -q` | 115 tests OK |
+| `python3 -m unittest discover -s tests -q` | 121 tests OK |
 | `python3 scripts/adr_validator.py --strict` | 3 ADR, 0 errores, 0 alertas |
 | `python3 scripts/auto_audit.py all` | 0 errores (1 alerta: LSN-009 abierta) |
 | `python3 scripts/auto_audit.py vulns` (pip-audit) | 0 errores, 5 advisories (chromadb 1.5.9 y diskcache 5.6.3, sin parche) |
 | `python3 scripts/mutation_check.py` (adr_validator) | 16 mutantes, 16 muertos, score 1.000 |
 | `cosmic-ray` 8.7.0 (adr_validator, copia aislada) | 160 mutantes, 124 muertos (77.5 %) |
+| `python3 scripts/jev_review.py --report --fake` (REQ-016) | OK (revision en JSON; no escribe en docs) |
+| `pip-audit -f cyclonedx-json -r requirements-optional.txt` | `docs/SBOM-2026-09-19.cdx.json` (119 componentes, 5 advisories) |
 | `vale README.md docs .docs` (opcional, Pilar 4) | 0 errores, 0 alertas (34 archivos) |
 | `bash scripts/verificar-proyecto.sh --pre-commit` | 40 OK, 0 fallos |
 
+## Revision de clasificaciones (REQ-016) y SBOM (2026-09-19)
+
+- `scripts/jev_review.py` (REQ-016): UI curses + `--report` que muestra las
+  clasificaciones de REQ-012 y recoge la confirmacion del programador; guarda en
+  `.docs/.storage/jev_review.json` (generado) sin tocar los documentos.
+- SBOM actual: `docs/SBOM-2026-09-19.cdx.json` (CycloneDX, 119 componentes, 5
+  advisories) generado con `pip-audit -f cyclonedx-json -r
+  requirements-optional.txt`; el `.venv` no contiene chromadb, por lo que un
+  escaneo del entorno no reflejaria el grafo resuelto. `auto_audit evidencias` y
+  el verificador reconocen `.spdx.json` y `.cdx.json`.
+
 ## Pendiente
 
-1. **Revision humana de las clasificaciones de REQ-012**: la integracion con el
-   modelo real funciona y **propone**; la categoria de `LSN-008` salio
+1. **Confirmar las clasificaciones de REQ-012**: ejecutar
+   `python3 scripts/jev_review.py` (UI) y dar OK/corregir; el resultado se guarda
+   en `.docs/.storage/jev_review.json`. La categoria de `LSN-008` salio
    equivocada, lo que confirma que la etiqueta definitiva es del humano
    (P1.17/P1.23).
 2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
-   ECE y la accuracy de `score`; hoy n=12 y el intervalo de confianza es ancho.
-3. **Regenerar el SBOM** (`docs/SBOM-2026-09-04.spdx.json`) con `syft` cuando
-   este disponible. `auto_audit vulns` ya re-escanea a demanda con pip-audit
-   (2026-09-19: 4 advisories sin parche en chromadb 1.5.9 y 1 en diskcache
-   5.6.3; riesgo aceptado para uso local embebido, LSN-007). Nota: el `.venv`
-   no tiene chromadb instalado, por lo que un SBOM por escaneo no refleja el
-   grafo resuelto de `requirements-optional.txt`.
+   ECE y la accuracy de `score`; hoy n=12. Requiere revision humana de cada
+   etiqueta (P1.15): crear candidatos en un fichero aparte y revisarlos antes de
+   fusionarlos con el set validado.
+3. **REQ-017**: herramientas de diagnostico, evaluacion y sugerencias de los
+   cuatro pilares para proyectos externos (en curso).
 
 ## Notas
 

@@ -29,6 +29,7 @@ import doc_validator as dv  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import jev_calibration as jc  # noqa: E402
 import jev_pillars as jp  # noqa: E402
+import jev_review as jr  # noqa: E402
 import lessons_extractor as le  # noqa: E402
 import mcp_server as mcp  # noqa: E402
 import mutation_check as mc  # noqa: E402
@@ -1225,6 +1226,69 @@ class TestMutationCheck(unittest.TestCase):
         finally:
             shutil.rmtree(copia, ignore_errors=True)
         self.assertGreaterEqual(resultado["score"], 0.8)
+
+
+class TestJevReview(unittest.TestCase):
+    """REQ-016: revision humana asistida de clasificaciones Jev (UI/report)."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_construir_items_requisitos(self):
+        items = jr.construir_items(["requisitos"], limit=3)
+        self.assertEqual(len(items), 3)
+        self.assertTrue(all(i["pilar"] == "requisitos" for i in items))
+        self.assertTrue(all(i["id"].startswith("REQ-") for i in items))
+
+    def test_construir_items_lecciones(self):
+        items = jr.construir_items(["lecciones"], limit=2)
+        self.assertTrue(all(i["pilar"] == "lecciones" for i in items))
+
+    def test_clasificar_con_cliente_falso(self):
+        items = [{"pilar": "requisitos", "id": "REQ-999", "texto": "texto"}]
+        filas = jr.clasificar(items, jr._ClienteFalso(), {"choice": 0.9})
+        self.assertEqual(len(filas), 1)
+        fila = filas[0]
+        self.assertEqual(fila["campo"], "prioridad")
+        self.assertIn(fila["propuesta"], fila["opciones"])
+        self.assertEqual(fila["estado"], "pendiente")
+
+    def test_aplicar_decisiones(self):
+        fila = {"propuesta": "Alta", "estado": "pendiente", "decision_final": None}
+        jr.aplicar_decision(fila, "y")
+        self.assertEqual((fila["estado"], fila["decision_final"]), ("ok", "Alta"))
+        fila2 = {"propuesta": "Alta", "estado": "pendiente", "decision_final": None}
+        jr.aplicar_decision(fila2, "n", "Baja")
+        self.assertEqual((fila2["estado"], fila2["decision_final"]), ("corregir", "Baja"))
+        fila3 = {"propuesta": "Alta", "estado": "pendiente", "decision_final": None}
+        jr.aplicar_decision(fila3, "s")
+        self.assertEqual((fila3["estado"], fila3["decision_final"]), ("saltar", None))
+
+    def test_guardar_revision(self):
+        filas = [
+            {"estado": "ok"}, {"estado": "corregir"}, {"estado": "pendiente"}, {"estado": "saltar"}
+        ]
+        path = self.tmp / "rev.json"
+        jr.guardar_revision(filas, path)
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(data["total"], 4)
+        self.assertEqual(data["ok"], 1)
+        self.assertEqual(data["corregir"], 1)
+        self.assertEqual(data["pendiente"], 1)
+        self.assertEqual(data["saltar"], 1)
+
+    def test_main_report_fake(self):
+        out = self.tmp / "rev.json"
+        os.environ["JEV_REVIEW_REPORT"] = str(out)
+        try:
+            self.assertEqual(jr.main(["--report", "--fake", "--limit", "2"]), 0)
+            self.assertTrue(out.exists())
+        finally:
+            os.environ.pop("JEV_REVIEW_REPORT", None)
+        self.assertNotIn(".docs/requirements", str(out))  # no escribe en los documentos
 
 
 if __name__ == "__main__":

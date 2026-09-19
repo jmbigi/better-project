@@ -134,3 +134,11 @@
   recomendacion: "Adoptar cosmic-ray como herramienta opcional de mutacion (mas rica que mutation_check.py) y usar un objetivo de test amplio (idealmente toda la suite) para reducir supervivientes; probarla en copia aislada (P1.21) y registrar la config minima."
   estado: Resuelta
   fecha: 2026-09-19
+- id: LSN-018
+  proyecto: "Ecosistema"
+  fase: "Deploy"
+  categoria: "Seguridad"
+  problema: "Regenerar el SBOM escaneando el .venv no refleja el grafo de requirements-optional.txt (chromadb no esta instalado en el .venv, solo pip-audit lo resuelve); ademas el SBOM SPDX previo habia quedado obsoleto."
+  recomendacion: "Generar el SBOM del grafo resuelto con 'pip-audit -f cyclonedx-json -r requirements-optional.txt' (sin instalar), versionarlo en docs/ y ampliar las exclusiones de seguridad (verificador y auto_audit) a .cdx.json, que tambien contiene purls."
+  estado: Resuelta
+  fecha: 2026-09-19

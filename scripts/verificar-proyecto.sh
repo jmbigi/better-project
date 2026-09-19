@@ -245,7 +245,7 @@ for root, dirs, files in os.walk('.'):
         # los SBOM generados (docs/SBOM-*.spdx.json) son evidencia P0.18 llena de
         # versiones de paquetes: falsos positivos de IPs (versiones de 4 partes)
         # y de emails (purls pkg:pypi/<nombre>@<version>). Se excluyen del check.
-        if f.startswith('SBOM-') and f.endswith('.spdx.json'):
+        if f.startswith('SBOM-') and f.endswith(('.spdx.json', '.cdx.json')):
             continue
         for i, linea in enumerate(open(ruta, errors='ignore'), 1):
             if excl.search(linea):
