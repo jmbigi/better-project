@@ -139,7 +139,7 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 .
 ├── .docs/
 │   ├── requirements/        # REQ-001..N (frontmatter YAML)
-│   ├── knowledge/           # architecture/, business-rules/, glossary.md
+│   ├── knowledge/           # documentos del dominio y de IA (ai/)
 │   ├── lessons/             # <anio>.yaml (lecciones aprendidas)
 │   └── .storage/            # generado: indices (no versionado)
 ├── .opencode/agents/        # code-reviewer, security-auditor, compliance-checker,
@@ -158,6 +158,11 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │   ├── mutation_check.py   # chequeo de mutaciones (REQ-015)
 │   ├── jev_review.py       # revision humana UI de clasificaciones (REQ-016)
 │   ├── diagnostico.py      # diagnostico de los 4 pilares en proyectos externos (REQ-017)
+│   ├── jev_llama.py        # motor Jev liviano con llama.cpp (REQ-011)
+│   ├── download_jev_model.py# descarga idempotente del modelo GGUF (REQ-011)
+│   ├── jev_pillars.py      # clasificacion asistida de los tres pilares (REQ-012)
+│   ├── jev_calibration.py  # calibracion por temperatura y metricas (REQ-011)
+│   ├── jev_calibration_merge.py # fusion de candidatos aprobados (REQ-018)
 │   └── hooks/pre-commit     # hook git local
 ├── demo/                    # proyecto de ejemplo (gestor de notas CLI)
 │   ├── src/notas.py         # codigo con referencias REQ-XXX
@@ -218,7 +223,7 @@ python3 scripts/jev_calibration_merge.py
 # Diagnosticar los 4 pilares en otro proyecto (REQ-017, solo lectura)
 python3 scripts/diagnostico.py --root <carpeta>
 
-# Suite de tests (126 casos, stdlib unittest)
+# Suite de tests (150 casos, stdlib unittest)
 python3 -m unittest discover -s tests -q
 
 # Verificacion completa previa a commit
