@@ -315,6 +315,8 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
 - `python scripts/diagnostico.py --root <carpeta>` — diagnostico, evaluacion y
   sugerencias de los cuatro pilares en un proyecto externo (REQ-017); solo
   lectura.
+- `python scripts/jev_calibration_merge.py [--aplicar]` — fusiona candidatos de
+  calibracion aprobados en el set validado (REQ-018); dry-run por defecto.
 - `bash scripts/setup.sh [--yes]` — onboarding guiado: entorno, hook,
   dependencias opcionales (doble confirmación de riesgo, P0.18) y primera
   validación (REQ-008).

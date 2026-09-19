@@ -29,6 +29,7 @@ import diagnostico as diag  # noqa: E402
 import doc_validator as dv  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import jev_calibration as jc  # noqa: E402
+import jev_calibration_merge as jcm  # noqa: E402
 import jev_pillars as jp  # noqa: E402
 import jev_review as jr  # noqa: E402
 import lessons_extractor as le  # noqa: E402
@@ -1376,6 +1377,66 @@ class TestDiagnostico(unittest.TestCase):
 
     def test_dir_inexistente(self):
         self.assertEqual(diag.main(["--root", str(self.tmp / "no_existe")]), 1)
+
+
+class TestJevCalibrationMerge(unittest.TestCase):
+    """REQ-018: fusion idempotente de candidatos aprobados en el set."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.set_path = self.tmp / "set.json"
+        self.cand_path = self.tmp / "cand.json"
+        self.set_path.write_text(json.dumps({
+            "version": 2,
+            "casos": [{"id": "N01", "tipo": "noul", "esperado": "yes"}],
+        }), encoding="utf-8")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _cand(self, estado="aprobado", casos=None):
+        self.cand_path.write_text(json.dumps({
+            "estado": estado,
+            "casos": casos if casos is not None else [
+                {"id": "N99", "tipo": "noul", "esperado": "yes"},
+                {"id": "C99", "tipo": "choice", "esperado": "requisitos"},
+            ],
+        }), encoding="utf-8")
+
+    def test_dry_run_no_escribe(self):
+        self._cand()
+        antes = self.set_path.read_text(encoding="utf-8")
+        set_data = jcm._leer(self.set_path)
+        resultado = jcm.fusionar(set_data, jcm._leer(self.cand_path), aplicar=False)
+        self.assertEqual(len(resultado["nuevos"]), 2)
+        self.assertEqual(set_data["version"], 2)
+        self.assertEqual(self.set_path.read_text(encoding="utf-8"), antes)
+
+    def test_aplicar_fusiona_y_subversiona(self):
+        self._cand()
+        set_data = jcm._leer(self.set_path)
+        resultado = jcm.fusionar(set_data, jcm._leer(self.cand_path), aplicar=True)
+        self.assertEqual(resultado["errores"], [])
+        self.assertEqual(set_data["version"], 3)
+        self.assertEqual([c["id"] for c in set_data["casos"]], ["N01", "N99", "C99"])
+        self.assertEqual(len(set_data["revision_humana"]["lotes_fusionados"]), 1)
+
+    def test_duplicado_es_error(self):
+        self._cand(casos=[{"id": "N01", "tipo": "noul", "esperado": "yes"}])
+        resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path), aplicar=True)
+        self.assertTrue(any("duplicado" in e for e in resultado["errores"]))
+
+    def test_no_aprobado_es_error_salvo_forzar(self):
+        self._cand(estado="pendiente_revision")
+        error = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path))
+        self.assertTrue(any("no estan aprobados" in e for e in error["errores"]))
+        forzado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path), forzar=True)
+        self.assertEqual(forzado["errores"], [])
+
+    def test_main_dry_run(self):
+        self._cand()
+        self.assertEqual(jcm.main(["--set", str(self.set_path), "--candidatos", str(self.cand_path)]), 0)
+        self.assertEqual(self.set_path.read_text(encoding="utf-8").count('"version": 2'), 1)
 
 
 if __name__ == "__main__":

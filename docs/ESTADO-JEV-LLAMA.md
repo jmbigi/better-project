@@ -139,13 +139,14 @@ cautelas estadisticas del artefacto de revision.
 
 | Verificacion | Resultado |
 |---|---|
-| `python3 -m unittest discover -s tests -q` | 132 tests OK |
+| `python3 -m unittest discover -s tests -q` | 137 tests OK |
 | `python3 scripts/adr_validator.py --strict` | 3 ADR, 0 errores, 0 alertas |
 | `python3 scripts/auto_audit.py all` | 0 errores (1 alerta: LSN-009 abierta) |
 | `python3 scripts/auto_audit.py vulns` (pip-audit) | 0 errores, 5 advisories (chromadb 1.5.9 y diskcache 5.6.3, sin parche) |
 | `python3 scripts/mutation_check.py` (adr_validator) | 16 mutantes, 16 muertos, score 1.000 |
 | `cosmic-ray` 8.7.0 (adr_validator, copia aislada) | 160 mutantes, 124 muertos (77.5 %) |
 | `python3 scripts/jev_review.py --report --fake` (REQ-016) | OK (revision en JSON; no escribe en docs) |
+| `python3 scripts/jev_calibration_merge.py --aplicar` (REQ-018) | set v3, 58 casos (22 noul / 18 choice / 18 score) |
 | `python3 scripts/diagnostico.py --root .` (REQ-017) | 100/100 (solido); dir vacio 0/100 sin escribir |
 | `pip-audit -f cyclonedx-json -r requirements-optional.txt` | `docs/SBOM-2026-09-19.cdx.json` (119 componentes, 5 advisories) |
 | `vale README.md docs .docs` (opcional, Pilar 4) | 0 errores, 0 alertas (34 archivos) |
@@ -164,19 +165,15 @@ cautelas estadisticas del artefacto de revision.
 
 ## Pendiente
 
-1. **Confirmar las clasificaciones de REQ-012**: ejecutar
-   `python3 scripts/jev_review.py` (UI) y dar OK/corregir; el resultado se guarda
-   en `.docs/.storage/jev_review.json`. La categoria de `LSN-008` salio
-   equivocada, lo que confirma que la etiqueta definitiva es del humano
-   (P1.17/P1.23).
-2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
-   ECE y la accuracy de `score`; hoy n=12. Primer lote de **candidatos** creado en
-   `.docs/knowledge/ai/jev_calibration_candidates.json` (18: N17-N22, C13-C18,
-   S13-S18), pendiente de revision humana con
-   `python3 scripts/jev_review.py --calibracion` antes de fusionarlos con el set
-   validado (P1.15).
-3. **REQ-017**: herramientas de diagnostico, evaluacion y sugerencias de los
-   cuatro pilares para proyectos externos (en curso).
+1. **Fusionar el lote 3 de candidatos**: revisar con
+   `python3 scripts/jev_review.py --calibracion` y fusionar con
+   `scripts/jev_calibration_merge.py --aplicar` (18 candidatos N23-N28,
+   C19-C24, S19-S24). Objetivo a medio plazo: >=100 casos por tipo.
+2. **Re-calibrar con el set ampliado** (v3, 58 casos): re-ejecutar
+   `scripts/jev_calibration.py --write` y actualizar las metricas de ESTADO.
+
+El programador confirmo el 2026-09-19 las clasificaciones de REQ-012
+presentadas y el lote 2 de candidatos (40 -> 58 casos, v3).
 
 ## Notas
 
