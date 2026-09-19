@@ -180,7 +180,7 @@ recomienda un orden de magnitud más de casos por clase (cientos) [4][5].
    tres pilares).
 
 Total original: **40 casos** (16 `noul`, 12 `choice`, 12 `score`). Tras las
-ampliaciones (sección 7): **166 casos** (58/54/54), set `version: 9`.
+ampliaciones (sección 7): **184 casos** (64/60/60), set `version: 10`.
 
 ## 7. Ampliaciones posteriores
 
@@ -198,9 +198,11 @@ ampliaciones (sección 7): **166 casos** (58/54/54), set `version: 9`.
 - **Lote 7 (2026-09-19)**: 18 candidatos (N47-N52, C43-C48, S43-S48) aprobados y
   fusionados (REQ-018) → `version: 8`, 148 casos.
 - **Lote 8 (2026-09-19)**: 18 candidatos (N53-N58, C49-C54, S49-S54) aprobados y
-  fusionados (REQ-018) → `version: 9`, **166 casos** (58 `noul`, 54 `choice`,
-  54 `score`).
-- **Lote 9 (pendiente de revisión)**: 18 candidatos (N59-N64, C55-C60, S55-S60)
+  fusionados (REQ-018) → `version: 9`, 166 casos.
+- **Lote 9 (2026-09-19)**: 18 candidatos (N59-N64, C55-C60, S55-S60) aprobados y
+  fusionados (REQ-018) → `version: 10`, **184 casos** (64 `noul`, 60 `choice`,
+  60 `score`).
+- **Lote 10 (pendiente de revisión)**: 18 candidatos (N65-N70, C61-C66, S61-S66)
   en `.docs/knowledge/ai/jev_calibration_candidates.json`; se revisan con
   `python3 scripts/jev_review.py --calibracion`.
 - Objetivo a medio plazo: ≥100 casos por tipo para estabilizar ECE y la accuracy

@@ -785,6 +785,22 @@ class TestJevCalibration(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
+    def test_bootstrap_ci_determinista(self):
+        valores = [1.0, 2.0, 3.0, 4.0]
+        primero = jc.bootstrap_ci(valores)
+        segundo = jc.bootstrap_ci(valores)
+        self.assertEqual(primero, segundo)
+        lo, hi = primero
+        self.assertLessEqual(lo, hi)
+        self.assertEqual(jc.bootstrap_ci([]), (0.0, 0.0))
+
+    def test_valores_por_caso(self):
+        records = [{"probs": [1.0, 0.0], "label_idx": 0}, {"probs": [0.5, 0.5], "label_idx": 1}]
+        nlls, briers = jc._valores_por_caso(records, 1.0)
+        self.assertEqual(len(nlls), 2)
+        self.assertEqual(len(briers), 2)
+        self.assertAlmostEqual(briers[0], 0.0, places=9)
+
     def test_ece_valor_conocido(self):
         probs = [[0.9, 0.1], [0.9, 0.1]]
         self.assertAlmostEqual(jc.ece(probs, [0, 1]), 0.4, places=9)

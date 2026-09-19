@@ -41,6 +41,9 @@ DEFAULT_CACHE = Path(__file__).resolve().parent.parent / ".docs" / ".storage" / 
 EPS = 1e-12
 # Grid de temperatura: suficiente para overconfidence tipica de LLM (T > 1).
 GRID = [round(0.1 * i, 1) for i in range(1, 51)]  # 0.1 .. 5.0
+# IC bootstrap de NLL/Brier (determinista por seed fijo, P1.9).
+BOOTSTRAP_N = 500
+BOOTSTRAP_SEED = 20260919
 
 
 def _log(p: float) -> float:
@@ -316,12 +319,35 @@ def _por_tipo(records: list[dict[str, Any]], temperature: float) -> dict[str, di
     return {t: evaluate([r for r in records if r["tipo"] == t], temperature) for t in tipos}
 
 
+def _valores_por_caso(records: list[dict[str, Any]], temperature: float) -> tuple[list[float], list[float]]:
+    probs_list = [temperature_scale(r["probs"], temperature) for r in records]
+    labels = [r["label_idx"] for r in records]
+    nlls = [nll(p, y) for p, y in zip(probs_list, labels)]
+    briers = [brier(p, y) for p, y in zip(probs_list, labels)]
+    return nlls, briers
+
+
+def bootstrap_ci(valores: list[float], n: int | None = None, seed: int = BOOTSTRAP_SEED) -> tuple[float, float]:
+    """IC 95 % por bootstrap (percentil) de la media de `valores` (determinista)."""
+    if not valores:
+        return (0.0, 0.0)
+    rng = random.Random(seed)
+    k = len(valores)
+    remuestras = n or BOOTSTRAP_N
+    medias = sorted(sum(valores[rng.randrange(k)] for _ in range(k)) / k for _ in range(remuestras))
+    lo = medias[max(0, int(0.025 * remuestras))]
+    hi = medias[min(remuestras - 1, int(0.975 * remuestras))]
+    return (round(lo, 4), round(hi, 4))
+
+
 def calibrate(
     client: JevLlama, casos: list[dict[str, Any]], folds: int = 5,
     cache: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     records = run_cases(client, casos, cache)
     t_full = fit_temperature(records)
+    nll_t1, brier_t1 = _valores_por_caso(records, 1.0)
+    nll_tr, brier_tr = _valores_por_caso(records, t_full)
     return {
         "modelo": client.model_path.name,
         "n_casos": len(records),
@@ -329,6 +355,14 @@ def calibrate(
         "T_recomendada": t_full,
         "T1_set_completo": evaluate(records, 1.0),
         "T_recomendada_set_completo": evaluate(records, t_full),
+        "bootstrap": {
+            "n": BOOTSTRAP_N,
+            "seed": BOOTSTRAP_SEED,
+            "nll_ci95_T1": bootstrap_ci(nll_t1),
+            "nll_ci95_Trecomendada": bootstrap_ci(nll_tr),
+            "brier_ci95_T1": bootstrap_ci(brier_t1),
+            "brier_ci95_Trecomendada": bootstrap_ci(brier_tr),
+        },
         "validacion_cruzada": kfold(records, folds),
         "por_tipo_T1": _por_tipo(records, 1.0),
         "por_tipo_Trecomendada": _por_tipo(records, t_full),
@@ -344,6 +378,12 @@ def _print_human(report: dict[str, Any]) -> None:
     print(f"{'metrica':<16}{'T=1':>10}{'T='+str(report['T_recomendada']):>10}")
     for k in ("nll", "brier", "ece", "accuracy", "confianza_media"):
         print(f"{k:<16}{report['T1_set_completo'][k]:>10.4f}{report['T_recomendada_set_completo'][k]:>10.4f}")
+    b = report.get("bootstrap")
+    if b:
+        print(
+            f"  IC95 bootstrap (n={b['n']})  NLL {b['nll_ci95_T1']} -> {b['nll_ci95_Trecomendada']}  "
+            f"Brier {b['brier_ci95_T1']} -> {b['brier_ci95_Trecomendada']}"
+        )
     cv = report["validacion_cruzada"]
     print()
     print(f"Validacion cruzada ({cv['folds']} folds, T media {cv['T_media']:.2f}):")
