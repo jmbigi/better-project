@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import curses
+import hashlib
 import json
 import os
 import sys
@@ -35,7 +36,27 @@ ROOT = Path(__file__).resolve().parent.parent
 REQ_DIR = ROOT / ".docs" / "requirements"
 LESSONS_DIR = ROOT / ".docs" / "lessons"
 DEFAULT_REPORT = ROOT / ".docs" / ".storage" / "jev_review.json"
+DEFAULT_CACHE = ROOT / ".docs" / ".storage" / "jev_review_cache.json"
+CANDIDATES = ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_candidates.json"
 UMBRAL = 0.5
+
+
+def _opciones_caso(caso: dict[str, Any]) -> list[str]:
+    tipo = caso["tipo"]
+    if tipo == "noul":
+        return ["yes", "no"]
+    if tipo == "choice":
+        return list(caso["criterios"].keys())
+    return [str(i) for i in range(len(caso["niveles"]))]
+
+
+def _items_calibracion(path: Path = CANDIDATES, limit: int | None = None) -> list[dict[str, Any]]:
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    items = [
+        {"pilar": "calibracion", "id": caso["id"], "texto": caso["estado"], "caso": caso}
+        for caso in data.get("casos", [])
+    ]
+    return items[:limit] if limit else items
 
 
 class _ClienteFalso:
@@ -67,8 +88,12 @@ def _cuerpo_sin_frontmatter(text: str) -> str:
     return text.strip()
 
 
-def construir_items(pilares: list[str], limit: int | None = None) -> list[dict[str, Any]]:
-    """Devuelve [(pilar, id, texto)] segun los pilares pedidos."""
+def construir_items(
+    pilares: list[str], limit: int | None = None, calibracion: bool = False
+) -> list[dict[str, Any]]:
+    """Devuelve items de revision segun los pilares pedidos (o candidatos)."""
+    if calibracion:
+        return _items_calibracion(limit=limit)
     items: list[dict[str, Any]] = []
     if "requisitos" in pilares:
         for path in sorted(REQ_DIR.glob("REQ-*.md")):
@@ -90,9 +115,58 @@ def construir_items(pilares: list[str], limit: int | None = None) -> list[dict[s
     return items[:limit] if limit else items
 
 
-def filas_de_item(item: dict[str, Any], client: Any, accuracy: dict[str, float]) -> list[dict[str, Any]]:
-    """Clasifica UN item y devuelve sus filas de revision (una por decision)."""
-    salida = jp.ejecutar(item["pilar"], item["id"], item["texto"], client, UMBRAL, accuracy)
+def _clave(item: dict[str, Any]) -> str:
+    digest = hashlib.sha1(item["texto"].encode("utf-8")).hexdigest()[:12]
+    return f"{item['pilar']}|{item['id']}|{digest}"
+
+
+def _ruta_cache(path: str | None = None) -> Path:
+    return Path(path or os.getenv("JEV_REVIEW_CACHE", str(DEFAULT_CACHE)))
+
+
+def cargar_cache(path: str | None = None) -> dict[str, Any]:
+    ruta = _ruta_cache(path)
+    if ruta.exists():
+        try:
+            return json.loads(ruta.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def guardar_cache(cache: dict[str, Any], path: str | None = None) -> None:
+    ruta = _ruta_cache(path)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    ruta.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+
+def filas_de_item(
+    item: dict[str, Any], client: Any, accuracy: dict[str, float], cache: dict | None = None
+) -> list[dict[str, Any]]:
+    """Clasifica UN item (o reutiliza la cache) y devuelve sus filas."""
+    if "caso" in item:
+        caso = item["caso"]
+        return [
+            {
+                "item": caso["id"],
+                "pilar": "calibracion",
+                "campo": caso["tipo"],
+                "tipo": caso["tipo"],
+                "opciones": _opciones_caso(caso),
+                "propuesta": str(caso["esperado"]),
+                "confianza": None,
+                "revision_humana": False,
+                "estado": "pendiente",
+                "decision_final": None,
+            }
+        ]
+    clave = _clave(item)
+    if cache is not None and clave in cache:
+        decisiones = cache[clave]
+    else:
+        decisiones = jp.ejecutar(item["pilar"], item["id"], item["texto"], client, UMBRAL, accuracy)["decisiones"]
+        if cache is not None:
+            cache[clave] = decisiones
     return [
         {
             "item": item["id"],
@@ -106,7 +180,7 @@ def filas_de_item(item: dict[str, Any], client: Any, accuracy: dict[str, float])
             "estado": "pendiente",
             "decision_final": None,
         }
-        for decision in salida["decisiones"]
+        for decision in decisiones
     ]
 
 
@@ -145,12 +219,16 @@ def guardar_revision(filas: list[dict[str, Any]], path: Path) -> None:
     path.write_text(json.dumps(resumen, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def _conf_txt(conf: float | None) -> str:
+    return "   n/a" if conf is None else f"{conf:>6.2f}"
+
+
 def imprimir_tabla(filas: list[dict[str, Any]]) -> None:
     print(f"{'item':<14}{'pilar':<14}{'campo':<13}{'propuesta':<18}{'conf':>6}  estado")
     for f in filas:
         print(
             f"{f['item']:<14}{f['pilar']:<14}{f['campo']:<13}{str(f['propuesta']):<18}"
-            f"{f['confianza']:>6.2f}  {f['estado']}"
+            f"{_conf_txt(f['confianza'])}  {f['estado']}"
         )
 
 
@@ -159,7 +237,7 @@ def _dibujar(stdscr, fila: dict[str, Any], cabecera: str, mensaje: str) -> None:
     alto, ancho = stdscr.getmaxyx()
     stdscr.addnstr(0, 0, f"REVISION JEV (REQ-016)  {cabecera}", ancho - 1, curses.A_BOLD)
     stdscr.addnstr(1, 0, f"{fila['item']}  [{fila['pilar']}/{fila['campo']}]  tipo={fila['tipo']}", ancho - 1)
-    texto = f"Propuesta: {fila['propuesta']}   confianza={fila['confianza']:.2f}"
+    texto = f"Propuesta: {fila['propuesta']}   confianza={_conf_txt(fila['confianza']).strip()}"
     stdscr.addnstr(2, 0, texto, ancho - 1)
     stdscr.addnstr(4, 0, "Opciones:", ancho - 1)
     for i, op in enumerate(fila["opciones"], 1):
@@ -169,13 +247,22 @@ def _dibujar(stdscr, fila: dict[str, Any], cabecera: str, mensaje: str) -> None:
     stdscr.refresh()
 
 
-def repl_curses(items: list[dict[str, Any]], client: Any, accuracy: dict[str, float]) -> list[dict[str, Any]]:
+def repl_curses(
+    items: list[dict[str, Any]], client: Any, accuracy: dict[str, float],
+    cache: dict | None = None, out: Path | None = None,
+) -> list[dict[str, Any]]:
     """UI incremental: clasifica cada item y pregunta su confirmacion al momento."""
     filas: list[dict[str, Any]] = []
 
+    def _guardar():
+        if cache is not None:
+            guardar_cache(cache)
+        if out is not None:
+            guardar_revision(filas, out)
+
     def _run(stdscr):
         for n_item, item in enumerate(items, 1):
-            nuevas = filas_de_item(item, client, accuracy)
+            nuevas = filas_de_item(item, client, accuracy, cache)
             filas.extend(nuevas)
             for fila in nuevas:
                 cabecera = f"item {n_item}/{len(items)}  fila {len(filas)}"
@@ -197,6 +284,7 @@ def repl_curses(items: list[dict[str, Any]], client: Any, accuracy: dict[str, fl
                         mensaje = "Opcion no valida"
                     else:
                         mensaje = f"Tecla no valida: {tecla!r}"
+            _guardar()
 
     curses.wrapper(_run)
     return filas
@@ -209,38 +297,49 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--limit", type=int, default=None, help="Maximo de items")
     parser.add_argument("--report", action="store_true", help="Tabla por consola (sin UI)")
     parser.add_argument("--fake", action="store_true", help="Cliente simulado (sin modelo)")
+    parser.add_argument("--calibracion", action="store_true",
+                        help="Revisar etiquetas candidatas de calibracion (sin modelo)")
     parser.add_argument("--out", default=None, help="Ruta del JSON de revision")
     parser.add_argument("--model", default=None, help="Ruta al GGUF (modelo real)")
     args = parser.parse_args(argv)
 
-    pilares = args.pilar or ["requisitos", "lecciones"]
-    items = construir_items(pilares, args.limit)
+    if args.calibracion:
+        items = construir_items(["calibracion"], args.limit, calibracion=True)
+        client: Any = None
+        accuracy: dict[str, float] = {}
+    else:
+        pilares = args.pilar or ["requisitos", "lecciones"]
+        items = construir_items(pilares, args.limit)
+        if args.fake:
+            client = _ClienteFalso()
+        else:
+            client = JevLlama(model_path=args.model)
+        accuracy = jp.accuracy_por_tipo(
+            Path(os.getenv("JEV_CALIBRATION_REPORT", str(jp.DEFAULT_CALIBRATION_REPORT)))
+        )
     if not items:
         print("No hay items para revisar.", file=sys.stderr)
         return 1
-    if args.fake:
-        client: Any = _ClienteFalso()
-    else:
-        client = JevLlama(model_path=args.model)
-    accuracy = jp.accuracy_por_tipo(
-        Path(os.getenv("JEV_CALIBRATION_REPORT", str(jp.DEFAULT_CALIBRATION_REPORT)))
-    )
+    out = Path(args.out or os.getenv("JEV_REVIEW_REPORT", str(DEFAULT_REPORT)))
+    cache = cargar_cache()
     filas: list[dict[str, Any]] = []
     if args.report or not sys.stdout.isatty():
         print(f"{'item':<14}{'pilar':<14}{'campo':<13}{'propuesta':<18}{'conf':>6}")
         for item in items:
-            nuevas = filas_de_item(item, client, accuracy)
+            nuevas = filas_de_item(item, client, accuracy, cache)
             filas.extend(nuevas)
             for f in nuevas:
                 print(
                     f"{f['item']:<14}{f['pilar']:<14}{f['campo']:<13}"
-                    f"{str(f['propuesta']):<18}{f['confianza']:>6.2f}   {f['estado']}"
+                    f"{str(f['propuesta']):<18}{_conf_txt(f['confianza'])}   {f['estado']}"
                 )
             sys.stdout.flush()
+            guardar_cache(cache)
+            guardar_revision(filas, out)  # progreso incremental (no se pierde por timeout)
     else:
-        filas = repl_curses(items, client, accuracy)
+        filas = repl_curses(items, client, accuracy, cache, out)
 
-    out = Path(args.out or os.getenv("JEV_REVIEW_REPORT", str(DEFAULT_REPORT)))
+    guardar_cache(cache)
     guardar_revision(filas, out)
     print(f"\nRevision guardada en {out}", file=sys.stderr)
     return 0

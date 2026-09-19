@@ -139,7 +139,7 @@ cautelas estadisticas del artefacto de revision.
 
 | Verificacion | Resultado |
 |---|---|
-| `python3 -m unittest discover -s tests -q` | 126 tests OK |
+| `python3 -m unittest discover -s tests -q` | 132 tests OK |
 | `python3 scripts/adr_validator.py --strict` | 3 ADR, 0 errores, 0 alertas |
 | `python3 scripts/auto_audit.py all` | 0 errores (1 alerta: LSN-009 abierta) |
 | `python3 scripts/auto_audit.py vulns` (pip-audit) | 0 errores, 5 advisories (chromadb 1.5.9 y diskcache 5.6.3, sin parche) |
@@ -170,9 +170,11 @@ cautelas estadisticas del artefacto de revision.
    equivocada, lo que confirma que la etiqueta definitiva es del humano
    (P1.17/P1.23).
 2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
-   ECE y la accuracy de `score`; hoy n=12. Requiere revision humana de cada
-   etiqueta (P1.15): crear candidatos en un fichero aparte y revisarlos antes de
-   fusionarlos con el set validado.
+   ECE y la accuracy de `score`; hoy n=12. Primer lote de **candidatos** creado en
+   `.docs/knowledge/ai/jev_calibration_candidates.json` (18: N17-N22, C13-C18,
+   S13-S18), pendiente de revision humana con
+   `python3 scripts/jev_review.py --calibracion` antes de fusionarlos con el set
+   validado (P1.15).
 3. **REQ-017**: herramientas de diagnostico, evaluacion y sugerencias de los
    cuatro pilares para proyectos externos (en curso).
 

@@ -1284,12 +1284,63 @@ class TestJevReview(unittest.TestCase):
     def test_main_report_fake(self):
         out = self.tmp / "rev.json"
         os.environ["JEV_REVIEW_REPORT"] = str(out)
+        os.environ["JEV_REVIEW_CACHE"] = str(self.tmp / "cache.json")
         try:
             self.assertEqual(jr.main(["--report", "--fake", "--limit", "2"]), 0)
             self.assertTrue(out.exists())
         finally:
             os.environ.pop("JEV_REVIEW_REPORT", None)
+            os.environ.pop("JEV_REVIEW_CACHE", None)
         self.assertNotIn(".docs/requirements", str(out))  # no escribe en los documentos
+
+    def test_cache_evita_recalcular(self):
+        llamadas = {"n": 0}
+
+        class _Contador(jr._ClienteFalso):
+            def decide(self, state, questions):
+                llamadas["n"] += 1
+                return super().decide(state, questions)
+
+        item = {"pilar": "requisitos", "id": "REQ-999", "texto": "texto"}
+        cache: dict = {}
+        primera = jr.filas_de_item(item, _Contador(), {"choice": 0.9}, cache)
+        segunda = jr.filas_de_item(item, _Contador(), {"choice": 0.9}, cache)
+        self.assertEqual(llamadas["n"], 1)
+        self.assertEqual(primera[0]["propuesta"], segunda[0]["propuesta"])
+
+    def test_clave_cache_estable(self):
+        a = {"pilar": "lecciones", "id": "LSN-1", "texto": "mismo"}
+        b = {"pilar": "lecciones", "id": "LSN-1", "texto": "mismo"}
+        self.assertEqual(jr._clave(a), jr._clave(b))
+
+    def test_cache_roundtrip(self):
+        path = self.tmp / "cache.json"
+        jr.guardar_cache({"k": [{"campo": "prioridad"}]}, str(path))
+        self.assertEqual(jr.cargar_cache(str(path))["k"][0]["campo"], "prioridad")
+        self.assertEqual(jr.cargar_cache(str(self.tmp / "no.json")), {})
+
+    def test_construir_items_calibracion(self):
+        items = jr.construir_items(["calibracion"], limit=2, calibracion=True)
+        self.assertEqual(len(items), 2)
+        self.assertTrue(all("caso" in i and i["pilar"] == "calibracion" for i in items))
+
+    def test_filas_calibracion_no_usa_modelo(self):
+        items = jr.construir_items(["calibracion"], limit=1, calibracion=True)
+        filas = jr.filas_de_item(items[0], client=None, accuracy={})
+        self.assertEqual(filas[0]["propuesta"], str(items[0]["caso"]["esperado"]))
+        self.assertIsNone(filas[0]["confianza"])
+        self.assertTrue(filas[0]["opciones"])
+
+    def test_main_calibracion_report(self):
+        out = self.tmp / "cal.json"
+        os.environ["JEV_REVIEW_REPORT"] = str(out)
+        os.environ["JEV_REVIEW_CACHE"] = str(self.tmp / "cache.json")
+        try:
+            self.assertEqual(jr.main(["--calibracion", "--report", "--limit", "3"]), 0)
+            self.assertTrue(out.exists())
+        finally:
+            os.environ.pop("JEV_REVIEW_REPORT", None)
+            os.environ.pop("JEV_REVIEW_CACHE", None)
 
 
 class TestDiagnostico(unittest.TestCase):

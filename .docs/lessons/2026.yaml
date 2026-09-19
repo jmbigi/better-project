@@ -142,3 +142,11 @@
   recomendacion: "Generar el SBOM del grafo resuelto con 'pip-audit -f cyclonedx-json -r requirements-optional.txt' (sin instalar), versionarlo en docs/ y ampliar las exclusiones de seguridad (verificador y auto_audit) a .cdx.json, que tambien contiene purls."
   estado: Resuelta
   fecha: 2026-09-19
+- id: LSN-019
+  proyecto: "Ecosistema / Jev (REQ-011)"
+  fase: "Implementacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "La revision con el modelo real tardo mas de 280s para 35 items (~8s/item) y, al agotarse el timeout, se perdio todo el progreso porque jev_review guardaba solo al final."
+  recomendacion: "Guardar la revision y la cache de clasificaciones de forma incremental por item; la cache (clave pilar|id|sha1(texto)) evita recalcular en reejecuciones. Para sets grandes, acotar con --pilar/--limit o revisar interactivamente y salir con q (guarda lo revisado)."
+  estado: Resuelta
+  fecha: 2026-09-19

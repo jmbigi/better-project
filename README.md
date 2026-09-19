@@ -209,6 +209,9 @@ python3 scripts/mutation_check.py
 # Revisar clasificaciones Jev con UI (REQ-016): OK / corregir / saltar
 python3 scripts/jev_review.py
 
+# Revisar etiquetas candidatas de calibracion (sin modelo)
+python3 scripts/jev_review.py --calibracion
+
 # Diagnosticar los 4 pilares en otro proyecto (REQ-017, solo lectura)
 python3 scripts/diagnostico.py --root <carpeta>
 
