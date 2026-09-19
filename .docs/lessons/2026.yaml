@@ -60,7 +60,7 @@
   categoria: "Riesgo_Tecnico"
   problema: "El motor Jev (REQ-011) pasaba los tests con mocks que simulaban scores como lista plana; el objeto real de llama-cpp-python expone scores 2D (n_ctx, vocab) y solo guarda logits si se pasa logits_all=True. La inferencia real fallaba con TypeError y ademas JEV_MODEL_PATH era ignorado."
   recomendacion: "Los mocks deben reproducir la forma y semantica reales de la dependencia (dimensionalidad, indices, flags de configuracion) y deben fallar con el codigo defectuoso. Validar siempre una inferencia end-to-end con un modelo real pequeno antes de declarar un REQ implementado (P1.1/P1.21)."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-19
 - id: LSN-009
   proyecto: "Ecosistema / Jev (REQ-011)"

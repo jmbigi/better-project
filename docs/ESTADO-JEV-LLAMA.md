@@ -72,7 +72,9 @@ Salida previa con un modelo local alternativo
 ### Commit
 
 - `648f95f` — feat(jev): cliente Jev AI liviano con llama.cpp (REQ-011).
-- Correcciones posteriores: pendientes de commit.
+- `b289293` — fix(jev): corrige inferencia real del motor REQ-011.
+- `1f62e37` — feat(jev): calibracion por temperatura con NLL/Brier/ECE.
+- Push a `origin/main`: sincronizado.
 
 ## Calibracion (2026-09-19)
 
@@ -100,10 +102,13 @@ en `.docs/.storage/jev_calibration.json`. Aplicar con `JEV_TEMPERATURE=2.0`.
 
 ## Pendiente
 
-1. **Revision humana de las etiquetas** del set de calibracion (P1.15): la
-   propuesta actual es de la IA y requiere validacion del programador.
-2. **Ampliacion opcional**: integrar Jev con los tres pilares (clasificar
-   requisitos, scorear conocimiento, clasificar lecciones) — no solicitado aun.
+1. **Revision humana de las etiquetas** del set de calibracion (P1.15):
+   artefacto de revision generado en `docs/REVISION-SET-CALIBRACION.md`.
+   Pendiente de que el programador marque OK/corregir; las etiquetas siguen
+   sin validar.
+2. **Integracion con los tres pilares**: especificacion en
+   `.docs/requirements/REQ-012.md` (estado `Draft`). Pendiente de aprobacion
+   del programador antes de implementar (P1.24).
 
 ## Notas
 
