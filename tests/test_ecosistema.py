@@ -1194,7 +1194,7 @@ class TestMutationCheck(unittest.TestCase):
     def test_mutantes_sintacticamente_validos(self):
         source = "def f(a, b):\n    return a == b and True\n"
         for _, codigo in mc.generar_mutantes(source):
-            ast.parse(codigo)
+            self.assertIsNotNone(ast.parse(codigo))
 
     def test_medir_agrega_y_restaura(self):
         scripts = self.tmp / "scripts"

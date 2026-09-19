@@ -110,3 +110,11 @@
   recomendacion: "Usar el chequeo de mutaciones para hallar huecos que la cobertura de lineas no ve; al cerrar cada hueco, anadir el caso que mate al mutante y re-ejecutar hasta score 1.0 en el modulo."
   estado: Resuelta
   fecha: 2026-09-19
+- id: LSN-015
+  proyecto: "Ecosistema"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "mutmut 3.6 (ya instalado) no es viable en este proyecto sin una configuracion especifica de pytest: exige source_paths/pytest_add_cli_args_test_selection y su recoleccion de stats (run_stats) falla con BadTestExecutionCommandsException sobre la suite unittest, aunque pytest 9 si recoge TestADRValidator por separado (14 passed)."
+  recomendacion: "Medir mutaciones con el chequeo stdlib scripts/mutation_check.py (REQ-015); si se quiere mutmut, migrar a un layout pytest con config dedicada y probarlo en copia aislada (P1.21). No adoptar una herramienta por popularidad (ad populum, Pilar 4)."
+  estado: Resuelta
+  fecha: 2026-09-19

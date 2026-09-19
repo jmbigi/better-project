@@ -78,6 +78,13 @@ dependencias opcionales y el riesgo se acepta para uso **local embebido**
 versionado (`docs/SBOM-2026-09-04.spdx.json`) queda desactualizado: regenerarlo
 con `syft` cuando esté disponible (P0.18).
 
+**Evaluación de `mutmut` (2026-09-19)**: se probó `mutmut` 3.6 en una copia
+aislada; exige configuración específica de pytest y su recolección de stats
+falla sobre esta suite unittest (`BadTestExecutionCommandsException`), aunque
+pytest 9 sí recoge `TestADRValidator` por separado (14 passed). Se mantiene el
+chequeo stdlib `scripts/mutation_check.py`; `cosmic-ray` queda sin evaluar
+(LSN-015).
+
 ## 6. Para los proyectos que sigan estas reglas
 
 - Copiar `scripts/auto_audit.py` (stdlib puro, sin dependencias) y añadir el

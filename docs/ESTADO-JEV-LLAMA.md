@@ -153,10 +153,11 @@ cautelas estadisticas del artefacto de revision.
    (P1.17/P1.23).
 2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
    ECE y la accuracy de `score`; hoy n=12 y el intervalo de confianza es ancho.
-3. **Chequeo de mutaciones**: `scripts/mutation_check.py` (REQ-015) ya mide la
-   fuerza de la suite con una heuristica aislada (2026-09-19: 16/16 mutantes de
-   `adr_validator.py` muertos, tras cerrar un hueco que detecto). Pendiente:
-   evaluar `mutmut`/`cosmic-ray` para mutaciones mas ricas.
+3. **Chequeo de mutaciones**: `scripts/mutation_check.py` (REQ-015) mide la
+   fuerza con una heuristica aislada (2026-09-19: 16/16 mutantes de
+   `adr_validator.py` muertos, tras cerrar un hueco que detecto). `mutmut` 3.6
+   se evaluo y no es viable aqui sin un layout pytest (su recoleccion de stats
+   falla sobre la suite unittest, LSN-015); `cosmic-ray` queda sin evaluar.
 4. **`vale` opcional** con estilos propios de "claims sin metrica" para reforzar
    el Pilar 4 mas alla de la heuristica de `auto_audit sesgos`.
 5. **Regenerar el SBOM** (`docs/SBOM-2026-09-04.spdx.json`) con `syft` cuando
