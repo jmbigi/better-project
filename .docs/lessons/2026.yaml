@@ -78,3 +78,19 @@
   recomendacion: "Al implementar un requisito, cambiar su estado a Implementado en el mismo cambio que agrega la referencia en el codigo; el estado Draft/Aprobado es solo para especificaciones sin codigo (P1.24)."
   estado: Resuelta
   fecha: 2026-09-19
+- id: LSN-011
+  proyecto: "Ecosistema"
+  fase: "Implementacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "El primer auditor de sesgos documental (REQ-014) marco 6 alertas en AGENTS.md y docs/REGLAS-COMPLETAS.md porque el lenguaje normativo usa terminos absolutos deliberados ('100%', 'sin errores') como reglas, no como afirmaciones; eran falsos positivos."
+  recomendacion: "Un auditor de prosa sin contexto produce ruido: excluir los documentos normativos (AGENTS.md, REGLAS-COMPLETAS.md) y limitar el analisis a la documentacion narrativa (README, arquitectura, ADR, knowledge), con lista blanca para catalogos de ejemplos."
+  estado: Resuelta
+  fecha: 2026-09-19
+- id: LSN-012
+  proyecto: "Ecosistema"
+  fase: "Diseno"
+  categoria: "Proceso"
+  problema: "Al investigar herramientas y fuentes para el Pilar 4, la tentacion era adoptar las mas populares (Vale, mutmut) sin evaluar coste/beneficio (ad populum) y citar fuentes sin verificarlas (P0.2/P0.18)."
+  recomendacion: "Separar siempre lo verificado (URL/licencia comprobadas) de lo candidato; adoptar una herramienta solo con ADR de >= 2 alternativas y tras pasar P0.18 (SBOM, escaneo, licencia)."
+  estado: Resuelta
+  fecha: 2026-09-19

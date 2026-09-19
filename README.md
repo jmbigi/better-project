@@ -62,11 +62,14 @@ Este pilar es transversal: controla la calidad de los tres pilares de datos
 (requisitos, conocimiento y lecciones).
 
 El detalle (taxonomía de sesgos, catálogo de falacias, matriz por fase y plan de
-mitigación) está en `docs/SESGOS-Y-FALACIAS.md`. Se ejecuta con el registro de
-decisiones `docs/decisions/` y `scripts/adr_validator.py` (REQ-013): cada ADR
-documenta contexto, alternativas, decisión, consecuencias y supuestos, y el
-validador emite alertas de falsa dicotomía, adjetivos sin métrica, premisas
-ocultas y afirmaciones absolutas. El verificador lo ejecuta en cada pre-commit.
+mitigación) está en `docs/SESGOS-Y-FALACIAS.md`, y el catálogo de herramientas y
+fuentes de referencia en `docs/HERRAMIENTAS-Y-FUENTES.md`. Se ejecuta con el
+registro de decisiones `docs/decisions/` y `scripts/adr_validator.py` (REQ-013):
+cada ADR documenta contexto, alternativas, decisión, consecuencias y supuestos, y
+el validador emite alertas de falsa dicotomía, adjetivos sin métrica, premisas
+ocultas y afirmaciones absolutas. `scripts/auto_audit.py` (REQ-014) añade cinco
+auto-auditorías: sesgos documentales, frescura del SBOM, decisiones pendientes,
+tests débiles y trazabilidad de IA. El verificador los ejecuta en cada pre-commit.
 
 ## Los 50 errores de LLM que se previenen
 
@@ -151,6 +154,7 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │   ├── ci.sh                # CI local sin proveedores (REQ-009)
 │   ├── verificar-proyecto.sh# verificacion de coherencia del repo (tests: REQ-010)
 │   ├── adr_validator.py    # valida ADRs y audita sesgos (REQ-013)
+│   ├── auto_audit.py       # auto-auditoria del proyecto (REQ-014)
 │   └── hooks/pre-commit     # hook git local
 ├── demo/                    # proyecto de ejemplo (gestor de notas CLI)
 │   ├── src/notas.py         # codigo con referencias REQ-XXX
@@ -193,7 +197,10 @@ python3 scripts/tui.py
 # Pilar 4: validar ADRs y auditar sesgos/falacias
 python3 scripts/adr_validator.py
 
-# Suite de tests (73 casos, stdlib unittest)
+# Auto-auditoria del proyecto (sesgos, evidencias, decisiones, tests, IA)
+python3 scripts/auto_audit.py all
+
+# Suite de tests (100 casos, stdlib unittest)
 python3 -m unittest discover -s tests -q
 
 # Verificacion completa previa a commit

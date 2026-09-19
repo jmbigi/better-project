@@ -22,6 +22,7 @@ SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import adr_validator as av  # noqa: E402
+import auto_audit as aa  # noqa: E402
 import doc_validator as dv  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import jev_calibration as jc  # noqa: E402
@@ -1006,6 +1007,113 @@ class TestADRValidator(unittest.TestCase):
 
     def test_dir_inexistente_falla(self):
         self.assertEqual(av.main(["--dir", str(self.tmp / "no_existe")]), 1)
+
+
+class TestAutoAudit(unittest.TestCase):
+    """REQ-014: auto-auditoria (sesgos, evidencias, decisiones, tests, IA)."""
+
+    _TEST_OK = (
+        "import unittest\n\n\n"
+        "class T(unittest.TestCase):\n"
+        "    def test_ok(self):\n"
+        "        self.assertEqual(1 + 1, 2)\n"
+    )
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _write(self, name: str, content: str) -> Path:
+        path = self.tmp / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        return path
+
+    def test_sesgos_detecta_garantia_absoluta(self):
+        path = self._write("doc.md", "El sistema garantiza el exito total.\n")
+        hallazgos = aa.auditar_sesgos([path])
+        self.assertTrue(any("garantia absoluta" in h for h in hallazgos))
+
+    def test_sesgos_ignora_lineas_de_reglas(self):
+        path = self._write("doc.md", "### P0.1 Nunca afirmes sin evidencia\n")
+        self.assertEqual(aa.auditar_sesgos([path]), [])
+
+    def test_sesgos_detecta_realismo_naif(self):
+        path = self._write("doc.md", "Obviamente esta es la mejor solucion.\n")
+        hallazgos = aa.auditar_sesgos([path])
+        self.assertTrue(any("realismo naif" in h for h in hallazgos))
+
+    def test_evidencias_sin_sbom_es_error(self):
+        errors, _ = aa.auditar_evidencias(docs_dir=self.tmp)
+        self.assertTrue(any("no hay SBOM" in e for e in errors))
+
+    def test_evidencias_sbom_antiguo_alerta(self):
+        self._write("SBOM-2020-01-01.spdx.json", "{}")
+        errors, warnings = aa.auditar_evidencias(docs_dir=self.tmp)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("SBOM de" in w for w in warnings))
+
+    def test_evidencias_sbom_reciente_ok(self):
+        import datetime
+
+        hoy = datetime.date.today().isoformat()
+        self._write(f"SBOM-{hoy}.spdx.json", "{}")
+        errors, warnings = aa.auditar_evidencias(docs_dir=self.tmp)
+        self.assertEqual((errors, warnings), ([], []))
+
+    def test_decisiones_req_draft(self):
+        self._write("req/REQ-999.md", "---\nid: REQ-999\nestado: Draft\n---\n# x\n")
+        (self.tmp / "adr").mkdir()
+        warns = aa.auditar_decisiones(req_dir=self.tmp / "req", adr_dir=self.tmp / "adr")
+        self.assertTrue(any("REQ-999.md" in w and "Draft" in w for w in warns))
+
+    def test_decisiones_adr_propuesto(self):
+        self._write("adr/ADR-999-x.md", "---\nid: ADR-999\nestado: Propuesto\n---\n# x\n")
+        (self.tmp / "req").mkdir()
+        warns = aa.auditar_decisiones(req_dir=self.tmp / "req", adr_dir=self.tmp / "adr")
+        self.assertTrue(any("ADR-999" in w and "Propuesto" in w for w in warns))
+
+    def test_tests_tautologia_es_error(self):
+        test = self._write(
+            "t.py",
+            "import unittest\n\n\nclass T(unittest.TestCase):\n"
+            "    def test_x(self):\n        self.assertTrue(True)\n",
+        )
+        scripts = self.tmp / "scripts"
+        scripts.mkdir()
+        errors, _ = aa.auditar_tests(test_file=test, scripts_dir=scripts)
+        self.assertTrue(any("tautologica" in e for e in errors))
+
+    def test_tests_sin_asercion_alerta(self):
+        test = self._write(
+            "t.py",
+            "import unittest\n\n\nclass T(unittest.TestCase):\n"
+            "    def test_y(self):\n        x = 1 + 1\n",
+        )
+        scripts = self.tmp / "scripts"
+        scripts.mkdir()
+        _, warnings = aa.auditar_tests(test_file=test, scripts_dir=scripts)
+        self.assertTrue(any("sin asercion" in w for w in warnings))
+
+    def test_except_pass_es_error(self):
+        test = self._write("t.py", self._TEST_OK)
+        self._write("scripts/z.py", "def f():\n    try:\n        x = 1\n    except Exception:\n        pass\n")
+        errors, _ = aa.auditar_tests(test_file=test, scripts_dir=self.tmp / "scripts")
+        self.assertTrue(any("except con 'pass'" in e for e in errors))
+
+    def test_trailer_asistido(self):
+        self.assertTrue(aa._tiene_trailer("Assisted-by: opencode"))
+        self.assertTrue(aa._tiene_trailer("Generated-by: x"))
+        self.assertFalse(aa._tiene_trailer("commit normal sin trailer"))
+
+    def test_repo_real_sin_errores_de_tests(self):
+        errors, _ = aa.auditar_tests()
+        self.assertEqual(errors, [])
+
+    def test_main_all_en_verde(self):
+        self.assertEqual(aa.main(["all"]), 0)
 
 
 if __name__ == "__main__":

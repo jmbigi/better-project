@@ -310,6 +310,7 @@
 - [ ] ¿Los atributos de calidad son métricas verificables (p. ej., p99, accuracy) y no adjetivos ambiguos ("escalable")?
 - [ ] ¿Hice pre-mortem y la decisión tiene criterios de parada/reversión para los cambios de alto impacto? (P1.23)
 - [ ] ¿Ejecuté `python3 scripts/adr_validator.py` y revisé sus alertas de sesgo?
+- [ ] ¿Ejecuté `python3 scripts/auto_audit.py all` (sesgos, SBOM, decisiones, tests, IA)?
 - [ ] ¿La revisión cruzada buscó contraejemplos y no solo confirmación de la hipótesis? (P1.15)
 
 ---

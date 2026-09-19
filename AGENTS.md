@@ -267,7 +267,7 @@ Agentes críticos usan perfiles deterministas (`temperature`/`top_p` por rol) pa
 
 ## Referencias
 
-Detalle, justificación y fuentes: `docs/REGLAS-COMPLETAS.md` · Checklist imprimible: `CHECKLIST.md` · Evidencia de pruebas: `docs/PRUEBAS.md` · Sesgos y falacias (Pilar 4): `docs/SESGOS-Y-FALACIAS.md`
+Detalle, justificación y fuentes: `docs/REGLAS-COMPLETAS.md` · Checklist imprimible: `CHECKLIST.md` · Evidencia de pruebas: `docs/PRUEBAS.md` · Sesgos y falacias (Pilar 4): `docs/SESGOS-Y-FALACIAS.md` · Herramientas y fuentes: `docs/HERRAMIENTAS-Y-FUENTES.md`
 ---
 
 # Directivas del proyecto (better-project)
@@ -304,6 +304,9 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
 - `python scripts/adr_validator.py [--strict]` — valida los ADR de
   `docs/decisions/` y audita sesgos/falacias de decision (REQ-013); base
   conceptual en `docs/SESGOS-Y-FALACIAS.md`.
+- `python scripts/auto_audit.py {sesgos|evidencias|decisiones|tests|ia|all}` —
+  auto-auditoria del proyecto (REQ-014); catalogo de herramientas y fuentes en
+  `docs/HERRAMIENTAS-Y-FUENTES.md`.
 - `bash scripts/setup.sh [--yes]` — onboarding guiado: entorno, hook,
   dependencias opcionales (doble confirmación de riesgo, P0.18) y primera
   validación (REQ-008).

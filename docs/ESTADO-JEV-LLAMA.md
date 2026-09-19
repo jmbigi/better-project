@@ -127,6 +127,22 @@ cautelas estadisticas del artefacto de revision.
 | Inferencia real `.venv/bin/python scripts/jev_llama.py --demo` (Qwen3.5-4B Q4_K_M) | OK |
 | Inferencia real `scripts/jev_pillars.py lecciones --id LSN-008 --json` | OK (fase `Testing` correcta; categoria propuesta `Proceso` frente a la real `Riesgo_Tecnico`) |
 
+## Auto-auditoria y gobernanza (REQ-013/REQ-014, 2026-09-19)
+
+- `scripts/adr_validator.py` (REQ-013): valida los ADR y audita sesgos de
+  decision; registro en `docs/decisions/` (ADR-001, ADR-002, ADR-003).
+- `scripts/auto_audit.py` (REQ-014): cinco subcomandos (sesgos documentales,
+  frescura del SBOM, decisiones pendientes, tests debiles y trazabilidad de IA).
+- `docs/SESGOS-Y-FALACIAS.md` y `docs/HERRAMIENTAS-Y-FUENTES.md` (referencia).
+- Ambos integrados en `scripts/verificar-proyecto.sh`.
+
+| Verificacion | Resultado |
+|---|---|
+| `python3 -m unittest discover -s tests -q` | 100 tests OK |
+| `python3 scripts/adr_validator.py --strict` | 3 ADR, 0 errores, 0 alertas |
+| `python3 scripts/auto_audit.py all` | 0 errores (1 alerta: LSN-009 abierta) |
+| `bash scripts/verificar-proyecto.sh --pre-commit` | 40 OK, 0 fallos |
+
 ## Pendiente
 
 1. **Revision humana de las clasificaciones de REQ-012**: la integracion con el
@@ -135,6 +151,14 @@ cautelas estadisticas del artefacto de revision.
    (P1.17/P1.23).
 2. **Ampliar el set de calibracion** (>= 100 casos por tipo) para estabilizar el
    ECE y la accuracy de `score`; hoy n=12 y el intervalo de confianza es ancho.
+3. **Mutation testing opcional** (mutmut/cosmic-ray) para medir la fuerza real de
+   los tests; hoy `auto_audit tests` solo detecta tests sin asercion y
+   tautologicos (P1.1).
+4. **`vale` opcional** con estilos propios de "claims sin metrica" para reforzar
+   el Pilar 4 mas alla de la heuristica de `auto_audit sesgos`.
+5. **Frescura P0.18 automatizada** (pip-audit/OSV) que re-escane el SBOM y
+   actualice `docs/SBOM-<fecha>.spdx.json` vencido (hoy se comprueba la
+   antiguedad, no se re-escanea).
 
 ## Notas
 
