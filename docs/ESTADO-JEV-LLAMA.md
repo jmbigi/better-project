@@ -76,29 +76,31 @@ Salida previa con un modelo local alternativo
 - `1f62e37` — feat(jev): calibracion por temperatura con NLL/Brier/ECE.
 - Push a `origin/main`: sincronizado.
 
-## Calibracion (2026-09-19)
+## Calibracion (2026-09-19, set v3 de 58 casos)
 
 Se anadio `scripts/jev_calibration.py` y `JEV_TEMPERATURE` al motor. El set
-etiquetado `.docs/knowledge/ai/jev_calibration_set.json` (40 casos: 16 noul,
-12 choice, 12 score) se basa en P0/P1, el estado de los REQ y LSN-001..008; sus
-etiquetas son la verdad de referencia **propuesta** y deben ser revisadas.
+`.docs/knowledge/ai/jev_calibration_set.json` (v3, 58 casos: 22 noul, 18 choice,
+18 score) se basa en P0/P1, el estado de los REQ y las lecciones LSN; sus
+etiquetas fueron **revisadas y aprobadas** por el programador (v2 40/40 y lote 2
+de 18; P1.15).
 
 Metodologia segun Guo 2017 (arXiv:1706.04599), Nixon 2019 (arXiv:1904.01685) y
 Kadavath 2022 (arXiv:2207.05221): T por minimizacion de NLL, Brier/NLL
 primarios, ECE secundario, validacion cruzada k-fold.
 
-Resultado medido (Qwen3.5-4B Q4_K_M):
+Resultado medido (Qwen3.5-4B Q4_K_M, 58 casos):
 
-| Metrica | T=1 | T=2.0 | CV antes | CV despues |
+| Metrica | T=1 | T=1.8 | CV antes | CV despues |
 |---|---|---|---|---|
-| NLL | 0.808 | 0.741 | 0.808 | 0.745 |
-| Brier | 0.480 | 0.454 | 0.480 | 0.455 |
-| ECE | 0.135 | 0.116 | 0.269 | 0.226 |
-| Accuracy | 0.650 | 0.650 | 0.650 | 0.650 |
+| NLL | 0.783 | 0.734 | 0.778 | 0.747 |
+| Brier | 0.470 | 0.446 | 0.467 | 0.452 |
+| ECE | 0.120 | 0.119 | 0.232 | 0.228 |
+| Accuracy | 0.655 | 0.655 | 0.662 | 0.662 |
 
-Accuracy por tipo (T=2.0): choice 0.917, noul 0.625, score 0.417. T=2.0 reduce
-NLL/Brier/ECE sin cambiar la accuracy. Informe JSON (generado, no versionado)
-en `.docs/.storage/jev_calibration.json`. Aplicar con `JEV_TEMPERATURE=2.0`.
+Accuracy por tipo (T=1.8): choice 0.889 (n=18), noul 0.636 (n=22), score 0.444
+(n=18). T=1.8 reduce NLL/Brier/ECE sin cambiar la accuracy. Informe JSON
+(generado, no versionado) en `.docs/.storage/jev_calibration.json`. Aplicar con
+`JEV_TEMPERATURE=1.8`.
 
 ## Etiquetas aprobadas (2026-09-19)
 
@@ -147,6 +149,7 @@ cautelas estadisticas del artefacto de revision.
 | `cosmic-ray` 8.7.0 (adr_validator, copia aislada) | 160 mutantes, 124 muertos (77.5 %) |
 | `python3 scripts/jev_review.py --report --fake` (REQ-016) | OK (revision en JSON; no escribe en docs) |
 | `python3 scripts/jev_calibration_merge.py --aplicar` (REQ-018) | set v3, 58 casos (22 noul / 18 choice / 18 score) |
+| `.venv/bin/python scripts/jev_calibration.py --write` (v3, 58 casos) | T=1.8; acc 0.655; choice 0.889, noul 0.636, score 0.444 |
 | `python3 scripts/diagnostico.py --root .` (REQ-017) | 100/100 (solido); dir vacio 0/100 sin escribir |
 | `pip-audit -f cyclonedx-json -r requirements-optional.txt` | `docs/SBOM-2026-09-19.cdx.json` (119 componentes, 5 advisories) |
 | `vale README.md docs .docs` (opcional, Pilar 4) | 0 errores, 0 alertas (34 archivos) |
@@ -169,11 +172,10 @@ cautelas estadisticas del artefacto de revision.
    `python3 scripts/jev_review.py --calibracion` y fusionar con
    `scripts/jev_calibration_merge.py --aplicar` (18 candidatos N23-N28,
    C19-C24, S19-S24). Objetivo a medio plazo: >=100 casos por tipo.
-2. **Re-calibrar con el set ampliado** (v3, 58 casos): re-ejecutar
-   `scripts/jev_calibration.py --write` y actualizar las metricas de ESTADO.
 
 El programador confirmo el 2026-09-19 las clasificaciones de REQ-012
-presentadas y el lote 2 de candidatos (40 -> 58 casos, v3).
+presentadas y el lote 2 de candidatos (40 -> 58 casos, v3). La calibracion se
+re-ejecuto con el set v3: T recomendada `1.8`, accuracy global 0.655.
 
 ## Notas
 

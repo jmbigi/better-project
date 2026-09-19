@@ -74,13 +74,13 @@ comando queda `experimental: true` (no se inventan valores; P1.19/P1.29).
 
 ## Precisión medida por tarea
 
-Valores del set validado (REQ-011, Qwen3.5-4B Q4_K_M, 40 casos, `T=2.0`):
+Valores del set validado (REQ-011 v3, Qwen3.5-4B Q4_K_M, 58 casos, `T=1.8`):
 
 | Pilar | Tipo | Accuracy | IC Wilson 95 % | Estado |
 |---|---|---|---|---|
-| Requisitos | `choice` | 0.917 | [0.646, 0.985] | utilizable (revisión humana) |
-| Lecciones | `choice` | 0.917 | [0.646, 0.985] | utilizable (revisión humana) |
-| Conocimiento | `score` | 0.417 | [0.193, 0.680] | `experimental` (no guardarraíl) |
+| Requisitos | `choice` | 0.889 (n=18) | [0.672, 0.969] | utilizable (revisión humana) |
+| Lecciones | `choice` | 0.889 (n=18) | [0.672, 0.969] | utilizable (revisión humana) |
+| Conocimiento | `score` | 0.444 (n=18) | [0.246, 0.663] | `experimental` (no guardarraíl) |
 
 El tipo `score` (relevancia de conocimiento) es poco fiable con el proxy de
 primer token y queda marcado `experimental` automáticamente (accuracy < 0.6).

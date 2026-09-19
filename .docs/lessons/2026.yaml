@@ -150,3 +150,11 @@
   recomendacion: "Guardar la revision y la cache de clasificaciones de forma incremental por item; la cache (clave pilar|id|sha1(texto)) evita recalcular en reejecuciones. Para sets grandes, acotar con --pilar/--limit o revisar interactivamente y salir con q (guarda lo revisado)."
   estado: Resuelta
   fecha: 2026-09-19
+- id: LSN-020
+  proyecto: "Ecosistema / Jev (REQ-011)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "Tras ampliar el set de calibracion de 40 a 58 casos (v3), la accuracy global se mantuvo en ~0.655 y por tipo: choice 0.889, noul 0.636, score 0.444; la T recomendada bajo de 2.0 a 1.8. El tipo score sigue poco fiable."
+  recomendacion: "No presentar la ampliacion como mejora de exactitud (no lo es); reportar accuracy e IC junto a NLL/Brier/ECE. Seguir ampliando hacia >=100/tipo y no usar score como guardarrail hasta que supere ~0.6."
+  estado: Abierta
+  fecha: 2026-09-19
