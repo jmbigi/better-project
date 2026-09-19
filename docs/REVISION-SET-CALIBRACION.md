@@ -204,9 +204,12 @@ ampliaciones (sección 7): **202 casos** (70/66/66), set `version: 11`.
 - **Lote 10 (2026-09-19)**: 18 candidatos (N65-N70, C61-C66, S61-S66) aprobados y
   fusionados (REQ-018) → `version: 11`, **202 casos** (70 `noul`, 66 `choice`,
   66 `score`).
-- **Lote 11 (pendiente de revisión)**: 18 candidatos (N71-N76, C67-C72, S67-S72)
-  en `.docs/knowledge/ai/jev_calibration_candidates.json`; se revisan con
-  `python3 scripts/jev_review.py --calibracion`.
+- **Lote 11 (2026-09-19)**: 18 candidatos (N71-N76, C67-C72, S67-S72)
+  revisados y aprobados por el programador sin correcciones (18/18) y
+  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  → `version: 12`, **220 casos** (76 `noul`, 72 `choice`, 72 `score`).
+  13 alertas de escenario duplicado (candidatos reutilizan textos de
+  N60-N64/C55-C60/S55-S60) son informativas, no errores.
 - Objetivo a medio plazo: ≥100 casos por tipo para estabilizar ECE y la accuracy
   de `score`.
 

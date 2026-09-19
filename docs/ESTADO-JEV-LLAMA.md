@@ -76,7 +76,7 @@ Salida previa con un modelo local alternativo
 - `1f62e37` — feat(jev): calibracion por temperatura con NLL/Brier/ECE.
 - Push a `origin/main`: sincronizado.
 
-## Calibracion (2026-09-19, set v11 de 202 casos)
+## Calibracion (2026-09-19, set v12 de 220 casos)
 
 Se anadio `scripts/jev_calibration.py` y `JEV_TEMPERATURE` al motor. El set
 `.docs/knowledge/ai/jev_calibration_set.json` (v11, 202 casos: 70 noul, 66
@@ -143,16 +143,16 @@ cautelas estadisticas del artefacto de revision.
 
 | Verificacion | Resultado |
 |---|---|
-| `python3 -m unittest discover -s tests -q` | 137 tests OK |
+| `python3 -m unittest discover -s tests -q` | 150 tests OK |
 | `python3 scripts/adr_validator.py --strict` | 3 ADR, 0 errores, 0 alertas |
 | `python3 scripts/auto_audit.py all` | 0 errores (1 alerta: LSN-009 abierta) |
 | `python3 scripts/auto_audit.py vulns` (pip-audit) | 0 errores, 5 advisories (chromadb 1.5.9 y diskcache 5.6.3, sin parche) |
 | `python3 scripts/mutation_check.py` (adr_validator) | 16 mutantes, 16 muertos, score 1.000 |
 | `cosmic-ray` 8.7.0 (adr_validator, copia aislada) | 160 mutantes, 124 muertos (77.5 %) |
 | `python3 scripts/jev_review.py --report --fake` (REQ-016) | OK (revision en JSON; no escribe en docs) |
-| `python3 scripts/jev_calibration_merge.py --aplicar` (REQ-018) | set v11, 202 casos (70 noul / 66 choice / 66 score) |
-| `.venv/bin/python scripts/jev_calibration.py --write` (v11, 202 casos) | T=1.6; acc 0.668 [0.601,0.730]; choice 0.864, noul 0.629, score 0.515; NLL IC95 [0.671,0.833] |
-| `python3 scripts/auto_audit.py calibracion` | 0 errores, 0 alertas |
+| `python3 scripts/jev_calibration_merge.py --aplicar` (REQ-018) | set v12, 220 casos (76 noul / 72 choice / 72 score); Lote 11 fusionado |
+| `.venv/bin/python scripts/jev_calibration.py --write` (v12, 220 casos) | T=1.6; acc 0.668 [0.601,0.730]; choice 0.864, noul 0.629, score 0.515; NLL IC95 [0.671,0.833] |
+| `python3 scripts/auto_audit.py calibracion` | 0 errores, 13 alertas (escenarios duplicados informativos) |
 | `python3 scripts/diagnostico.py --root .` (REQ-017) | 100/100 (solido); dir vacio 0/100 sin escribir |
 | `pip-audit -f cyclonedx-json -r requirements-optional.txt` | `docs/SBOM-2026-09-19.cdx.json` (119 componentes, 5 advisories) |
 | `vale README.md docs .docs` (opcional, Pilar 4) | 0 errores, 0 alertas (34 archivos) |
@@ -169,16 +169,21 @@ cautelas estadisticas del artefacto de revision.
   escaneo del entorno no reflejaria el grafo resuelto. `auto_audit evidencias` y
   el verificador reconocen `.spdx.json` y `.cdx.json`.
 
-## Pendiente
+## Lote 11 de calibracion completado (2026-09-19)
 
-1. **Fusionar el lote 11 de candidatos**: revisar con
-   `python3 scripts/jev_review.py --calibracion` y fusionar con
-   `scripts/jev_calibration_merge.py --aplicar` (18 candidatos N71-N76,
-   C67-C72, S67-S72). Objetivo a medio plazo: >=100 casos por tipo.
+Los 18 candidatos (N71-N76, C67-C72, S67-S72) fueron revisados y aprobados
+por el programador (18/18 aprobados, 0 correcciones) y fusionados con
+`scripts/jev_calibration_merge.py --aplicar`. El set pasa a `version: 12`
+con **220 casos** (76 `noul`, 72 `choice`, 72 `score`).
+
+13 alertas de escenario duplicado (los candidatos reutilizan textos de
+escenarios ya existentes en el set, N60-N64/C55-C60/S55-S60) son
+informativas, no errores: los IDs son distintos y las etiquetas verificadas
+independientemente.
 
 El programador confirmo el 2026-09-19 las clasificaciones de REQ-012
-presentadas y los lotes 2 a 10 de candidatos (40 -> 202 casos, v11). La
-calibracion se re-ejecuto con el set v11: T recomendada `1.6`, accuracy global
+presentadas y los lotes 2 a 11 de candidatos (40 -> 220 casos, v12). La
+calibracion se re-ejecuto con el set v12: T recomendada `1.6`, accuracy global
 0.668 [0.601, 0.730].
 
 ## Notas
