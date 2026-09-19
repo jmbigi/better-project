@@ -1,0 +1,1400 @@
+# =============================================================================
+# Adaptador del ruleset para Kimi Code CLI — REQ-005
+# =============================================================================
+# Fuente de verdad: opencode.json / kilo.json (304 patrones bash: 218 deny,
+# 85 ask, 1 allow) + 14 patrones edit + 14 read + webfetch allow.
+# Doc oficial: https://www.kimi.com/code/docs/en/kimi-code-cli/configuration/config-files.html
+# Hooks:       https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html
+#
+# ORDEN INVERTIDO RESPECTO A opencode.json/kilo.json (CRITICO):
+#   - opencode/kilo usan LAST-match-wins: el allow comodin "*" va PRIMERO y
+#     los deny/ask especificos lo override-an despues.
+#   - Kimi Code documenta FIRST-match-wins: la PRIMERA regla cuyo patron
+#     coincide gana. Por eso aqui el orden es:
+#       1. excepciones allow (*.env.example) ANTES que sus denies generales
+#       2. denies especificos (antes que los asks que podrian solaparse)
+#       3. asks
+#       4. catch-all allow (Bash(*), Edit(*), Read(*)) al FINAL
+#   Este orden es compatible con ambas semanticas para deny/ask.
+#
+# CAVEAT — issue MoonshotAI/kimi-cli#2508 (v0.27.0): se reporta que el
+# runtime real aplica prioridad por CLASE (deny > ask > allow) sin importar
+# el orden, contradiciendo la doc. Bajo esa semantica la excepcion allow
+# *.env.example perderia frente a *.env.* deny. Sin verificacion empirica
+# (kimi-code no esta instalado en esta maquina): PENDIENTE.
+#
+# COBERTURA: los 304 patrones bash + 28 (edit/read) se portan como glob
+# Bash(patron)/Edit(patron)/Read(patron). Familias cuya semantica exacta en
+# el matcher de Kimi NO esta verificada (PENDIENTE, no omitidas): patrones
+# con comillas embebidas (sh -c/bash -c "..." y '...'), globs con prefijo
+# "*/" (invocacion por ruta absoluta), globs con "*" al inicio o en medio
+# ("* * > *.env*", "psql * *DROP*") y "npx * -g *". El hook PreToolUse de
+# abajo cubre en profundidad comillas, pipes, subcomandos encadenados y
+# rutas absolutas, asi que esas familias tienen defensa en profundidad.
+#
+# CAVEAT local.toml: la doc oficial describe local.toml solo para settings
+# de proyecto tipo [workspace]; es posible que [[permission.rules]] y
+# [[hooks]] solo se carguen desde ~/.kimi-code/config.toml. Si el runtime
+# los ignora aqui, copiar el contenido de este archivo al config.toml
+# global. PENDIENTE de verificacion empirica.
+#
+# Hooks FAIL-OPEN: la doc oficial advierte que si el hook falla o hace
+# timeout, el comando se PERMITE. El hook no es barrera unica; las reglas
+# deny declarativas de arriba son la primera linea de defensa.
+# =============================================================================
+# --- Excepciones allow (ANTES que los denies: primer-match-gana) ---
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Edit(*.env.example)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Read(*.env.example)"
+
+# --- Deny Bash (218; mismo orden que opencode.json) ---
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(rm -rf *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(rm -r *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(rm -f *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/rm -rf *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/rm -r *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/rm -f *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c 'rm -rf *')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c \"rm -rf *\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c 'rm -r *')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c \"rm -r *\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c 'rm -f *')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c \"rm -f *\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c 'rm -rf *')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c \"rm -rf *\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c 'rm -r *')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c \"rm -r *\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c 'rm -f *')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c \"rm -f *\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(pip install --user *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/pip install --user *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(docker compose down -v*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/docker compose down -v*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(docker kill*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/docker kill*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(kubectl drain*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(terraform destroy*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(terraform state rm*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git reset --hard*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git clean *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git checkout -- *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git checkout .*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git stash clear*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git branch -D *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git push --force*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/git reset --hard*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/git push --force*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c 'git reset --hard*')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c \"git reset --hard*\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c 'git push --force*')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c \"git push --force*\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c 'git reset --hard*')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c \"git reset --hard*\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c 'git push --force*')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c \"git push --force*\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c 'docker compose down -v')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c \"docker compose down -v\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c 'docker compose down -v')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c \"docker compose down -v\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c 'redis-cli FLUSHALL')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c \"redis-cli FLUSHALL\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c 'redis-cli FLUSHALL')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c \"redis-cli FLUSHALL\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c 'redis-cli FLUSHDB')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c \"redis-cli FLUSHDB\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c 'redis-cli FLUSHDB')"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c \"redis-cli FLUSHDB\")"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c 'eval $(curl*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sh -c \"eval $(curl*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c 'eval $(curl*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(bash -c \"eval $(curl*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git filter-branch*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git -C * filter-branch*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git -C * reset --hard*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git -C * clean *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git -C * checkout -- *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git -C * push --force*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git -C * branch -D *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(git --git-dir * filter-branch*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(dropdb *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(psql * *DROP*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(psql * *TRUNCATE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(psql * *DELETE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(psql * *ALTER*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/psql *DROP*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/psql *TRUNCATE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/psql *DELETE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/psql *ALTER*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(mysql * *DROP*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(mysql * *TRUNCATE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(mysql * *DELETE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(mysql * *ALTER*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/mysql *DROP*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/mysql *TRUNCATE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/mysql *DELETE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/mysql *ALTER*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sqlite3 * *DROP*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sqlite3 * *TRUNCATE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sqlite3 * *DELETE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sqlite3 * *ALTER*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/sqlite3 *DROP*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/sqlite3 *TRUNCATE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/sqlite3 *DELETE*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/sqlite3 *ALTER*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(migrate reset*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(prisma migrate reset*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(npx prisma migrate reset*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(rails db:reset*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(rails db:drop*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(rails db:migrate:reset*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(systemctl *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(service *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(initctl *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(reboot*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(shutdown*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(poweroff*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(mkfs*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(fdisk*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(parted*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(sfdisk*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(mkswap*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(wipefs*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(shred *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(truncate -s 0*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(dd *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(chmod 777*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(chmod 666*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(mv --force*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(mv -f *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cp -f *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cp --force*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(rsync --delete*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(curl * | bash*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(curl * | sh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(wget * | bash*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(wget * | sh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(eval *)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/eval $(curl*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(redis-cli * FLUSHALL*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(redis-cli * FLUSHDB*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(redis-cli FLUSHALL*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(redis-cli FLUSHDB*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(redis-cli * *DEL*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(redis-cli *DEL*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/redis-cli FLUSHALL*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(*/redis-cli FLUSHDB*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat * *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less * *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more * *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head * *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail * *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(grep * *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(* * > *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(* * >> *.env*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat * *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less * *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more * *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head * *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail * *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(grep * *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat * *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less * *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more * *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head * *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail * *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(grep * *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat * *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less * *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more * *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head * *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail * *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(grep * *id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat * *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less * *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more * *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head * *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail * *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(grep * *id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat * *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less * *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more * *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head * *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail * *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(grep * *id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(cat * *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(less * *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(more * *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(head * *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(tail * *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(grep * *id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(* * > *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(* * >> *.ssh*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(* * > *.aws*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Bash(* * >> *.aws*)"
+
+# --- Deny Edit (12) ---
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*.env)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*.env.*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(~/.ssh/*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*.ssh/*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(~/.aws/*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*.aws/*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*.pem)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Edit(*credentials*)"
+
+# --- Deny Read (12) ---
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*.env)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*.env.*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(~/.ssh/*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*.ssh/*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(~/.aws/*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*.aws/*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*.pem)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*id_rsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*id_ed25519*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*id_ecdsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*id_dsa*)"
+
+[[permission.rules]]
+decision = "deny"
+pattern = "Read(*credentials*)"
+
+# --- Ask Bash (85; despues de los deny para que estos ganen) ---
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(rm *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(sudo *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(apt *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(apt-get *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(dnf *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(yum *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(pacman *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(snap *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(flatpak *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(npm uninstall *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(npm update *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(npm -g *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(npx * -g *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(yarn global *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(pip install *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(pip uninstall *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(pipx *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(gem install *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(cargo install *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(go install *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(brew install *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(docker compose down*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(docker rm -f*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(docker rmi *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(docker volume rm *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(docker system prune*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(docker stop*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(docker exec*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(kubectl delete*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(kubectl cordon*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(kubectl rollout undo*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(kubectl scale*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(helm uninstall*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(helm delete*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(terraform apply*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(terraform force-unlock*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(ansible-playbook *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git commit *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git push *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git merge *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git reset --soft*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git reset --mixed*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git reset *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git stash drop*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git rebase *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git revert *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git gc *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git -C * rebase *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(git -C * gc *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(createdb *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(psql -c *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(mysql -e *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(sqlite3 *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(mongosh *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(redis-cli *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(prisma migrate dev*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(prisma db push*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(npx prisma migrate dev*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(npx prisma db push*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(alembic downgrade base*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(chmod -R *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(chown -R *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(pkill *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(kill -9 *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(killall *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(iptables *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(ufw *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(crontab *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(ssh-copy-id *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(mv *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(rsync *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(unzip *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(tar -x*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(tar x*)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(pnpm uninstall *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(pnpm update *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(pnpm -g *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(bun uninstall *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(bun update *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(bun add -g *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(uv pip install *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(uv pip uninstall *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(uv tool install *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(conda install *)"
+
+[[permission.rules]]
+decision = "ask"
+pattern = "Bash(conda remove *)"
+
+# --- WebFetch allow (paridad con "webfetch": "allow") ---
+
+[[permission.rules]]
+decision = "allow"
+pattern = "WebFetch"
+
+# --- Catch-all allow (al FINAL: primer-match-gana; en opencode va primero) ---
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Edit(*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Read(*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(*)"
+
+# --- Hook PreToolUse: analisis estatico del comando Bash (REQ-005) ---
+# Kimi Code pasa el evento como JSON por stdin; el wrapper extrae
+# tool_input.command y bloquea (exit 2) si analyze_shell.py halla
+# patrones peligrosos. Fallo del analizador = bloqueo (deny-by-default).
+
+[[hooks]]
+event = "PreToolUse"
+matcher = "Bash"
+command = "python3 .kimi-code/hooks/pre_bash_analyze.py"
+timeout = 10
