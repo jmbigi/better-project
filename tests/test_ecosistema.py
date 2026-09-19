@@ -736,6 +736,15 @@ class TestJevCalibration(unittest.TestCase):
         self.assertIn("accuracy_ci95", metricas)
         self.assertEqual(len(metricas["accuracy_ci95"]), 2)
 
+    def test_ece_adaptativo(self):
+        self.assertAlmostEqual(jc.ece([[1.0, 0.0], [1.0, 0.0]], [0, 0], adaptativo=True), 0.0, places=9)
+        mixto = [[0.9, 0.1], [0.6, 0.4], [0.2, 0.8], [0.5, 0.5]]
+        valor = jc.ece(mixto, [0, 0, 0, 1], adaptativo=True)
+        self.assertGreaterEqual(valor, 0.0)
+        self.assertLessEqual(valor, 1.0)
+        self.assertIn("ece_adaptativo", jc.evaluate(
+            [{"probs": [0.9, 0.1], "label_idx": 0}], 1.0))
+
     def test_ece_valor_conocido(self):
         probs = [[0.9, 0.1], [0.9, 0.1]]
         self.assertAlmostEqual(jc.ece(probs, [0, 1]), 0.4, places=9)
@@ -1461,6 +1470,14 @@ class TestJevCalibrationMerge(unittest.TestCase):
                             "niveles": ["a", "b"], "esperado": 9}])
         resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path), aplicar=True)
         self.assertTrue(any("fuera de niveles" in e for e in resultado["errores"]))
+
+    def test_escenario_duplicado_advertencia(self):
+        self._cand(casos=[
+            {"id": "N98", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "yes"},
+            {"id": "N97", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "no"},
+        ])
+        resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path), aplicar=True)
+        self.assertTrue(any("escenario duplicado" in a for a in resultado["advertencias"]))
 
 
 if __name__ == "__main__":

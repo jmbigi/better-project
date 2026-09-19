@@ -78,21 +78,26 @@ def nll(probs: list[float], label_idx: int) -> float:
     return -_log(probs[label_idx])
 
 
-def ece(probs_list: list[list[float]], labels: list[int], n_bins: int = 10) -> float:
-    """Expected Calibration Error top-label (norma L1), 10 bins.
+def ece(probs_list: list[list[float]], labels: list[int], n_bins: int = 10,
+        adaptativo: bool = False) -> float:
+    """Expected Calibration Error top-label (norma L1).
 
-    Metrica secundaria: ECE tiene sesgos conocidos (Nixon et al. 2019); se
-    reporta junto a NLL/Brier, no en su lugar.
+    Por defecto usa bins de igual anchura (equal-width). Con `adaptativo=True`
+    usa bins de igual masa (equal-mass), que Nixon et al. 2019 recomiendan por
+    su mayor estabilidad (metrica secundaria; reportar junto a NLL/Brier).
     """
-    bins: list[list[tuple[float, bool]]] = [[] for _ in range(n_bins)]
-    for probs, label in zip(probs_list, labels):
-        conf = max(probs)
-        correct = probs.index(conf) == label
-        idx = min(int(conf * n_bins), n_bins - 1)
-        bins[idx].append((conf, correct))
     total = len(probs_list)
     if total == 0:
         return 0.0
+    pares = [(max(p), p.index(max(p)) == label) for p, label in zip(probs_list, labels)]
+    if adaptativo:
+        pares.sort(key=lambda t: t[0])
+        tam = max(1, math.ceil(total / n_bins))
+        bins = [pares[i:i + tam] for i in range(0, total, tam)]
+    else:
+        bins = [[] for _ in range(n_bins)]
+        for conf, correcto in pares:
+            bins[min(int(conf * n_bins), n_bins - 1)].append((conf, correcto))
     e = 0.0
     for b in bins:
         if not b:
@@ -132,7 +137,7 @@ def evaluate(records: list[dict[str, Any]], temperature: float) -> dict[str, flo
     n = len(records)
     if n == 0:
         return {
-            "n": 0, "nll": 0.0, "brier": 0.0, "ece": 0.0,
+            "n": 0, "nll": 0.0, "brier": 0.0, "ece": 0.0, "ece_adaptativo": 0.0,
             "accuracy": 0.0, "accuracy_ci95": [0.0, 0.0], "confianza_media": 0.0,
         }
     hits = _hits(probs_list, labels)
@@ -142,6 +147,7 @@ def evaluate(records: list[dict[str, Any]], temperature: float) -> dict[str, flo
         "nll": sum(nll(p, y) for p, y in zip(probs_list, labels)) / n,
         "brier": sum(brier(p, y) for p, y in zip(probs_list, labels)) / n,
         "ece": ece(probs_list, labels),
+        "ece_adaptativo": ece(probs_list, labels, adaptativo=True),
         "accuracy": hits / n,
         "accuracy_ci95": [round(ci[0], 4), round(ci[1], 4)],
         "confianza_media": sum(max(p) for p in probs_list) / n,
@@ -293,7 +299,8 @@ def _print_human(report: dict[str, Any]) -> None:
         ci = m.get("accuracy_ci95", [0.0, 0.0])
         print(
             f"  {tipo:<8} n={m['n']:<3} acc={m['accuracy']:.3f} "
-            f"[{ci[0]:.3f},{ci[1]:.3f}] ece={m['ece']:.3f} nll={m['nll']:.3f}"
+            f"[{ci[0]:.3f},{ci[1]:.3f}] ece={m['ece']:.3f} "
+            f"ece_adapt={m.get('ece_adaptativo', 0.0):.3f} nll={m['nll']:.3f}"
         )
     print()
     print(f"Para aplicar: export JEV_TEMPERATURE={report['T_recomendada']}")

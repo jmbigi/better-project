@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
+import unicodedata
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -31,6 +33,12 @@ TIPOS = {"noul", "choice", "score"}
 
 def _leer(path: Path) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def _normalizar(texto: Any) -> str:
+    t = unicodedata.normalize("NFKD", str(texto).lower())
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", t).strip()
 
 
 def validar_caso(caso: dict[str, Any]) -> list[str]:
@@ -65,14 +73,16 @@ def validar_caso(caso: dict[str, Any]) -> list[str]:
 def fusionar(
     set_data: dict[str, Any], cand_data: dict[str, Any], forzar: bool = False, aplicar: bool = False
 ) -> dict[str, Any]:
-    """Valida y (si aplicar) fusiona. Devuelve {nuevos, errores}."""
+    """Valida y (si aplicar) fusiona. Devuelve {nuevos, errores, advertencias}."""
     errores: list[str] = []
+    advertencias: list[str] = []
     if not forzar and cand_data.get("estado") not in ESTADOS_APROBADOS:
         errores.append(
             f"los candidatos no estan aprobados (estado='{cand_data.get('estado')}'); "
             f"revisar con jev_review --calibracion o usar --forzar"
         )
     ids_set = {str(c.get("id")) for c in set_data.get("casos", [])}
+    escenarios = {_normalizar(c.get("estado")) for c in set_data.get("casos", [])}
     vistos: set[str] = set()
     nuevos: list[dict[str, Any]] = []
     for caso in cand_data.get("casos", []):
@@ -81,6 +91,10 @@ def fusionar(
         if problemas:
             errores.append(f"{cid}: " + "; ".join(problemas))
             continue
+        escenario = _normalizar(caso.get("estado"))
+        if escenario in escenarios:
+            advertencias.append(f"{cid}: escenario duplicado respecto a otro caso")
+        escenarios.add(escenario)
         if cid in ids_set:
             errores.append(f"id duplicado en el set: {cid}")
         elif cid in vistos:
@@ -89,7 +103,7 @@ def fusionar(
             vistos.add(cid)
             nuevos.append(caso)
     if errores or not aplicar:
-        return {"nuevos": nuevos, "errores": errores}
+        return {"nuevos": nuevos, "errores": errores, "advertencias": advertencias}
     set_data.setdefault("casos", []).extend(nuevos)
     set_data["version"] = int(set_data.get("version", 1)) + 1
     revision = set_data.setdefault("revision_humana", {})
@@ -101,7 +115,7 @@ def fusionar(
         str(set_data.get("descripcion", "")).rstrip()
         + f" Fusion (REQ-018, {date.today().isoformat()}): +{len(nuevos)} casos aprobados."
     )
-    return {"nuevos": nuevos, "errores": errores}
+    return {"nuevos": nuevos, "errores": errores, "advertencias": advertencias}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -123,10 +137,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.json:
         print(json.dumps({"nuevos": [c.get("id") for c in resultado["nuevos"]],
-                          "errores": resultado["errores"]}, indent=2, ensure_ascii=False))
+                          "errores": resultado["errores"],
+                          "advertencias": resultado["advertencias"]}, indent=2, ensure_ascii=False))
     else:
         for e in resultado["errores"]:
             print(f"[ERROR] {e}")
+        for a in resultado["advertencias"]:
+            print(f"[ALERTA] {a}")
         print(f"Candidatos: {len(cand_data.get('casos', []))}  nuevos a fusionar: {len(resultado['nuevos'])}")
         for c in resultado["nuevos"]:
             print(f"  + {c.get('id')} ({c.get('tipo')})")

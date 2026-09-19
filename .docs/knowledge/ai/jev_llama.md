@@ -138,17 +138,17 @@ Metodologia:
   (arXiv:2207.05221) documenta que los LLM son calibrables en eleccion multiple
   y verdadero-falso.
 
-Resultado medido (Qwen3.5-4B Q4_K_M, set v6 de 112 casos, 2026-09-19):
+Resultado medido (Qwen3.5-4B Q4_K_M, set v7 de 130 casos, 2026-09-19):
 
-| Metrica | T=1 | T=1.9 | CV (held-out) antes | CV despues |
+| Metrica | T=1 | T=1.7 | CV (held-out) antes | CV despues |
 |---|---|---|---|---|
-| NLL | 0.830 | 0.769 | 0.828 | 0.775 |
-| Brier | 0.488 | 0.459 | 0.487 | 0.463 |
-| ECE | 0.115 | 0.069 | 0.192 | 0.182 |
-| Accuracy | 0.625 | 0.625 | 0.625 | 0.625 |
+| NLL | 0.788 | 0.748 | 0.788 | 0.752 |
+| Brier | 0.463 | 0.445 | 0.463 | 0.446 |
+| ECE | 0.106 | 0.069 | 0.177 | 0.158 |
+| Accuracy | 0.646 | 0.646 | 0.646 | 0.646 |
 
-Por tipo (T recomendada `1.9`): `choice` acc 0.861, `noul` acc 0.600, `score`
-acc 0.417. La temperatura no cambia la accuracy (correcto por diseno); solo
+Por tipo (T recomendada `1.7`): `choice` acc 0.881, `noul` acc 0.609, `score`
+acc 0.452. La temperatura no cambia la accuracy (correcto por diseno); solo
 recalibra la confianza. El tipo `score` (escala ordinal) es el menos fiable con
 el proxy de primer token y no debe usarse como guardarrail sin calibracion
 propia.
