@@ -49,6 +49,10 @@ echo "== CI local: verificacion completa =="
 BETTER_TEST_INTEGRACION=1 bash scripts/verificar-proyecto.sh --pre-commit \
     || fail "verificar-proyecto.sh en rojo"
 
+echo "== CI local: mutacion multi-modulo (REQ-015) =="
+python3 scripts/mutation_check.py --batch --strict --umbral 0.8 \
+    || fail "mutation_check --batch por debajo del umbral 0.8"
+
 echo
 echo "CI local VERDE. Copia limpia conservada en: $EXPORT_DIR"
 echo "(borrala manualmente cuando quieras; no se auto-elimina, P0.3)"

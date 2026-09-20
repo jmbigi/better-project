@@ -109,25 +109,32 @@ rico que `mutation_check.py` (operadores como `ZeroIterationForLoop`) y se adopt
 como herramienta **opcional de desarrollo**; `mutmut` queda descartado (LSN-015).
 
 **Medición de calidad de la suite (2026-09-20)**: `coverage 7.10.6` sobre la
-suite (186 tests) da **70 %** de cobertura de líneas en `scripts/` (2731
-sentencias, 830 sin cubrir). Las zonas bajas son la TUI curses (`tui.py`, 29 %),
+suite (199 tests) da **71 %** de cobertura de líneas en `scripts/` (2747
+sentencias, 809 sin cubrir). Las zonas bajas son la TUI curses (`tui.py`, 29 %),
 `mcp_server.py` (50 %) y ramas opcionales (chromadb/CLI) de
-`index_knowledge.py` (71 %), `jev_review.py` (71 %), `jev_calibration.py` (64 %),
+`index_knowledge.py` (72 %), `jev_review.py` (71 %), `jev_calibration.py` (64 %),
 `jev_pillars.py` (62 %) y `analyze_shell.py` (62 %).
 
-`mutation_check.py` (REQ-015, heurística stdlib) por módulo:
+`mutation_check.py` (REQ-015, heurística stdlib). El modo `--batch` mide varios
+módulos y agrega el score ponderado por mutantes (integrado en `scripts/ci.sh`
+con `--strict --umbral 0.8`, ~107 s):
 
-| Módulo(s) | Mutantes | Score |
+| Módulo | Mutantes | Score |
 |---|---|---|
-| adr_validator / auto_audit / doc_validator / diagnostico / mcp_server / jev_review / jev_pillars | 16-40 | **1.00** |
-| jev_calibration_merge | 23 | **0.91** |
+| adr_validator | 16 | **1.00** |
+| doc_validator | 22 | **1.00** |
+| auto_audit | 40 | **1.00** |
+| diagnostico | 12 | **1.00** |
 | lessons_extractor | 14 | **0.79** |
-| index_knowledge | 29 | **0.72** |
+| index_knowledge | 29 | **0.97** |
+| **Batch (global ponderado)** | **133** | **0.97** |
 
-Los supervivientes restantes son en su mayoría equivalentes (flags de
-serialización, guarda `__main__`, `is not None`) o rutas no ejercitables sin
-`chromadb` (dependencia opcional). Cobertura y mutación no entran en el
-pre-commit (son mediciones a demanda).
+Otros módulos medidos a demanda alcanzan **1.00** (`mcp_server`, `jev_review`,
+`jev_pillars`) y `jev_calibration_merge` **0.91**. Los supervivientes restantes
+son en su mayoría equivalentes (defaults de flags, guarda `__main__`, `parents`/
+`exist_ok` cuando el directorio ya existe) o rutas no ejercitables sin
+`chromadb` (dependencia opcional). La mutación no entra en el pre-commit
+(medición a demanda); el modo `--batch` sí corre en el CI local.
 
 **Linter de prosa `vale` (2026-09-19)**: instalado con `go install
 github.com/vale-cli/vale/v3/cmd/vale@latest` (MIT, usuario, sin sudo). Config en

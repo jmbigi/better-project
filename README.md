@@ -211,6 +211,9 @@ python3 scripts/auto_audit.py all
 # Chequeo de mutaciones: mide la fuerza de los tests (copia temporal)
 python3 scripts/mutation_check.py
 
+# Mutacion multi-modulo con score global (lo corre tambien scripts/ci.sh)
+python3 scripts/mutation_check.py --batch --strict --umbral 0.8
+
 # Revisar clasificaciones Jev con UI (REQ-016): OK / corregir / saltar
 python3 scripts/jev_review.py
 
@@ -223,7 +226,7 @@ python3 scripts/jev_calibration_merge.py
 # Diagnosticar los 4 pilares en otro proyecto (REQ-017, solo lectura)
 python3 scripts/diagnostico.py --root <carpeta>
 
-# Suite de tests (186 casos, stdlib unittest)
+# Suite de tests (199 casos, stdlib unittest)
 python3 -m unittest discover -s tests -q
 
 # Verificacion completa previa a commit

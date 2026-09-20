@@ -14,6 +14,7 @@ Es una heuristica: complementa, no reemplaza, herramientas maduras como
 
 Uso:
     python3 scripts/mutation_check.py
+    python3 scripts/mutation_check.py --batch [--json] [--strict] [--umbral 0.8]
     python3 scripts/mutation_check.py --module scripts/auto_audit.py \\
         --test test_ecosistema.TestAutoAudit --max-mutantes 20 [--json] [--strict]
 """
@@ -35,6 +36,16 @@ DEFAULT_TEST = "test_ecosistema.TestADRValidator"
 DEFAULT_MAX = 40
 DEFAULT_TIMEOUT = 60
 DEFAULT_UMBRAL = 0.8
+
+# Modulos con test acotado y rapido para el modo --batch (fuerza global).
+DEFAULT_BATCH: list[tuple[str, str]] = [
+    ("scripts/adr_validator.py", "test_ecosistema.TestADRValidator"),
+    ("scripts/doc_validator.py", "test_ecosistema.TestDocValidator"),
+    ("scripts/lessons_extractor.py", "test_ecosistema.TestLessonsExtractor"),
+    ("scripts/index_knowledge.py", "test_ecosistema.TestIndexKnowledge"),
+    ("scripts/auto_audit.py", "test_ecosistema.TestAutoAudit"),
+    ("scripts/diagnostico.py", "test_ecosistema.TestDiagnostico"),
+]
 
 OP_MAP: dict[type, type] = {
     ast.Eq: ast.NotEq,
@@ -153,6 +164,32 @@ def medir(
     }
 
 
+def medir_batch(
+    root: Path,
+    pares: list[tuple[str, str]] | None = None,
+    max_mutantes: int = DEFAULT_MAX,
+    timeout: int = DEFAULT_TIMEOUT,
+    ejecutar=None,
+) -> dict:
+    """Mide varios modulos (module, test) y agrega el score global.
+
+    El score global se pondera por numero de mutantes: suma de muertos entre
+    suma de totales. Un modulo sin mutantes generables no altera el agregado.
+    """
+    resultados = [
+        medir(root, modulo_rel, test_target, max_mutantes, timeout, ejecutar)
+        for modulo_rel, test_target in (pares if pares is not None else DEFAULT_BATCH)
+    ]
+    total = sum(r["total"] for r in resultados)
+    muertos = sum(r["mutantes_muertos"] for r in resultados)
+    return {
+        "batch": resultados,
+        "total": total,
+        "mutantes_muertos": muertos,
+        "score": (muertos / total) if total else 1.0,
+    }
+
+
 def _copia_temporal(root: Path) -> Path:
     destino = Path(tempfile.mkdtemp(prefix="mutation_check_"))
     ignorar = shutil.ignore_patterns(".git", ".venv", "venv", "__pycache__", ".storage", "*.pyc")
@@ -165,6 +202,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Chequeo de mutaciones (REQ-015)")
     parser.add_argument("--module", default=DEFAULT_MODULE, help="Modulo a mutar (ruta relativa)")
     parser.add_argument("--test", default=DEFAULT_TEST, help="Objetivo unittest (modulo.Clase)")
+    parser.add_argument("--batch", action="store_true", help="Mide DEFAULT_BATCH y agrega el score global")
     parser.add_argument("--max-mutantes", type=int, default=DEFAULT_MAX)
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT, help="Timeout por mutante (s)")
     parser.add_argument("--umbral", type=float, default=DEFAULT_UMBRAL, help="Score minimo con --strict")
@@ -175,13 +213,23 @@ def main(argv: list[str] | None = None) -> int:
 
     root = ROOT if args.in_place else _copia_temporal(ROOT)
     try:
-        resultado = medir(root, args.module, args.test, args.max_mutantes, args.timeout)
+        if args.batch:
+            resultado = medir_batch(root, None, args.max_mutantes, args.timeout)
+        else:
+            resultado = medir(root, args.module, args.test, args.max_mutantes, args.timeout)
     finally:
         if root is not ROOT:
             shutil.rmtree(root, ignore_errors=True)
 
     if args.json:
         print(json.dumps(resultado, indent=2, ensure_ascii=False))
+    elif args.batch:
+        for r in resultado["batch"]:
+            print(f"  {r['modulo']:<34} {r['mutantes_muertos']:>3}/{r['total']:<3} score {r['score']:.3f}")
+        print(f"Batch: {resultado['mutantes_muertos']}/{resultado['total']}  score {resultado['score']:.3f}")
+        for r in resultado["batch"]:
+            for s in r["sobrevivientes"]:
+                print(f"  [SOBREVIVE] {r['modulo']} {s}")
     else:
         print(f"Modulo: {resultado['modulo']}  (test: {resultado['test']})")
         print(f"Mutantes: {resultado['total']}  muertos: {resultado['mutantes_muertos']}  score: {resultado['score']:.3f}")

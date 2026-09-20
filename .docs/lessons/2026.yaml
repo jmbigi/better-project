@@ -269,3 +269,13 @@
   resolucion: "Parcial (2026-09-20): AGENTS.md corregido para citar los comandos reales (unittest, mutation_check.py, verificar-proyecto.sh). Pendiente: revisar las citas a test-determinism.py y redteam-prompt-injection.py antes de ampliar el regex del verificador a .py."
   estado: Abierta
   fecha: 2026-09-20
+- id: LSN-032
+  proyecto: "Ecosistema (REQ-015)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El score de mutacion por defecto medía solo adr_validator y subestimaba la fuerza de la suite; al medir por modulo, index_knowledge daba 0.69 (9 supervivientes) y lessons_extractor 0.79. Parte de los supervivientes correspondian a ramas de orden/normalizacion/CLI sin cubrir y otros a artefactos del propio mutador (guarda __main__, flags HAS_YAML, parents/exist_ok cuando el directorio ya existe)."
+  recomendacion: "Medir en lote (mutation_check --batch) e integrarlo al CI con umbral; cerrar solo los supervivientes que sean ramas logicas reales con tests deterministas (mock de imports/entorno, comparacion de orden y normalizacion) y documentar los equivalentes en vez de exigir score 1.0."
+  resolucion: "Anadido --batch a mutation_check.py (score global ponderado) e integrado en scripts/ci.sh con --strict --umbral 0.8. Tests nuevos mataron 8/9 supervivientes de index_knowledge (0.69 -> 0.97). Batch global 0.91 -> 0.97 (129/133); los 4 restantes son equivalentes documentados."
+  estado: Resuelta
+  fecha: 2026-09-20
+  fecha_resolucion: 2026-09-20

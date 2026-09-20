@@ -8,6 +8,7 @@ Usa directorios temporales para no tocar el estado real del repo.
 
 import argparse
 import ast
+import builtins
 import io
 import json
 import math
@@ -404,6 +405,81 @@ class TestIndexKnowledge(unittest.TestCase):
         with mock.patch.object(sys, "argv", ["index_knowledge.py", "--all"]), \
                 mock.patch.object(sys, "stdout", io.StringIO()):
             self.assertEqual(ik.main(), 0)
+
+    def test_vectors_normalizan_por_total_tokens(self):
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta\n")
+        (self.know / "b.md").write_text(
+            "## B\nalpha iota kappa lambda mu nu xi omicron pi rho sigma tau\n"
+        )
+        ik.build_json_index()
+        data = json.loads(ik.JSON_INDEX.read_text(encoding="utf-8"))
+        pesos = {c["archivo"]: v["alpha"] for c, v in zip(data["chunks"], data["vectors"])}
+        self.assertGreater(pesos[".docs/knowledge/a.md"], pesos[".docs/knowledge/b.md"])
+
+    def test_search_json_ordena_por_score(self):
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        (self.know / "b.md").write_text("## B\nalpha iota kappa lambda mu nu xi omicron\n")
+        ik.build_json_index()
+        resultados = ik.search_json("alpha beta")
+        self.assertGreaterEqual(resultados[0]["score"], resultados[-1]["score"])
+        self.assertIn("beta", resultados[0]["contenido"])
+
+    def test_index_all_default_no_reconstruye(self):
+        (self.know / "a.md").write_text("## A\ncontenido largo suficiente para chunk de prueba\n")
+        ik.build_json_index()
+        ik.JSON_INDEX.write_text("SENTINELA", encoding="utf-8")
+        with mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.index_all()
+        self.assertEqual(ik.JSON_INDEX.read_text(encoding="utf-8"), "SENTINELA")
+
+    def test_index_all_crea_storage_con_padres(self):
+        nuevo = self.tmp / "nested" / "storage"
+        ik.STORAGE_DIR = nuevo
+        ik.JSON_INDEX = nuevo / "index.json"
+        ik.MANIFEST = nuevo / "manifest.json"
+        ik.CHROMA_DIR = nuevo / "chroma_db"
+        (self.know / "a.md").write_text("## A\ncontenido largo suficiente para chunk de prueba\n")
+        with mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.index_all()
+        self.assertTrue(ik.JSON_INDEX.exists())
+
+    def test_check_fresh_manifiesto_sin_indice(self):
+        ik.MANIFEST.write_text("{}", encoding="utf-8")
+        self.assertFalse(ik.JSON_INDEX.exists())
+        self.assertFalse(ik.CHROMA_DIR.exists())
+        self.assertFalse(ik.check_fresh())
+
+    def test_main_all_fuerza_reconstruccion(self):
+        (self.know / "a.md").write_text("## A\ncontenido largo suficiente para chunk de prueba\n")
+        ik.build_json_index()
+        ik.JSON_INDEX.write_text("SENTINELA", encoding="utf-8")
+        with mock.patch.object(sys, "argv", ["index_knowledge.py", "--all"]), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(ik.main(), 0)
+        self.assertNotEqual(ik.JSON_INDEX.read_text(encoding="utf-8"), "SENTINELA")
+
+    def test_chroma_available_true_con_imports(self):
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name in ("chromadb", "sentence_transformers"):
+                return mock.MagicMock()
+            return real_import(name, *args, **kwargs)
+
+        with mock.patch.object(builtins, "__import__", side_effect=fake_import):
+            self.assertTrue(ik._chroma_available())
+
+    def test_main_search_usa_json_si_chroma_no_disponible(self):
+        (self.know / "a.md").write_text("## Timeout\nservidor timeout conexiones pool\n")
+        ik.build_json_index()
+        ik.CHROMA_DIR.mkdir(parents=True, exist_ok=True)
+        buf = io.StringIO()
+        with mock.patch.object(ik, "_chroma_available", return_value=False), \
+                mock.patch.object(sys, "argv", ["index_knowledge.py", "search", "timeout"]), \
+                mock.patch.object(sys, "stdout", buf):
+            rc = ik.main()
+        self.assertEqual(rc, 0)
+        self.assertIn("timeout", buf.getvalue())
 
 
 class TestMCPServer(unittest.TestCase):
@@ -1454,6 +1530,61 @@ class TestMutationCheck(unittest.TestCase):
         finally:
             shutil.rmtree(copia, ignore_errors=True)
         self.assertGreaterEqual(resultado["score"], 0.8)
+
+    def test_medir_batch_agrega_y_pondera(self):
+        scripts = self.tmp / "scripts"
+        scripts.mkdir()
+        (scripts / "uno.py").write_text("def f(a, b):\n    return a == b\n", encoding="utf-8")
+        (scripts / "dos.py").write_text("def g(a, b):\n    return a and b\n", encoding="utf-8")
+        pares = [("scripts/uno.py", "test_x"), ("scripts/dos.py", "test_y")]
+        resultado = mc.medir_batch(self.tmp, pares=pares, ejecutar=lambda desc: 1)
+        self.assertEqual(resultado["total"], 2)
+        self.assertEqual(resultado["mutantes_muertos"], 2)
+        self.assertEqual(resultado["score"], 1.0)
+        self.assertEqual(len(resultado["batch"]), 2)
+
+    def test_medir_batch_score_parcial(self):
+        scripts = self.tmp / "scripts"
+        scripts.mkdir()
+        (scripts / "uno.py").write_text("def f(a, b):\n    return a == b\n", encoding="utf-8")
+        (scripts / "dos.py").write_text("def g(a, b):\n    return a and b\n", encoding="utf-8")
+        pares = [("scripts/uno.py", "test_x"), ("scripts/dos.py", "test_y")]
+        llamadas = {"n": 0}
+
+        def ejecutar(desc):
+            llamadas["n"] += 1
+            return 1 if llamadas["n"] == 1 else 0
+
+        resultado = mc.medir_batch(self.tmp, pares=pares, ejecutar=ejecutar)
+        self.assertEqual(resultado["score"], 0.5)
+
+    def test_medir_batch_sin_mutantes_score_1(self):
+        scripts = self.tmp / "scripts"
+        scripts.mkdir()
+        (scripts / "vacio.py").write_text("x = 1\n", encoding="utf-8")
+        resultado = mc.medir_batch(self.tmp, pares=[("scripts/vacio.py", "test_x")])
+        self.assertEqual(resultado["total"], 0)
+        self.assertEqual(resultado["score"], 1.0)
+
+    def test_main_batch_imprime_tabla(self):
+        res = {
+            "batch": [{"modulo": "scripts/x.py", "test": "t", "total": 2,
+                       "mutantes_muertos": 2, "sobrevivientes": [], "score": 1.0}],
+            "total": 2, "mutantes_muertos": 2, "score": 1.0,
+        }
+        with mock.patch.object(mc, "medir_batch", return_value=res), \
+                mock.patch.object(sys, "stdout", io.StringIO()) as out:
+            rc = mc.main(["--batch", "--in-place"])
+        self.assertEqual(rc, 0)
+        self.assertIn("Batch: 2/2", out.getvalue())
+
+    def test_main_batch_strict_falla_bajo_umbral(self):
+        res = {"batch": [], "total": 4, "mutantes_muertos": 2, "score": 0.5}
+        with mock.patch.object(mc, "medir_batch", return_value=res), \
+                mock.patch.object(sys, "stdout", io.StringIO()), \
+                mock.patch.object(sys, "stderr", io.StringIO()):
+            rc = mc.main(["--batch", "--in-place", "--strict", "--umbral", "0.8"])
+        self.assertEqual(rc, 1)
 
 
 class TestJevReview(unittest.TestCase):
