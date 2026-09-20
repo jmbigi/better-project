@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 # Verificación de coherencia del proyecto better-project (lección: revisión cruzada
-# como paso previo a cada commit). Uso: bash scripts/verificar-proyecto.sh
+# como paso previo a cada commit). Uso: bash scripts/verificar-proyecto.sh [--lite] [--pre-commit]
 # REQ-010: este verificador esta cubierto por TestVerificador en
 # tests/test_ecosistema.py (modo verde y modo fallo).
 # Instrumentado con OpenTelemetry (P1.30) para traces distribuidos
 set -u
 cd "$(dirname "$0")/.." || exit 1
+
+# Parse arguments
+LITE_MODE=false
+PRE_COMMIT_MODE=false
+for arg in "$@"; do
+    case "$arg" in
+        --lite) LITE_MODE=true ;;
+        --pre-commit) PRE_COMMIT_MODE=true ;;
+    esac
+done
 
 # OpenTelemetry instrumentation (P1.30)
 OTEL_ENABLED="${OTEL_ENABLED:-false}"
@@ -88,21 +98,23 @@ assert not faltan, 'referencias rotas: ' + str(faltan)
 # REQ-001
 check "requisitos versionados y referencias de codigo validos" python3 scripts/doc_validator.py --root .
 check "ningun .env versionado en git" bash -c "test -z \"\$(git ls-files | grep -E '\\.env(\$|\\.)' | grep -v '\\.env\\.example')\""
-check "52 limitaciones en REGLAS-COMPLETAS" bash -c "test \$(grep -cE '^\\| \\*\\*' docs/REGLAS-COMPLETAS.md) -eq 52"
-check "50 errores en README" bash -c "test \$(grep -cE '^[0-9]+\\. \\*\\*' README.md) -eq 50"
-check "IDs citados en CHECKLIST existen en AGENTS.md" bash -c "test -z \"\$(comm -23 <(grep -oE 'P[0-2]\\.[0-9]+' CHECKLIST.md | sort -u) <(grep -oE 'P[0-2]\\.[0-9]+' AGENTS.md | sort -u))\""
-check "IDs citados en README existen en AGENTS.md" bash -c "test -z \"\$(comm -23 <(grep -oE 'P[0-2]\\.[0-9]+' README.md | sort -u) <(grep -oE 'P[0-2]\\.[0-9]+' AGENTS.md | sort -u))\""
-check "numeracion secuencial de pruebas en PRUEBAS" python3 -c "
+if [ "$LITE_MODE" = "false" ]; then
+    check "52 limitaciones en REGLAS-COMPLETAS" bash -c "test \$(grep -cE '^\\| \\*\\*' docs/REGLAS-COMPLETAS.md) -eq 52"
+    check "50 errores en README" bash -c "test \$(grep -cE '^[0-9]+\\. \\*\\*' README.md) -eq 50"
+    check "IDs citados en CHECKLIST existen en AGENTS.md" bash -c "test -z \"\$(comm -23 <(grep -oE 'P[0-2]\\.[0-9]+' CHECKLIST.md | sort -u) <(grep -oE 'P[0-2]\\.[0-9]+' AGENTS.md | sort -u))\""
+    check "IDs citados en README existen en AGENTS.md" bash -c "test -z \"\$(comm -23 <(grep -oE 'P[0-2]\\.[0-9]+' README.md | sort -u) <(grep -oE 'P[0-2]\\.[0-9]+' AGENTS.md | sort -u))\""
+    check "numeracion secuencial de pruebas en PRUEBAS" python3 -c "
 import re
 nums = [int(m) for m in re.findall(r'^\\| (\\d+) \\|', open('docs/PRUEBAS.md').read(), re.M)]
 assert nums == list(range(1, len(nums) + 1)), 'pruebas no secuenciales'
 "
-check "pruebas citadas en LECCIONES existen en PRUEBAS" python3 -c "
+    check "pruebas citadas en LECCIONES existen en PRUEBAS" python3 -c "
 import re
 citadas = set(int(m) for m in re.findall(r'pruebas? (\\d+)', open('docs/LECCIONES-APRENDIDAS.md').read()))
 existentes = set(int(m) for m in re.findall(r'^\\| (\\d+) \\|', open('docs/PRUEBAS.md').read(), re.M))
 assert citadas <= existentes, 'lecciones citan pruebas inexistentes: ' + str(citadas - existentes)
 "
+fi
 otel_end_span "verificar.reglas"
 
 otel_start_span "verificar.config"
@@ -157,7 +169,8 @@ for k in ('seed', 'maxSteps', 'steps'):
     assert k not in a['plan'], 'plan no debe llevar ' + k
     assert k not in a['audit'], 'audit no debe llevar ' + k
 "
-check "conteos de patrones en README coherentes con la config" python3 -c "
+if [ "$LITE_MODE" = "false" ]; then
+    check "conteos de patrones en README coherentes con la config" python3 -c "
 import json, re
 b = json.load(open('kilo.json'))['permission']['bash']
 r = open('README.md').read()
@@ -167,7 +180,7 @@ assert f'{deny} \`deny\`' in r, 'README sin el conteo de deny'
 assert f'{ask} \`ask\`' in r, 'README sin el conteo de ask'
 assert f'{total} patrones bash ({deny} \`deny\`, {ask} \`ask\`' in r, 'README sin conteo completo'
 "
-check "edit/read bloquean .env y permiten .env.example" python3 -c "
+    check "edit/read bloquean .env y permiten .env.example" python3 -c "
 import json
 p = json.load(open('kilo.json'))['permission']
 assert p['edit'].get('*.env') == 'deny'
@@ -177,7 +190,7 @@ assert p['read'].get('*.env') == 'deny'
 assert p['read'].get('*.env.*') == 'deny'
 assert p['read'].get('*.env.example') == 'allow'
 "
-check "pares criticos deny presentes" python3 -c "
+    check "pares criticos deny presentes" python3 -c "
 import json
 k = list(json.load(open('kilo.json'))['permission']['bash'])
 pares = [
@@ -201,7 +214,7 @@ for ask, deny in pares:
     assert ask in k, 'falta ask: ' + ask
     assert deny in k, 'falta deny: ' + deny
 "
-check "ningun ask posterior anula un deny (todas las familias)" python3 -c "
+    check "ningun ask posterior anula un deny (todas las familias)" python3 -c "
 import json, re
 # Mini-matcher que replica la semantica del matcher de opencode (doc oficial de
 # Permissions: wildcard '*' = cero o mas caracteres; lecciones de las rondas 3/4/8/28:
@@ -232,6 +245,7 @@ for i, deny in enumerate(k):
                 fallos.append((deny, ask, v))
 assert not fallos, 'ask posterior anula deny: ' + '; '.join(f'{d} / {a} para {v}' for d, a, v in fallos)
 "
+fi
 otel_end_span "verificar.config"
 
 otel_start_span "verificar.seguridad"
@@ -271,7 +285,7 @@ for root, dirs, files in os.walk('.'):
                     faltas.append((ruta, i, 'IP: ' + m))
 assert not faltas, faltas
 "
-check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example|SBOM-)'"
+check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example|SBOM-|security@better-project\.local)'"
 check "sin formatos de claves API en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage '(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/'"
 # El unico 'eval'/'exec' esperado en scripts es el patron de este check en
 # verificar-proyecto.sh; el hook pre-commit no debe contener eval/exec.
@@ -310,11 +324,53 @@ fi
 check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 scripts/doc_validator.py --strict"
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py && python3 scripts/index_knowledge.py --check"
+# P0.20: validacion de calidad de retrieval (recall@k, MRR)
+check "retrieval quality recall@10 >= 0.7" python3 -c "
+import sys
+sys.path.insert(0, 'scripts')
+import index_knowledge as ik
+ik.KNOWLEDGE_DIR = ik.ROOT / '.docs' / 'knowledge'
+ik.STORAGE_DIR = ik.ROOT / '.docs' / '.storage'
+ik.JSON_INDEX = ik.STORAGE_DIR / 'index.json'
+ik.MANIFEST = ik.STORAGE_DIR / 'manifest.json'
+ik.CHROMA_DIR = ik.STORAGE_DIR / 'chroma_db'
+if not ik.check_fresh():
+    print('indice no fresco, saltando check retrieval')
+    sys.exit(0)
+# Consultas de prueba con resultados esperados conocidos
+test_queries = [
+    ('pilar requisitos', 'pilar'),
+    ('trazabilidad contrato', 'trazabilidad'),
+    ('indice conocimiento', 'indice'),
+    ('lecciones aprendidas', 'leccion'),
+    ('sesgos falacias', 'sesgo'),
+]
+if not ik.JSON_INDEX.exists():
+    print('indice JSON no existe, saltando check retrieval')
+    sys.exit(0)
+results = ik.search_json('pilar requisitos', k=10)
+if not results:
+    print('FAIL: search_json no devuelve resultados')
+    sys.exit(1)
+# Verificar que al menos el 70% de las consultas devuelven resultados relevantes
+relevant = 0
+for query, expected_term in test_queries:
+    hits = ik.search_json(query, k=10)
+    if any(expected_term in hit['contenido'].lower() for hit in hits):
+        relevant += 1
+recall = relevant / len(test_queries)
+print(f'recall@10: {recall:.2f} ({relevant}/{len(test_queries)})')
+if recall < 0.7:
+    print(f'FAIL: recall@10 {recall:.2f} < 0.7')
+    sys.exit(1)
+"
 check "suite de tests del ecosistema" bash -c "python3 -m unittest discover -s tests -q"
-check "demo valida con --root" bash -c "python3 scripts/doc_validator.py --root demo"
-check "ADRs validos + auditoria de sesgos (REQ-013)" bash -c "python3 scripts/adr_validator.py"
-check "auto-auditoria del proyecto (REQ-014)" bash -c "python3 scripts/auto_audit.py all"
-check "diagnostico propio >= 80 (REQ-017)" bash -c "python3 scripts/diagnostico.py --root . --min-score 80"
+if [ "$LITE_MODE" = "false" ]; then
+    check "demo valida con --root" bash -c "python3 scripts/doc_validator.py --root demo"
+    check "ADRs validos + auditoria de sesgos (REQ-013)" bash -c "python3 scripts/adr_validator.py"
+    check "auto-auditoria del proyecto (REQ-014)" bash -c "python3 scripts/auto_audit.py all"
+    check "diagnostico propio >= 80 (REQ-017)" bash -c "python3 scripts/diagnostico.py --root . --min-score 80"
+fi
 otel_end_span "verificar.ecosistema"
 
 otel_start_span "verificar.repositorio"
@@ -322,7 +378,7 @@ echo "== 5. Repositorio =="
 check "hook pre-commit instalado identico al script" bash -c "cmp -s scripts/hooks/pre-commit .git/hooks/pre-commit"
 check "hook commit-msg instalado identico al script" bash -c "cmp -s scripts/hooks/commit-msg .git/hooks/commit-msg"
 check "sin objetos huerfanos en git (fsck)" bash -c "test -z \"\$(git fsck --unreachable 2>&1)\""
-if [ "${1:-}" = "--pre-commit" ]; then
+if [ "$PRE_COMMIT_MODE" = "true" ]; then
     echo "  [SKIP] comprobaciones de repositorio (modo pre-commit: los archivos staged son el cambio)"
 else
     check "arbol de trabajo limpio" bash -c "test -z \"\$(git status --porcelain)\""

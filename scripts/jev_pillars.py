@@ -37,7 +37,7 @@ ROOT = Path(__file__).resolve().parent.parent
 REQ_DIR = ROOT / ".docs" / "requirements"
 LESSONS_DIR = ROOT / ".docs" / "lessons"
 DEFAULT_CALIBRATION_REPORT = ROOT / ".docs" / ".storage" / "jev_calibration.json"
-DEFAULT_MIN_CONFIDENCE = 0.5
+DEFAULT_MIN_CONFIDENCE = 0.6
 # Umbral de accuracy por tarea (REQ-012, criterio 6).
 ACCURACY_MINIMA = 0.6
 
