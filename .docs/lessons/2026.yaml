@@ -242,3 +242,13 @@
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
+- id: LSN-029
+  proyecto: "Ecosistema (REQ-003)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "lessons_extractor.py --json fallaba con TypeError ('Object of type date is not JSON serializable'): YAML parsea las fechas sin comillas (fecha, fecha_resolucion) como datetime.date y json.dumps no las serializa. La suite no cubria la rama --json, asi que el fallo era invisible."
+  recomendacion: "Cubrir las ramas CLI (--check/--json) de los scripts con tests que puedan fallar; al serializar datos parseados de YAML, normalizar fechas a texto o usar json.dumps(..., default=str). La mutacion/cobertura de ramas revela rutas nunca ejercitadas."
+  resolucion: "fecha normalizada a texto en validate() y json.dumps(..., default=str) en --json; anadidos tests de las ramas --check/--json. lessons_extractor pasa de 0.43 a 0.79 de mutacion."
+  estado: Resuelta
+  fecha: 2026-09-20
+  fecha_resolucion: 2026-09-20

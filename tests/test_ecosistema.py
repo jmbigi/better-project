@@ -8,6 +8,7 @@ Usa directorios temporales para no tocar el estado real del repo.
 
 import argparse
 import ast
+import io
 import json
 import math
 import os
@@ -211,6 +212,45 @@ class TestLessonsExtractor(unittest.TestCase):
         self.assertIn("prob", texto)
         self.assertIn("rec", texto)
 
+    def test_estado_invalido_genera_problema(self):
+        self._yaml(
+            "- id: LSN-001\n  proyecto: P\n  fase: F\n  categoria: C\n  problema: a\n"
+            "  recomendacion: b\n  estado: EnCurso\n  fecha: 2026-08-06\n"
+        )
+        _, problems = le.validate()
+        self.assertTrue(any("estado" in p and "invalido" in p for p in problems))
+
+    def test_parser_linea_indentada_sin_entrada(self):
+        self.assertEqual(le._minimal_parser("  clave: valor\n"), [])
+
+    def test_main_check_no_genera_contexto(self):
+        self._yaml(
+            "- id: LSN-001\n  proyecto: P\n  fase: F\n  categoria: C\n  problema: a\n"
+            "  recomendacion: b\n  estado: Resuelta\n  fecha: 2026-08-06\n"
+        )
+        buf = io.StringIO()
+        with mock.patch.object(sys, "argv", ["lessons_extractor.py", "--check"]), \
+                mock.patch.object(sys, "stdout", buf), \
+                mock.patch.object(le, "OUTPUT", self.tmp / "ctx.txt"):
+            rc = le.main()
+        self.assertEqual(rc, 0)
+        self.assertNotIn("lessons_context.txt", buf.getvalue())
+
+    def test_main_json_conserva_acentos(self):
+        self._yaml(
+            "- id: LSN-001\n  proyecto: P\n  fase: F\n  categoria: C\n"
+            "  problema: situación crítica\n  recomendacion: b\n  estado: Resuelta\n"
+            "  fecha: 2026-08-06\n  fecha_resolucion: 2026-08-07\n"
+        )
+        buf = io.StringIO()
+        with mock.patch.object(sys, "argv", ["lessons_extractor.py", "--json"]), \
+                mock.patch.object(sys, "stdout", buf), \
+                mock.patch.object(le, "OUTPUT", self.tmp / "ctx.txt"):
+            rc = le.main()
+        self.assertEqual(rc, 0)
+        self.assertIn("situación", buf.getvalue())
+        json.loads(buf.getvalue())
+
 
 class TestIndexKnowledge(unittest.TestCase):
     def setUp(self):
@@ -277,6 +317,27 @@ class TestIndexKnowledge(unittest.TestCase):
 
     def test_check_fresh_sin_indice(self):
         self.assertFalse(ik.check_fresh())
+
+    def test_json_index_chunk_sin_palabras_utiles(self):
+        (self.know / "a.md").write_text("## S\nel la los las de del y o u a en con para por\n")
+        n_files, n_chunks = ik.build_json_index()
+        self.assertEqual(n_files, 1)
+        self.assertGreaterEqual(n_chunks, 1)
+
+    def test_json_index_conserva_acentos(self):
+        (self.know / "a.md").write_text("## Reglas\nsituación crítica de prueba\n")
+        ik.build_json_index()
+        self.assertIn("situación", ik.JSON_INDEX.read_text(encoding="utf-8"))
+
+    def test_main_search_sobre_indice_json(self):
+        (self.know / "a.md").write_text("## Timeout\nservidor timeout conexiones pool\n")
+        ik.build_json_index()
+        buf = io.StringIO()
+        with mock.patch.object(sys, "argv", ["index_knowledge.py", "search", "timeout"]), \
+                mock.patch.object(sys, "stdout", buf):
+            rc = ik.main()
+        self.assertEqual(rc, 0)
+        self.assertIn("timeout", buf.getvalue())
 
 
 class TestMCPServer(unittest.TestCase):
@@ -1556,6 +1617,43 @@ class TestJevCalibrationMerge(unittest.TestCase):
         ])
         resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path), aplicar=True)
         self.assertTrue(any("escenario duplicado" in a for a in resultado["advertencias"]))
+
+    def test_choice_sin_criterios_es_error(self):
+        self._cand(casos=[{"id": "X3", "tipo": "choice", "estado": "e", "instrucciones": "i",
+                            "criterios": {}, "esperado": "requisitos"}])
+        resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path))
+        self.assertTrue(any("choice sin 'criterios'" in e for e in resultado["errores"]))
+
+    def test_score_sin_niveles_es_error(self):
+        self._cand(casos=[{"id": "X4", "tipo": "score", "estado": "e", "instrucciones": "i",
+                            "niveles": [], "esperado": 0}])
+        resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path))
+        self.assertTrue(any("score sin 'niveles'" in e for e in resultado["errores"]))
+
+    def test_escenarios_distintos_sin_advertencia(self):
+        self._cand(casos=[
+            {"id": "N96", "tipo": "noul", "estado": "uno", "instrucciones": "i", "esperado": "yes"},
+            {"id": "N95", "tipo": "noul", "estado": "dos", "instrucciones": "i", "esperado": "no"},
+        ])
+        resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path))
+        self.assertEqual(resultado["advertencias"], [])
+
+    def test_ids_unicos_sin_error(self):
+        self._cand(casos=[
+            {"id": "N94", "tipo": "noul", "estado": "a", "instrucciones": "i", "esperado": "yes"},
+            {"id": "N93", "tipo": "noul", "estado": "b", "instrucciones": "i", "esperado": "no"},
+        ])
+        resultado = jcm.fusionar(jcm._leer(self.set_path), jcm._leer(self.cand_path))
+        self.assertEqual(resultado["errores"], [])
+
+    def test_main_json_aplicar_conserva_acentos(self):
+        self._cand(casos=[{"id": "N91", "tipo": "noul", "estado": "situación",
+                            "instrucciones": "i", "esperado": "yes"}])
+        with mock.patch.object(sys, "stdout", io.StringIO()):
+            rc = jcm.main(["--set", str(self.set_path), "--candidatos", str(self.cand_path),
+                           "--aplicar", "--json"])
+        self.assertEqual(rc, 0)
+        self.assertIn("situación", self.set_path.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

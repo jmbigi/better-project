@@ -100,6 +100,7 @@ def validate() -> tuple[list[dict], list[str]]:
                 problems.append(
                     f"{path.name}: {lesson.get('id', '?')} fecha '{fecha}' invalida (AAAA-MM-DD)"
                 )
+            lesson["fecha"] = fecha  # YAML parsea fechas como date: normalizar para --json
             lessons.append(lesson)
     return lessons, problems
 
@@ -132,7 +133,7 @@ def main() -> int:
         return 1 if problems else 0
 
     if "--json" in sys.argv:
-        print(json.dumps(lessons, ensure_ascii=False, indent=2))
+        print(json.dumps(lessons, ensure_ascii=False, indent=2, default=str))
         return 0
 
     if problems:
