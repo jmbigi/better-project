@@ -260,3 +260,12 @@
   recomendacion: "Un servidor MCP local debe ser un proceso que hable JSON-RPC por stdio; no configurar scripts shell de proposito general como MCP. En 'cwd' usar solo rutas relativas al workspace o omitirlo (no existe ${workspace}). Exponer la verificacion como tool del servidor MCP existente (mcp_server.py: run_verification) y validar con 'opencode mcp list'."
   estado: Abierta
   fecha: 2026-09-20
+- id: LSN-031
+  proyecto: "Ecosistema / reglas"
+  fase: "Documentacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "Varios documentos citaban scripts que no existen en el repo: AGENTS.md referenciaba 'scripts/check-shell-pipes.py' y 'scripts/fuzz-denies.py' como tests del ruleset, y 'scripts/test-determinism.py' como test opcional; docs/REGLAS-COMPLETAS.md citaba 'scripts/redteam-prompt-injection.py'; AGENTS.md menciona skills en '.opencode/skills/' que no existen. El chequeo del verificador solo escaneaba rutas .md y .sh, por lo que las referencias .py rotas pasaban inadvertidas."
+  recomendacion: "Verificar que cada ruta citada exista (P0.2) y ampliar el chequeo de referencias del verificador para incluir .py; al citar script test/opcional que no se distribuye, describir el proposito sin la ruta concreta o marcarlo como no incluido."
+  resolucion: "Parcial (2026-09-20): AGENTS.md corregido para citar los comandos reales (unittest, mutation_check.py, verificar-proyecto.sh). Pendiente: revisar las citas a test-determinism.py y redteam-prompt-injection.py antes de ampliar el regex del verificador a .py."
+  estado: Abierta
+  fecha: 2026-09-20

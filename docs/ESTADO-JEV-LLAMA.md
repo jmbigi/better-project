@@ -2,6 +2,10 @@
 
 Fecha: 2026-09-19 (revision y correccion)
 
+> Actualizacion 2026-09-20: la suite del ecosistema tiene **186 tests OK**
+> (`python3 -m unittest discover -s tests`). Los conteos por ronda de este
+> documento (49/59/73/150/151) son snapshots historicos de su fecha.
+
 ## Realizado
 
 ### Requisito y codigo

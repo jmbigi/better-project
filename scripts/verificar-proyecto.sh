@@ -290,7 +290,7 @@ otel_end_span "verificar.seguridad"
 
 otel_start_span "verificar.ecosistema"
 echo "== 4. Ecosistema better-project =="
-check "sintaxis python de los scripts" bash -c "python3 -m py_compile scripts/doc_validator.py scripts/index_knowledge.py scripts/lessons_extractor.py scripts/mcp_server.py scripts/tui.py scripts/adr_validator.py scripts/auto_audit.py scripts/mutation_check.py scripts/jev_review.py scripts/diagnostico.py scripts/jev_llama.py scripts/jev_pillars.py scripts/jev_calibration.py scripts/jev_calibration_merge.py scripts/download_jev_model.py"
+check "sintaxis python de los scripts" bash -c "python3 -m py_compile scripts/doc_validator.py scripts/index_knowledge.py scripts/lessons_extractor.py scripts/mcp_server.py scripts/tui.py scripts/adr_validator.py scripts/auto_audit.py scripts/mutation_check.py scripts/jev_review.py scripts/diagnostico.py scripts/jev_llama.py scripts/jev_pillars.py scripts/jev_calibration.py scripts/jev_calibration_merge.py scripts/download_jev_model.py scripts/analyze_shell.py"
 check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 scripts/doc_validator.py --strict"
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py && python3 scripts/index_knowledge.py --check"

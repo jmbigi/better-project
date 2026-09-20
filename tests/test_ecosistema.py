@@ -17,6 +17,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import urllib.error
 from pathlib import Path
 from unittest import mock
 
@@ -25,8 +26,10 @@ SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import adr_validator as av  # noqa: E402
+import analyze_shell as ash  # noqa: E402
 import auto_audit as aa  # noqa: E402
 import diagnostico as diag  # noqa: E402
+import download_jev_model as djm  # noqa: E402
 import doc_validator as dv  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import jev_calibration as jc  # noqa: E402
@@ -1717,6 +1720,120 @@ class TestJevCalibrationMerge(unittest.TestCase):
                            "--aplicar", "--json"])
         self.assertEqual(rc, 0)
         self.assertIn("situación", self.set_path.read_text(encoding="utf-8"))
+
+
+class TestAnalyzeShell(unittest.TestCase):
+    """Cubre el analisis estatico de comandos shell (P0.8)."""
+
+    def test_comando_seguro_sin_hallazgos(self):
+        self.assertEqual(ash.analyze("echo hola"), [])
+        self.assertEqual(ash.analyze("cat /tmp/archivo.txt"), [])
+
+    def test_pipe_descargador_a_shell(self):
+        for cmd in ("curl http://x | bash", "wget http://x -O- | sh"):
+            hallazgos = ash.analyze(cmd)
+            self.assertTrue(any("dangerous-pipe" in h for h in hallazgos), cmd)
+
+    def test_eval_like(self):
+        self.assertTrue(any("eval-like" in h for h in ash.analyze("eval foo")))
+
+    def test_rm_rf_directo(self):
+        self.assertTrue(any("rm-rf" in h for h in ash.analyze("rm -rf /tmp/x")))
+
+    def test_bash_c_destructivo(self):
+        self.assertTrue(any("rm-rf" in h for h in ash.analyze("bash -c 'rm -rf /'")))
+
+    def test_subcomando_encadenado(self):
+        self.assertTrue(any("git-reset-hard" in h for h in ash.analyze("ls && git reset --hard")))
+
+    def test_tokenize_y_split(self):
+        self.assertEqual(len(ash.split_into_commands(ash.tokenize("a | b && c"))), 2)
+
+    def test_tokenizacion_invalida_eleva_error(self):
+        with self.assertRaises(ValueError):
+            ash.analyze("echo 'sin cerrar")
+
+
+class TestDownloadJevModel(unittest.TestCase):
+    """Cubre el helper de descarga idempotente del modelo GGUF (REQ-011)."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _fake_response(self, chunks):
+        class _Resp:
+            status = 200
+            headers = {"Content-Length": str(sum(len(c) for c in chunks))}
+
+            def __init__(self):
+                self._it = iter(chunks)
+
+            def read(self, n=-1):
+                return next(self._it, b"")
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+        return _Resp()
+
+    def test_human_unidades(self):
+        self.assertEqual(djm._human(512), "512.0 B")
+        self.assertEqual(djm._human(2048), "2.0 KB")
+        self.assertEqual(djm._human(5 * 1024 ** 3), "5.0 GB")
+
+    def test_main_modelo_existente_no_descarga(self):
+        dest = self.tmp / "m.gguf"
+        dest.write_bytes(b"x")
+        argv = ["download_jev_model.py", "--dest", str(dest), "--yes"]
+        with mock.patch.object(sys, "argv", argv), mock.patch.object(djm, "EXPECTED_BYTES", 1), \
+                mock.patch.object(djm, "_download") as dl, mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(djm.main(), 0)
+            dl.assert_not_called()
+
+    def test_main_descarga_cuando_falta(self):
+        dest = self.tmp / "m.gguf"
+        argv = ["download_jev_model.py", "--dest", str(dest), "--yes"]
+        with mock.patch.object(sys, "argv", argv), mock.patch.object(djm, "_download") as dl, \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(djm.main(), 0)
+            dl.assert_called_once()
+
+    def test_main_error_de_descarga_devuelve_1(self):
+        dest = self.tmp / "m.gguf"
+        argv = ["download_jev_model.py", "--dest", str(dest), "--yes"]
+        with mock.patch.object(sys, "argv", argv), \
+                mock.patch.object(djm, "_download", side_effect=RuntimeError("boom")), \
+                mock.patch.object(sys, "stdout", io.StringIO()), mock.patch.object(sys, "stderr", io.StringIO()):
+            self.assertEqual(djm.main(), 1)
+
+    def test_download_escribe_chunks(self):
+        dest = self.tmp / "m.gguf"
+        with mock.patch.object(djm, "EXPECTED_BYTES", 1), \
+                mock.patch("urllib.request.urlopen", return_value=self._fake_response([b"ab", b"cd"])), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            djm._download("http://x/m.gguf", dest, yes=True)
+        self.assertEqual(dest.read_bytes(), b"abcd")
+
+    def test_download_error_http_eleva_runtime_error(self):
+        dest = self.tmp / "m.gguf"
+        err = urllib.error.HTTPError("http://x", 404, "no encontrado", {}, None)
+        with mock.patch("urllib.request.urlopen", side_effect=err), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            with self.assertRaises(RuntimeError):
+                djm._download("http://x/m.gguf", dest, yes=True)
+
+    def test_download_error_red_eleva_runtime_error(self):
+        dest = self.tmp / "m.gguf"
+        err = urllib.error.URLError("sin red")
+        with mock.patch("urllib.request.urlopen", side_effect=err), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            with self.assertRaises(RuntimeError):
+                djm._download("http://x/m.gguf", dest, yes=True)
 
 
 if __name__ == "__main__":
