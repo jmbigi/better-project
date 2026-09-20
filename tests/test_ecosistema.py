@@ -1486,6 +1486,112 @@ class TestJevCalibration(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
+    def test_temperature_scale_invalida(self):
+        with self.assertRaises(ValueError):
+            jc.temperature_scale([0.5, 0.5], 0)
+
+    def test_accuracy_y_evaluate_vacios(self):
+        self.assertEqual(jc._accuracy([], []), 0.0)
+        self.assertEqual(jc.evaluate([], 1.0)["n"], 0)
+
+    def test_kfold_folds_invalidos(self):
+        with self.assertRaises(ValueError):
+            jc.kfold([{"probs": [0.6, 0.4], "label_idx": 0}], 1)
+
+    def test_question_y_options(self):
+        self.assertEqual(
+            jc._question({"id": "N1", "tipo": "noul", "instrucciones": "i"})["type"], "noul"
+        )
+        self.assertEqual(
+            jc._question({"id": "C1", "tipo": "choice", "instrucciones": "i",
+                          "criterios": {"a": "A"}})["criteria"], {"a": "A"})
+        self.assertEqual(
+            jc._question({"id": "S1", "tipo": "score", "instrucciones": "i",
+                          "niveles": ["x", "y"]})["criteria"], ["x", "y"])
+        with self.assertRaises(ValueError):
+            jc._question({"id": "Z1", "tipo": "raro", "instrucciones": "i"})
+        self.assertEqual(
+            jc._options_and_label({"id": "C1", "tipo": "choice", "esperado": "a",
+                                   "criterios": {"a": "A", "b": "B"}}), (["a", "b"], 0))
+        self.assertEqual(
+            jc._options_and_label({"id": "S1", "tipo": "score", "esperado": "1",
+                                   "niveles": ["x", "y"]}), (["0", "1"], 1))
+
+    def test_cargar_cache_json_invalido(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            ruta = tmp / "c.json"
+            ruta.write_text("{no json", encoding="utf-8")
+            self.assertEqual(jc.cargar_cache(ruta), {})
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_sembrar_cache_ausente_e_invalido(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            self.assertEqual(jc.sembrar_cache_desde_informe({}, tmp / "no.json"), 0)
+            malo = tmp / "malo.json"
+            malo.write_text("{no json", encoding="utf-8")
+            self.assertEqual(jc.sembrar_cache_desde_informe({}, malo), 0)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_por_tipo_y_print_human(self):
+        report = jc.calibrate(_FakeCalibClient(), _casos_calibracion(), folds=2)
+        self.assertIn("noul", jc._por_tipo(report["records"], 1.0))
+        buf = io.StringIO()
+        with mock.patch.object(sys, "stdout", buf):
+            jc._print_human(report)
+        self.assertIn("T recomendada", buf.getvalue())
+
+    def test_main_json_y_write(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            set_path = tmp / "set.json"
+            set_path.write_text(json.dumps({"casos": _casos_calibracion()}), encoding="utf-8")
+            argv = ["jev_calibration.py", "--set", str(set_path), "--folds", "2",
+                    "--no-cache", "--json", "--write"]
+            with mock.patch.object(jc, "JevLlama", lambda model_path=None: _FakeCalibClient()), \
+                    mock.patch.object(jc, "DEFAULT_REPORT", tmp / "r.json"), \
+                    mock.patch.object(sys, "argv", argv), \
+                    mock.patch.object(sys, "stdout", io.StringIO()), \
+                    mock.patch.object(sys, "stderr", io.StringIO()):
+                self.assertEqual(jc.main(), 0)
+            self.assertTrue((tmp / "r.json").exists())
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+class _FakeCalibClient:
+    """Cliente simulado para calibracion (REQ-011), sin modelo."""
+
+    def __init__(self):
+        self.model_path = Path("fake.gguf")
+
+    def decide(self, state, questions):
+        q = questions["q"]
+        tipo = q["type"]
+        if tipo == "noul":
+            probs = {"yes": 0.8, "no": 0.2}
+        elif tipo == "choice":
+            claves = list(q["criteria"])
+            probs = {k: (0.8 if i == 0 else 0.2 / max(1, len(claves) - 1))
+                     for i, k in enumerate(claves)}
+        else:
+            n = len(q["criteria"])
+            probs = {str(i): (0.8 if i == 0 else 0.2 / max(1, n - 1)) for i in range(n)}
+        return {"q": {"type": tipo, "probabilities": probs, "confidence": 0.8}}
+
+
+def _casos_calibracion():
+    return [
+        {"id": "N01", "tipo": "noul", "estado": "e", "instrucciones": "i", "esperado": "yes"},
+        {"id": "C01", "tipo": "choice", "estado": "e", "instrucciones": "i",
+         "criterios": {"a": "A", "b": "B"}, "esperado": "a"},
+        {"id": "S01", "tipo": "score", "estado": "e", "instrucciones": "i",
+         "niveles": ["x", "y"], "esperado": "1"},
+    ]
+
 
 class _FakeJevClient:
     """Cliente Jev simulado para REQ-012: probabilidades fijas, sin modelo."""
@@ -1659,6 +1765,74 @@ class TestJevPillars(unittest.TestCase):
             self.assertIn("Cuerpo del requisito.", texto)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_strip_frontmatter(self):
+        self.assertEqual(jp._strip_frontmatter("---\na: 1\n---\ncuerpo"), "cuerpo")
+        self.assertEqual(jp._strip_frontmatter("sin frontmatter"), "sin frontmatter")
+
+    def test_leer_requisito_ausente(self):
+        with self.assertRaises(FileNotFoundError):
+            jp._leer_requisito("REQ-999")
+
+    def test_buscar_leccion_ok_y_ausente(self):
+        self.assertEqual(str(jp._buscar_leccion("LSN-001").get("id")), "LSN-001")
+        with self.assertRaises(ValueError):
+            jp._buscar_leccion("LSN-999")
+
+    def test_texto_leccion(self):
+        self.assertIn("Problema: p", jp._texto_leccion({"problema": "p", "recomendacion": "r"}))
+
+    def test_texto_desde_archivo_lecciones_y_plano(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            yaml_list = tmp / "l.yaml"
+            yaml_list.write_text(
+                "- id: LSN-001\n  problema: p\n  recomendacion: r\n", encoding="utf-8"
+            )
+            _, texto = jp._texto_desde_archivo(yaml_list, "lecciones")
+            self.assertIn("Problema: p", texto)
+            plano = tmp / "k.md"
+            plano.write_text("contenido plano", encoding="utf-8")
+            _, texto2 = jp._texto_desde_archivo(plano, "conocimiento")
+            self.assertEqual(texto2, "contenido plano")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_resolver_entrada_todas_las_vias(self):
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            archivo = tmp / "f.md"
+            archivo.write_text("texto archivo", encoding="utf-8")
+            self.assertEqual(jp.resolver_entrada("requisitos", self._ns(req="REQ-011"))[0], "REQ-011")
+            self.assertEqual(
+                jp.resolver_entrada("requisitos", self._ns(file=str(archivo)))[1], "texto archivo"
+            )
+            self.assertEqual(jp.resolver_entrada("requisitos", self._ns(text="x"))[1], "x")
+            self.assertEqual(
+                jp.resolver_entrada("conocimiento", self._ns(file=str(archivo)))[1], "texto archivo"
+            )
+            self.assertEqual(jp.resolver_entrada("lecciones", self._ns(text="x"))[1], "x")
+            with self.assertRaises(ValueError):
+                jp.resolver_entrada("otro", self._ns(text="x"))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_print_human(self):
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(), 0.5, self.ACC)
+        buf = io.StringIO()
+        with mock.patch.object(sys, "stdout", buf):
+            jp._print_human(salida)
+        self.assertIn("Pilar: requisitos", buf.getvalue())
+
+    def test_main_json_y_error(self):
+        buf = io.StringIO()
+        with mock.patch.object(jp, "JevLlama", lambda model_path=None: _FakeJevClient()), \
+                mock.patch.object(jp, "accuracy_por_tipo", return_value=self.ACC), \
+                mock.patch.object(sys, "stdout", buf):
+            self.assertEqual(jp.main(["conocimiento", "--text", "x", "--json"]), 0)
+        self.assertIn("experimental", buf.getvalue())
+        with mock.patch.object(sys, "stderr", io.StringIO()):
+            self.assertEqual(jp.main(["requisitos"]), 1)
 
 
 class TestADRValidator(unittest.TestCase):
@@ -2343,6 +2517,80 @@ class TestAnalyzeShell(unittest.TestCase):
     def test_tokenizacion_invalida_eleva_error(self):
         with self.assertRaises(ValueError):
             ash.analyze("echo 'sin cerrar")
+
+    def test_helpers_downloader_shell_eval(self):
+        self.assertTrue(ash.is_downloader(["/usr/bin/curl", "x"]))
+        self.assertFalse(ash.is_downloader([], 0))
+        self.assertFalse(ash.is_downloader(["x"], 5))
+        self.assertTrue(ash.has_downloader(["ls", "wget"]))
+        self.assertTrue(ash.is_shell(["/bin/bash"]))
+        self.assertTrue(ash.is_shell(["sudo", "bash"]))
+        self.assertFalse(ash.is_shell(["echo"]))
+        self.assertTrue(ash.is_eval_like(["source"]))
+        self.assertFalse(ash.is_eval_like([], 0))
+
+    def test_find_shell_con_sudo(self):
+        self.assertEqual(ash.find_shell(["sudo", "-S", "bash"]), 2)
+        self.assertEqual(ash.find_shell(["sudo"]), -1)
+        self.assertEqual(ash.find_shell(["echo", "hi"]), -1)
+
+    def test_extract_substitution(self):
+        self.assertEqual(ash._extract_substitution("$(curl x)"), ["curl x"])
+        self.assertEqual(ash._extract_substitution("`curl x`"), ["curl x"])
+        self.assertEqual(ash._extract_substitution("nada"), [])
+
+    def test_extract_command_substitutions_dos_formas(self):
+        self.assertEqual(ash._extract_command_substitutions(["$(curl x)"]), ["curl x"])
+        self.assertEqual(
+            ash._extract_command_substitutions(["$", "(", "curl", "x", ")"]), ["curl x"]
+        )
+        self.assertEqual(
+            ash._extract_command_substitutions(["$", "(", "$", "(", "a", ")", ")"]),
+            ["$ ( a )"],
+        )
+
+    def test_extract_process_substitutions(self):
+        self.assertEqual(
+            ash._extract_process_substitutions(["<(", "curl", "x", ")"]), ["curl x"]
+        )
+        self.assertEqual(ash._extract_process_substitutions(["nada"]), [])
+
+    def test_extract_backtick_blocks(self):
+        self.assertEqual(ash._extract_backtick_blocks(["`curl x`"]), ["curl x"])
+        self.assertIn("curl", ash._extract_backtick_blocks(["`", "curl", "x", "`"])[0])
+
+    def test_extract_bash_c_content(self):
+        self.assertEqual(ash._extract_bash_c_content(["bash", "-c", "rm -rf /"]), ["rm -rf /"])
+        self.assertEqual(ash._extract_bash_c_content(["bash", "-c"]), [])
+        self.assertEqual(ash._extract_bash_c_content(["echo", "hi"]), [])
+        self.assertEqual(ash._extract_bash_c_content([]), [])
+
+    def test_stage_y_pipeline_vacios(self):
+        self.assertEqual(ash.analyze_stage([]), set())
+        self.assertEqual(ash.analyze_pipeline([]), set())
+
+    def test_analyze_process_substitution(self):
+        hallazgos = ash.analyze("bash <(curl http://x)")
+        self.assertTrue(any("process-substitution" in h for h in hallazgos))
+
+    def test_analyze_pipe_backtick(self):
+        hallazgos = ash.analyze("`curl http://x` | sh")
+        self.assertTrue(any("dangerous-pipe-backtick" in h for h in hallazgos))
+
+    def test_analyze_command_substitution_y_backtick(self):
+        self.assertIsInstance(ash.analyze("echo $(curl http://x)"), list)
+        self.assertIsInstance(ash.analyze("echo `curl http://x`"), list)
+
+    def test_cli_main(self):
+        script = str(SCRIPTS / "analyze_shell.py")
+        ok = subprocess.run([sys.executable, script, "echo hola"],
+                            capture_output=True, text=True, timeout=30)
+        self.assertEqual(ok.returncode, 0)
+        bad = subprocess.run([sys.executable, script, "rm -rf /tmp/x"],
+                            capture_output=True, text=True, timeout=30)
+        self.assertEqual(bad.returncode, 1)
+        uso = subprocess.run([sys.executable, script], capture_output=True, text=True, timeout=30)
+        self.assertEqual(uso.returncode, 1)
 
 
 class TestDownloadJevModel(unittest.TestCase):

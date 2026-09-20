@@ -229,7 +229,7 @@ python3 scripts/jev_calibration_merge.py
 # Diagnosticar los 4 pilares en otro proyecto (REQ-017, solo lectura)
 python3 scripts/diagnostico.py --root <carpeta>
 
-# Suite de tests (240 casos, stdlib unittest)
+# Suite de tests (278 casos, stdlib unittest)
 python3 -m unittest discover -s tests -q
 
 # Verificacion completa previa a commit

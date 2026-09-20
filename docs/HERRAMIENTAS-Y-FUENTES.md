@@ -114,11 +114,12 @@ rico que `mutation_check.py` (operadores como `ZeroIterationForLoop`) y se adopt
 como herramienta **opcional de desarrollo**; `mutmut` queda descartado (LSN-015).
 
 **Medición de calidad de la suite (2026-09-20)**: `coverage 7.10.6` sobre la
-suite (240 tests) da **81 %** de cobertura de líneas en `scripts/` (2747
-sentencias, 510 sin cubrir). Tras los tests de integración, `mcp_server.py`
-(99 %) y `tui.py` (95 %) dejan de ser zonas bajas; quedan `analyze_shell.py`
-(62 %), `jev_pillars.py` (62 %), `jev_calibration.py` (64 %), `jev_review.py`
-(71 %) e `index_knowledge.py` (72 %) por ramas opcionales (chromadb/CLI).
+suite (278 tests) da **89 %** de cobertura de líneas en `scripts/` (2824
+sentencias, 316 sin cubrir). `mcp_server.py` (99 %), `tui.py` (95 %),
+`jev_calibration.py` (97 %), `jev_pillars.py` (95 %) y `analyze_shell.py` (93 %)
+ya no son zonas bajas; quedan `jev_review.py` (71 %), `index_knowledge.py`
+(72 %), `jev_llama.py` (81 %), `auto_audit.py` (83 %) y `lessons_extractor.py`
+(84 %), por ramas opcionales (chromadb/CLI) y utilidades.
 
 `mutation_check.py` (REQ-015, heurística stdlib). El modo `--batch` mide varios
 módulos y agrega el score ponderado por mutantes (integrado en `scripts/ci.sh`

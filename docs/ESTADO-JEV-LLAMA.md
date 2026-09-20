@@ -2,7 +2,7 @@
 
 Fecha: 2026-09-19 (revision y correccion)
 
-> Actualizacion 2026-09-20: la suite del ecosistema tiene **240 tests OK**
+> Actualizacion 2026-09-20: la suite del ecosistema tiene **278 tests OK**
 > (`python3 -m unittest discover -s tests`). Los conteos por ronda de este
 > documento (49/59/73/150/151) son snapshots historicos de su fecha.
 > SBOM vigente: `docs/SBOM-2026-09-20.cdx.json` (119 componentes, 5 advisories);
