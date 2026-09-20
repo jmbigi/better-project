@@ -159,7 +159,7 @@ def handle_call(name: str, arguments: dict) -> tuple[list[dict], bool]:
             elif name == "validate_requirements":
                 content, ok = validate_requirements(), True
             elif name == "create_lesson":
-                content, ok = create_lesson(arguments), True
+                content, ok = create_lesson(arguments)
             elif name == "run_verification":
                 content, ok = run_verification()
             else:
@@ -237,11 +237,11 @@ def validate_requirements() -> list[dict]:
     return [{"type": "text", "text": json.dumps(report, ensure_ascii=False, indent=2)}]
 
 
-def create_lesson(args: dict) -> list[dict]:
+def create_lesson(args: dict) -> tuple[list[dict], bool]:
     problema = str(args.get("problema", "")).strip()
     recomendacion = str(args.get("recomendacion", "")).strip()
     if not problema or not recomendacion:
-        return [{"type": "text", "text": "error: problema y recomendacion son obligatorias"}]
+        return [{"type": "text", "text": "error: problema y recomendacion son obligatorias"}], False
     LESSONS_DIR.mkdir(parents=True, exist_ok=True)
     year_file = LESSONS_DIR / f"{date.today().year}.yaml"
     existing: set = set()
@@ -275,7 +275,7 @@ def create_lesson(args: dict) -> list[dict]:
         if text and not text.endswith("\n"):
             fh.write("\n")
         fh.write("\n".join(lines) + "\n")
-    return [{"type": "text", "text": f"leccion {entry['id']} anadida a {year_file.name}"}]
+    return [{"type": "text", "text": f"leccion {entry['id']} anadida a {year_file.name}"}], True
 
 
 def run_verification() -> tuple[list[dict], bool]:

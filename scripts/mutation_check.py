@@ -45,6 +45,7 @@ DEFAULT_BATCH: list[tuple[str, str]] = [
     ("scripts/index_knowledge.py", "test_ecosistema.TestIndexKnowledge"),
     ("scripts/auto_audit.py", "test_ecosistema.TestAutoAudit"),
     ("scripts/diagnostico.py", "test_ecosistema.TestDiagnostico"),
+    ("scripts/mcp_server.py", "test_ecosistema.TestMCPServer"),
 ]
 
 OP_MAP: dict[type, type] = {

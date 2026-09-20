@@ -112,15 +112,15 @@ rico que `mutation_check.py` (operadores como `ZeroIterationForLoop`) y se adopt
 como herramienta **opcional de desarrollo**; `mutmut` queda descartado (LSN-015).
 
 **Medición de calidad de la suite (2026-09-20)**: `coverage 7.10.6` sobre la
-suite (199 tests) da **71 %** de cobertura de líneas en `scripts/` (2747
-sentencias, 809 sin cubrir). Las zonas bajas son la TUI curses (`tui.py`, 29 %),
-`mcp_server.py` (50 %) y ramas opcionales (chromadb/CLI) de
-`index_knowledge.py` (72 %), `jev_review.py` (71 %), `jev_calibration.py` (64 %),
-`jev_pillars.py` (62 %) y `analyze_shell.py` (62 %).
+suite (240 tests) da **81 %** de cobertura de líneas en `scripts/` (2747
+sentencias, 510 sin cubrir). Tras los tests de integración, `mcp_server.py`
+(99 %) y `tui.py` (95 %) dejan de ser zonas bajas; quedan `analyze_shell.py`
+(62 %), `jev_pillars.py` (62 %), `jev_calibration.py` (64 %), `jev_review.py`
+(71 %) e `index_knowledge.py` (72 %) por ramas opcionales (chromadb/CLI).
 
 `mutation_check.py` (REQ-015, heurística stdlib). El modo `--batch` mide varios
 módulos y agrega el score ponderado por mutantes (integrado en `scripts/ci.sh`
-con `--strict --umbral 0.8`, ~107 s):
+con `--strict --umbral 0.8`, ~110 s):
 
 | Módulo | Mutantes | Score |
 |---|---|---|
@@ -128,9 +128,10 @@ con `--strict --umbral 0.8`, ~107 s):
 | doc_validator | 22 | **1.00** |
 | auto_audit | 40 | **1.00** |
 | diagnostico | 12 | **1.00** |
+| mcp_server | 40 | **1.00** |
 | lessons_extractor | 14 | **0.79** |
 | index_knowledge | 29 | **0.97** |
-| **Batch (global ponderado)** | **133** | **0.97** |
+| **Batch (global ponderado)** | **173** | **0.98** |
 
 Otros módulos medidos a demanda alcanzan **1.00** (`mcp_server`, `jev_review`,
 `jev_pillars`) y `jev_calibration_merge` **0.91**. Los supervivientes restantes
