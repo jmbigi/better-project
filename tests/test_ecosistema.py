@@ -2255,7 +2255,7 @@ class TestADRValidator(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def _adr(self, content: str, name: str = "ADR-100-prueba.md") -> Path:  # type: ignore[return-value]
+    def _adr(self, content: str, name: str = "ADR-100-prueba.md") -> Path:
         path = self.tmp / name
         path.write_text(content, encoding="utf-8")
         return path
@@ -2351,7 +2351,7 @@ class TestAutoAudit(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def _write(self, name: str, content: str) -> Path:  # type: ignore[return-value]
+    def _write(self, name: str, content: str) -> Path:
         path = self.tmp / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
