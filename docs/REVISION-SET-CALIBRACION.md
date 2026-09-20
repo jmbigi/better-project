@@ -180,7 +180,7 @@ recomienda un orden de magnitud más de casos por clase (cientos) [4][5].
    tres pilares).
 
 Total original: **40 casos** (16 `noul`, 12 `choice`, 12 `score`). Tras las
-ampliaciones (sección 7): **202 casos** (70/66/66), set `version: 11`.
+ampliaciones (sección 7): **238 casos** (82/78/78), set `version: 13`.
 
 ## 7. Ampliaciones posteriores
 
@@ -210,14 +210,14 @@ ampliaciones (sección 7): **202 casos** (70/66/66), set `version: 11`.
   → `version: 12`, **220 casos** (76 `noul`, 72 `choice`, 72 `score`).
   13 alertas de escenario duplicado (candidatos reutilizan textos de
   N60-N64/C55-C60/S55-S60) son informativas, no errores.
-- **Lote 12 (2026-09-19, PENDIENTE)**: 18 candidatos (N77-N82, C73-C78,
-  S73-S78) propuestos por la IA con escenarios nuevos (validados sin duplicados
-  ni errores de esquema con `jev_calibration_merge.py --forzar --json`).
-  Pendientes de revision y aprobacion del programador (REQ-016) antes de
-  fusionar (REQ-018); no se fusionan automaticamente.
+- **Lote 12 (2026-09-19)**: 18 candidatos (N77-N82, C73-C78, S73-S78)
+  revisados y aprobados por el programador sin correcciones (18/18) y
+  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  → `version: 13`, **238 casos** (82 `noul`, 78 `choice`, 78 `score`).
+  Calibracion re-ejecutada: T=1.5; accuracy global 0.660 [0.597, 0.717]
+  (choice 0.846, noul 0.622, score 0.513).
 - Objetivo a medio plazo: ≥100 casos por tipo para estabilizar ECE y la accuracy
-  de `score` (con el lote 12 aprobado quedarian 82 `noul`, 78 `choice`, 78
-  `score`).
+  de `score` (actualmente 82/78/78).
 
 ## Referencias
 

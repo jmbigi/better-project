@@ -182,3 +182,13 @@
   estado: Resuelta
   fecha: 2026-09-19
   fecha_resolucion: 2026-09-19
+- id: LSN-023
+  proyecto: "Ecosistema / Jev (REQ-011)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El set de calibracion v13 (238 casos, lote 12) dio accuracy global 0.6597 [0.597,0.717] frente a 0.668 del v12 (220 casos); por tipo choice 0.846, noul 0.622, score 0.513; T recomendada 1.5 (antes 1.6). Ampliar el set con casos nuevos y exigentes no mejoro la exactitud."
+  recomendacion: "No presentar la ampliacion del set como mejora de exactitud (no lo es); reportar accuracy e IC junto a NLL/Brier/ECE y mantener el tipo score como experimental hasta superar de forma estable ~0.6 con >=100 casos/tipo. Recalibrar la temperatura al cambiar el set o el modelo."
+  resolucion: "Set v13 (238 casos) calibrado con Qwen3.5-4B Q4_K_M: T=1.5, accuracy 0.660 [0.597,0.717]. Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md; no se presenta como mejora."
+  estado: Resuelta
+  fecha: 2026-09-20
+  fecha_resolucion: 2026-09-20
