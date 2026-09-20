@@ -339,6 +339,37 @@ class TestIndexKnowledge(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertIn("timeout", buf.getvalue())
 
+    def test_index_all_force_reconstruye(self):
+        (self.know / "a.md").write_text("## A\ncontenido de prueba largo suficiente\n")
+        ik.build_json_index()
+        ik.JSON_INDEX.write_text("SENTINELA", encoding="utf-8")
+        with mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.index_all(force=False)
+        self.assertEqual(ik.JSON_INDEX.read_text(encoding="utf-8"), "SENTINELA")
+        with mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.index_all(force=True)
+        self.assertIn("chunks", ik.JSON_INDEX.read_text(encoding="utf-8"))
+
+    def test_check_fresh_manifiesto_extra(self):
+        (self.know / "a.md").write_text("## A\ncontenido largo suficiente para chunk\n")
+        ik.build_json_index()
+        m = json.loads(ik.MANIFEST.read_text(encoding="utf-8"))
+        m["extra.md"] = 123.0
+        ik.MANIFEST.write_text(json.dumps(m), encoding="utf-8")
+        self.assertFalse(ik.check_fresh())
+
+    def test_main_check_y_all(self):
+        (self.know / "a.md").write_text("## A\ncontenido largo suficiente para chunk\n")
+        with mock.patch.object(sys, "argv", ["index_knowledge.py"]), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.main()
+        with mock.patch.object(sys, "argv", ["index_knowledge.py", "--check"]), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(ik.main(), 0)
+        with mock.patch.object(sys, "argv", ["index_knowledge.py", "--all"]), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(ik.main(), 0)
+
 
 class TestMCPServer(unittest.TestCase):
     def test_next_lesson_id(self):

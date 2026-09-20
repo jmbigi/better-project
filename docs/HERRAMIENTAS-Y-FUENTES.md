@@ -109,8 +109,8 @@ rico que `mutation_check.py` (operadores como `ZeroIterationForLoop`) y se adopt
 como herramienta **opcional de desarrollo**; `mutmut` queda descartado (LSN-015).
 
 **Medición de calidad de la suite (2026-09-20)**: `coverage 7.10.6` sobre la
-suite (163 tests) da **60 %** de cobertura de líneas en `scripts/` (2719
-sentencias, 1075 sin cubrir). Las zonas bajas son utilidades fuera de alcance
+suite (166 tests) da **61 %** de cobertura de líneas en `scripts/` (2719
+sentencias, 1054 sin cubrir). Las zonas bajas son utilidades fuera de alcance
 (`analyze_shell.py`, `download_jev_model.py`, 0 %), la TUI curses (`tui.py`, 29 %)
 y ramas opcionales (chromadb/CLI) de `index_knowledge.py`/`mcp_server.py`.
 
@@ -121,7 +121,7 @@ y ramas opcionales (chromadb/CLI) de `index_knowledge.py`/`mcp_server.py`.
 | adr_validator / auto_audit / doc_validator / diagnostico / mcp_server / jev_review / jev_pillars | 16-40 | **1.00** |
 | jev_calibration_merge | 23 | **0.91** |
 | lessons_extractor | 14 | **0.79** |
-| index_knowledge | 29 | **0.52** |
+| index_knowledge | 29 | **0.72** |
 
 Los supervivientes restantes son en su mayoría equivalentes (flags de
 serialización, guarda `__main__`, `is not None`) o rutas no ejercitables sin
