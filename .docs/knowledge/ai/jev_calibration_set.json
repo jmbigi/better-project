@@ -1,6 +1,6 @@
 {
-  "version": 14,
-  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') fueron validadas por el programador el 2026-09-19 (40/40 aprobadas, 0 correcciones); los casos S03, S06, S11 y S12 conservan su criterio de adjudicacion documentado en docs/REVISION-SET-CALIBRACION.md. Fusion (REQ-018, 2026-09-19): +18 casos aprobados (Lote 11). Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados.",
+  "version": 15,
+  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') fueron validadas por el programador el 2026-09-19 (40/40 aprobadas, 0 correcciones); los casos S03, S06, S11 y S12 conservan su criterio de adjudicacion documentado en docs/REVISION-SET-CALIBRACION.md. Fusion (REQ-018, 2026-09-19): +18 casos aprobados (Lote 11). Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados.",
   "revision_humana": {
     "estado": "Aprobada",
     "fecha": "2026-09-19",
@@ -289,6 +289,29 @@
           "S82",
           "S83",
           "S84"
+        ]
+      },
+      {
+        "fecha": "2026-09-20",
+        "casos": [
+          "N89",
+          "N90",
+          "N91",
+          "N92",
+          "N93",
+          "N94",
+          "C85",
+          "C86",
+          "C87",
+          "C88",
+          "C89",
+          "C90",
+          "S85",
+          "S86",
+          "S87",
+          "S88",
+          "S89",
+          "S90"
         ]
       }
     ]
@@ -3015,6 +3038,198 @@
         "critico"
       ],
       "esperado": 0
+    },
+    {
+      "id": "N89",
+      "tipo": "noul",
+      "estado": "Antes de integrar un cambio se prototipa aislado (rama, venv o sandbox) con casos limite.",
+      "instrucciones": "Es correcto segun P1.21?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N90",
+      "tipo": "noul",
+      "estado": "Se entrega codigo con placeholders 'TODO' y bloques 'pass' sin implementar.",
+      "instrucciones": "Esta permitido por P1.33?",
+      "esperado": "no"
+    },
+    {
+      "id": "N91",
+      "tipo": "noul",
+      "estado": "Una operacion de red reintenta con backoff y jitter hasta un limite de 3 intentos.",
+      "instrucciones": "Es correcto segun P1.34?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N92",
+      "tipo": "noul",
+      "estado": "Se despliega directo a produccion sin staging, canary ni rollback.",
+      "instrucciones": "Esta permitido por P1.35?",
+      "esperado": "no"
+    },
+    {
+      "id": "N93",
+      "tipo": "noul",
+      "estado": "Se valida la procedencia y el hash de un modelo de embeddings antes de usarlo en produccion.",
+      "instrucciones": "Es correcto segun P0.20?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N94",
+      "tipo": "noul",
+      "estado": "La consola web lanza errores de JavaScript que el proyecto decide ignorar.",
+      "instrucciones": "Esta permitido por P1.27?",
+      "esperado": "no"
+    },
+    {
+      "id": "C85",
+      "tipo": "choice",
+      "estado": "Se define un esquema JSON formal para las transiciones de un agente.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "determinismo": "esquemas y FSM",
+        "verificacion": "tests",
+        "documentacion": "docs"
+      },
+      "esperado": "determinismo"
+    },
+    {
+      "id": "C86",
+      "tipo": "choice",
+      "estado": "El proyecto no tiene una plantilla de requerimientos estandar (SRS).",
+      "instrucciones": "Que pilar esta afectado?",
+      "criterios": {
+        "requisitos": "especificacion",
+        "documentacion": "docs",
+        "proceso": "gestion"
+      },
+      "esperado": "requisitos"
+    },
+    {
+      "id": "C87",
+      "tipo": "choice",
+      "estado": "No se registran trazas ni metricas de las llamadas al modelo.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "proceso": "instrumentacion",
+        "documentacion": "registro",
+        "seguridad": "auditoria"
+      },
+      "esperado": "proceso"
+    },
+    {
+      "id": "C88",
+      "tipo": "choice",
+      "estado": "El despliegue usa staging y canary con rollback automatico.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "proceso": "despliegue gradual",
+        "verificacion": "tests",
+        "seguridad": "proteccion"
+      },
+      "esperado": "proceso"
+    },
+    {
+      "id": "C89",
+      "tipo": "choice",
+      "estado": "Un componente se integra sin haberlo probado aislado con mocks.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "verificacion": "prototipo aislado",
+        "documentacion": "docs",
+        "requisitos": "trazabilidad REQ"
+      },
+      "esperado": "verificacion"
+    },
+    {
+      "id": "C90",
+      "tipo": "choice",
+      "estado": "La documentacion no cita fuentes para sus afirmaciones tecnicas.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "documentacion": "fundamentacion",
+        "conocimiento": "fuentes",
+        "verificacion": "tests"
+      },
+      "esperado": "documentacion"
+    },
+    {
+      "id": "S85",
+      "tipo": "score",
+      "estado": "Se despliega en produccion sin staging ni plan de rollback.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 3
+    },
+    {
+      "id": "S86",
+      "tipo": "score",
+      "estado": "Un archivo de codigo contiene un marcador TODO sin implementar.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 1
+    },
+    {
+      "id": "S87",
+      "tipo": "score",
+      "estado": "Se define un timeout explicito en una llamada de red.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 0
+    },
+    {
+      "id": "S88",
+      "tipo": "score",
+      "estado": "Una operacion de red no tiene limite de reintentos y puede quedar en bucle.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 2
+    },
+    {
+      "id": "S89",
+      "tipo": "score",
+      "estado": "Se anade una plantilla de requerimientos con criterios medibles.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 0
+    },
+    {
+      "id": "S90",
+      "tipo": "score",
+      "estado": "El agente no registra trazas de las llamadas al modelo.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 1
     }
   ]
 }
