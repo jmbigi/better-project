@@ -114,6 +114,36 @@ citadas = set(int(m) for m in re.findall(r'pruebas? (\\d+)', open('docs/LECCIONE
 existentes = set(int(m) for m in re.findall(r'^\\| (\\d+) \\|', open('docs/PRUEBAS.md').read(), re.M))
 assert citadas <= existentes, 'lecciones citan pruebas inexistentes: ' + str(citadas - existentes)
 "
+    check "conteo total reglas P0+P1+P2 = 62 (20 P0 + 37 P1 + 5 P2)" python3 -c "
+import re
+p0 = len(re.findall(r'^### P0\\.', open('AGENTS.md').read(), re.M))
+p1 = len(re.findall(r'^### P1\\.', open('AGENTS.md').read(), re.M))
+p2 = len(re.findall(r'^\\s*-\\s*P2\\.', open('AGENTS.md').read(), re.M))
+assert p0 == 20 and p1 == 37 and p2 == 5, f'P0={p0} P1={p1} P2={p2}'
+total = p0 + p1 + p2
+assert total == 62, f'total reglas+preferencias = {total}, esperado 62'
+"
+    check "README no dice '50 reglas P0/P1/P2' (son 61 reglas, 50 errores)" python3 -c "
+import re
+txt = open('README.md').read()
+# '50 errores' es correcto (lista de 50 errores que se previenen)
+# '50 reglas' sería incorrecto (son 61 reglas P0+P1+P2)
+assert '50 reglas' not in txt or '61 reglas' in txt, 'README dice 50 reglas pero son 61 (20 P0 + 37 P1 + 4 P2)'
+"
+    check "tools MCP habilitados = 4 (context7, gh_grep, sentry, better-project)" python3 -c "
+import json
+mcp = json.load(open('opencode.json'))['mcp']
+tools = [k for k, v in mcp.items() if v.get('enabled', True)]
+assert len(tools) == 4, f'tools MCP habilitados = {len(tools)}: {tools}'
+assert set(tools) == {'context7', 'gh_grep', 'sentry', 'better-project'}, tools
+"
+    check "rondas PRUEBAS.md = 32 (coherente en todo el doc)" python3 -c "
+import re
+txt = open('docs/PRUEBAS.md').read()
+rondas = set(int(m) for m in re.findall(r'Ronda (\\d+)', txt))
+assert max(rondas) == 35, f'rondas max = {max(rondas)}, esperado 35'
+assert len(rondas) == 32, f'rondas únicas = {len(rondas)}, esperado 32 (faltan 32, 33, 34)'
+"
 fi
 otel_end_span "verificar.reglas"
 
