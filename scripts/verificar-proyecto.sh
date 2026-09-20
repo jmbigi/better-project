@@ -58,6 +58,16 @@ check() {
     fi
 }
 
+# Lint opcional (no es dependencia obligatoria): si ruff esta instalado se
+# ejecuta con ruff.toml; si no, se omite sin marcar fallo.
+check_ruff() {
+    if command -v ruff >/dev/null 2>&1; then
+        check "lint ruff (ruff.toml)" bash -c "ruff check scripts tests"
+    else
+        echo "  [SKIP] lint ruff (no instalado; ver docs/HERRAMIENTAS-Y-FUENTES.md)"
+    fi
+}
+
 otel_start_span "verificar.total"
 otel_start_span "verificar.reglas"
 echo "== 1. Reglas =="
@@ -291,6 +301,7 @@ otel_end_span "verificar.seguridad"
 otel_start_span "verificar.ecosistema"
 echo "== 4. Ecosistema better-project =="
 check "sintaxis python de todos los scripts" bash -c 'for f in scripts/*.py; do python3 -m py_compile "$f" || exit 1; done'
+check_ruff
 check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 scripts/doc_validator.py --strict"
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py && python3 scripts/index_knowledge.py --check"

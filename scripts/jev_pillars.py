@@ -200,7 +200,10 @@ def construir_decision(
     probs = {str(k): float(v) for k, v in resultado["probabilities"].items()}
     confianza = float(resultado["confidence"])
     propuesta = max(probs, key=probs.get)
-    definitiva = confianza >= umbral
+    # P0.20/P1.31: un tipo experimental (accuracy desconocida o < umbral) NUNCA
+    # produce una decision autoritativa; solo propone y exige revision humana.
+    experimental = accuracy is None or accuracy < ACCURACY_MINIMA
+    definitiva = (confianza >= umbral) and not experimental
     return {
         "id": entry_id,
         "campo": campo,
@@ -211,7 +214,7 @@ def construir_decision(
         "confidence": confianza,
         "revision_humana": not definitiva,
         "accuracy_referencia": accuracy,
-        "experimental": accuracy is None or accuracy < ACCURACY_MINIMA,
+        "experimental": experimental,
     }
 
 

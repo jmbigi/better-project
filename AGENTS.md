@@ -235,7 +235,7 @@ Herramientas: **opencode** y **kilocode**; cargan AGENTS.md y aplican 304 patron
 
 ## Verificación, rutas y comandos
 
-Sin full build — Python `python3 -m py_compile <archivo>`; Shell `bash -n <script>`; lint selectivo `ruff check`/`eslint` si existe; diff `git diff -- <archivo>` + `git status --short`. Tests del ecosistema: `python3 -m unittest discover -s tests -q`, `python3 scripts/mutation_check.py`, `bash scripts/verificar-proyecto.sh --pre-commit` (con `OTEL_ENABLED=true` para traces; spans `verificar.*` a JSONL en `/tmp`). Rutas: reglas `AGENTS.md` + `docs/REGLAS-COMPLETAS.md` + `CHECKLIST.md`; guardarraíles `opencode.json`/`kilo.json`; verificación `scripts/verificar-proyecto.sh`; memoria `docs/LECCIONES-APRENDIDAS.md`, `docs/PRUEBAS.md`.
+Sin full build — Python `python3 -m py_compile <archivo>`; Shell `bash -n <script>`; lint `ruff check` (config `ruff.toml`) si esta instalado (el verificador lo ejecuta si existe, si no lo omite); diff `git diff -- <archivo>` + `git status --short`. Tests del ecosistema: `python3 -m unittest discover -s tests -q`, `python3 scripts/mutation_check.py`, `bash scripts/verificar-proyecto.sh --pre-commit` (con `OTEL_ENABLED=true` para traces; spans `verificar.*` a JSONL en `/tmp`). Rutas: reglas `AGENTS.md` + `docs/REGLAS-COMPLETAS.md` + `CHECKLIST.md`; guardarraíles `opencode.json`/`kilo.json`; verificación `scripts/verificar-proyecto.sh`; memoria `docs/LECCIONES-APRENDIDAS.md`, `docs/PRUEBAS.md`.
 
 ## Checklist pre-entrega (obligatorio)
 

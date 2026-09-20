@@ -211,7 +211,6 @@ class JevLlama:
         raw = self._first_token_probs(prompt, token_ids)
         probs = _softmax([math.log(p + 1e-12) for p in raw])
         probs_list = [float(p) for p in probs]
-        top = int(self._np.argmax(probs))
         return {
             "type": "score",
             "score": sum(i * probs_list[i] for i in levels),

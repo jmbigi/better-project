@@ -582,7 +582,7 @@ class TestMCPServer(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stderr)
             respuestas = {
                 m["id"]: m for m in
-                (json.loads(l) for l in proc.stdout.splitlines() if l.strip())
+                (json.loads(linea) for linea in proc.stdout.splitlines() if linea.strip())
             }
             self.assertEqual(respuestas[1]["result"]["serverInfo"]["name"], "better-project")
             self.assertFalse(respuestas[2]["result"]["isError"])
@@ -1166,10 +1166,11 @@ class TestVerificador(unittest.TestCase):
         repo = self._copia()
         agents = repo / "AGENTS.md"
         lineas = agents.read_text(encoding="utf-8").splitlines(keepends=True)
-        self.assertTrue(any(l.startswith("### P0.20") for l in lineas))
+        self.assertTrue(any(linea.startswith("### P0.20") for linea in lineas))
         # eliminar la linea completa: el conteo de reglas P0 baja a 19
         agents.write_text(
-            "".join(l for l in lineas if not l.startswith("### P0.20")), encoding="utf-8"
+            "".join(linea for linea in lineas if not linea.startswith("### P0.20")),
+            encoding="utf-8",
         )
         proc = self._verifica(repo)
         self.assertEqual(proc.returncode, 1, "el verificador no detecto la corrupcion")
@@ -1555,7 +1556,11 @@ class TestJevPillars(unittest.TestCase):
         self.assertEqual(salida["tipo"], "score")
         # accuracy score 0.417 < 0.6 => experimental (criterio 6).
         self.assertTrue(salida["experimental"])
-        self.assertTrue(salida["decisiones"][0]["experimental"])
+        decision = salida["decisiones"][0]
+        self.assertTrue(decision["experimental"])
+        # P0.20/P1.31: experimental => nunca decision autoritativa, exige revision.
+        self.assertIsNone(decision["decision"])
+        self.assertTrue(decision["revision_humana"])
 
     def test_lecciones_dos_decisiones(self):
         salida = jp.ejecutar("lecciones", "LSN-008", "texto", _FakeJevClient(), 0.5, self.ACC)
@@ -1580,6 +1585,9 @@ class TestJevPillars(unittest.TestCase):
         salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(), 0.5, {})
         self.assertIsNone(salida["accuracy_referencia"])
         self.assertTrue(salida["experimental"])
+        # sin accuracy de referencia, tampoco decide: solo propone (P1.19).
+        self.assertIsNone(salida["decisiones"][0]["decision"])
+        self.assertTrue(salida["decisiones"][0]["revision_humana"])
 
     def test_pilar_desconocido_lanza(self):
         with self.assertRaises(ValueError):

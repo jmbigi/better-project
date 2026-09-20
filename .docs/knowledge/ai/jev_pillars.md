@@ -53,12 +53,22 @@ que se le pide predecir.
 }
 ```
 
-- `decision`: valor emitido; `null` si la confianza no alcanza el umbral.
+- `decision`: valor emitido; `null` si la confianza no alcanza el umbral **o**
+  si el tipo es `experimental`.
 - `propuesta`: argmax, siempre presente (para revisión humana).
-- `revision_humana`: `true` si no se emite etiqueta definitiva.
+- `revision_humana`: `true` si no se emite etiqueta definitiva (incluye todo
+  caso `experimental`).
 - `accuracy_referencia`: accuracy medida para el tipo de pregunta en el set de
   calibración de REQ-011.
 - `experimental`: `true` si la accuracy es desconocida o < 0.6.
+
+## Guardarraíl de tipos experimentales (P0.20/P1.31)
+
+Un tipo con accuracy desconocida o < 0.6 (`score`, y cualquier pilar sin
+informe de calibración) **nunca** emite `decision` autoritativa: siempre devuelve
+`decision: null`, `revision_humana: true` y `experimental: true`. Así el tipo
+`score` no puede disparar una etiqueta sin revisión humana aunque su confianza
+supere el umbral.
 
 ## Umbrales y configuración
 

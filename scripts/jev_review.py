@@ -103,7 +103,7 @@ def construir_items(
             )
     if "lecciones" in pilares:
         lessons, _ = le.validate()
-        for lesson in sorted(lessons, key=lambda l: str(l.get("id", ""))):
+        for lesson in sorted(lessons, key=lambda item: str(item.get("id", ""))):
             texto = f"Problema: {lesson.get('problema', '')}\nRecomendacion: {lesson.get('recomendacion', '')}"
             items.append({"pilar": "lecciones", "id": str(lesson.get("id")), "texto": texto})
     if "conocimiento" in pilares:

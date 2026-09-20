@@ -112,7 +112,7 @@ def render_context(lessons: list[dict]) -> str:
         f"# Total: {len(lessons)}",
         "",
     ]
-    for lesson in sorted(lessons, key=lambda l: str(l.get("id", ""))):
+    for lesson in sorted(lessons, key=lambda item: str(item.get("id", ""))):
         lines.append(f"## {lesson.get('id', '?')} [{lesson.get('estado', '?')}] {lesson.get('proyecto', '')}")
         lines.append(f"- fase: {lesson.get('fase', '')}")
         lines.append(f"- categoria: {lesson.get('categoria', '')}")

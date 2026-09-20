@@ -1,0 +1,8 @@
+# Lint opcional del proyecto (P2.1): ruff no es dependencia obligatoria.
+# Si esta instalado, `scripts/verificar-proyecto.sh` ejecuta `ruff check`.
+# Instalacion (usuario, sin sudo): pipx install ruff  (o el gestor preferido).
+target-version = "py310"
+
+[lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]  # line-length: el proyecto usa lineas largas en docstrings/regex

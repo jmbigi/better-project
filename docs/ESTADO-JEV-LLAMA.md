@@ -128,6 +128,8 @@ cautelas estadisticas del artefacto de revision.
   -> `fase` y `categoria`). Solo lee; nunca escribe en los documentos.
 - Umbral `JEV_MIN_CONFIDENCE` (default 0.5) y marca `experimental` automatica
   cuando la accuracy de referencia < 0.6 (el tipo `score` queda experimental).
+  Un tipo `experimental` **nunca** emite `decision` autoritativa: devuelve
+  `decision: null` y `revision_humana: true` (guardarrail P0.20/P1.31).
 - `tests/test_ecosistema.py`: tests de REQ-012 con cliente simulado (sin modelo).
 - Documentacion en `.docs/knowledge/ai/jev_pillars.md`.
 

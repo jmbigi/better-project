@@ -355,7 +355,7 @@ class App:
             2, 0, truncar(f" {len(self.lecciones)} lecciones  ·  Enter=detalle", w - 1), curses.A_DIM
         )
         filas = []
-        for leccion in sorted(self.lecciones, key=lambda l: str(l.get("id", ""))):
+        for leccion in sorted(self.lecciones, key=lambda item: str(item.get("id", ""))):
             color = CP_OK if leccion.get("estado") == "Resuelta" else CP_WARN
             filas.append(
                 (

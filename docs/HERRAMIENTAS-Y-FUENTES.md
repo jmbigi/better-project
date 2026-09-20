@@ -70,6 +70,7 @@
 | 3 | Chequeo de mutaciones stdlib (`scripts/mutation_check.py`, REQ-015); `mutmut`/`cosmic-ray` como alternativas maduras | Implementado (2026-09-19) |
 | 4 | Linter de prosa `vale` con estilo propio de "claims sin métrica" (`.vale.ini` + `.vale/styles/BetterProject/Claims.yml`) | Implementado (2026-09-19) |
 | 5 | Re-escaneo de dependencias (`auto_audit vulns` con pip-audit/osv-scanner) | Implementado (2026-09-19) |
+| 6 | Lint de codigo `ruff` (config `ruff.toml`, E/F/W sin E501); opcional, se ejecuta en el verificador si esta instalado | Implementado (2026-09-20) |
 
 **Hallazgo del re-escaneo (2026-09-20)**: `auto_audit vulns` detectó 5
 advisories sin parche: 4 en chromadb 1.5.9 y 1 en diskcache 5.6.3 (transitiva).
