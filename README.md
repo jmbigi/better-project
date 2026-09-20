@@ -277,6 +277,8 @@ P0.10) y estado del repositorio antes de cada commit. Los subagentes
 `@cost-optimizer` y `@dependency-auditor` anaden una revision humana de solo
 lectura (P1.13, P1.15). Un tercero puede reproducir la verificacion completa con
 `bash scripts/ci.sh`; procedimiento y limites en `docs/AUDITORIA-EXTERNA.md`.
+Modelo de amenazas en `docs/THREAT-MODEL.md` y casos de uso/procedencia en
+`docs/ALCANCE.md`.
 
 ## Licencia
 

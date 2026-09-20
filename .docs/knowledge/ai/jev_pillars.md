@@ -96,6 +96,11 @@ El tipo `score` (relevancia de conocimiento) es poco fiable con el proxy de
 primer token y queda marcado `experimental` automáticamente (accuracy < 0.6).
 No debe usarse como guardarraíl sin recalibrar y ampliar el set.
 
+**No apto para producción**: con accuracy global 0.646 y `score` en 0.537, Jev
+es una ayuda de clasificación **experimental**, no una IA fiable para
+decisiones automáticas. Su uso correcto es proponer etiquetas para revisión
+humana; nunca aplicar etiquetas sin confirmación (P1.17/P1.23).
+
 ## Limitaciones
 
 - El motor usa el **primer token** de cada opción como proxy (REQ-011).
