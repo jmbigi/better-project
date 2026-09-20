@@ -160,6 +160,38 @@ class TestDocValidator(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertIn("3 REQs", proc.stdout)
 
+    def test_sin_frontmatter_es_error(self):
+        (self.reqs / "REQ-100.md").write_text("# sin frontmatter\n", encoding="utf-8")
+        dv.collect_req_files()
+        self.assertTrue(any("sin frontmatter" in e for e in dv.errors))
+
+    def test_id_frontmatter_invalido_es_error(self):
+        (self.reqs / "REQ-100.md").write_text(
+            "---\nid: XX\ntitulo: T\nestado: Implementado\nprioridad: Alta\n"
+            "version: 1.0\nfecha_creacion: 2026-08-06\n---\n", encoding="utf-8")
+        dv.collect_req_files()
+        self.assertTrue(any("'id' invalido" in e for e in dv.errors))
+
+    def test_faltan_campos_es_error(self):
+        (self.reqs / "REQ-100.md").write_text(
+            "---\nid: REQ-100\ntitulo: T\nestado: Implementado\n---\n", encoding="utf-8")
+        dv.collect_req_files()
+        self.assertTrue(any("faltan campos" in e for e in dv.errors))
+
+    def test_draft_referenciado_es_advertencia(self):
+        self._req(estado="Draft")
+        self._code("# REQ-100\n")
+        reqs = dv.collect_req_files()
+        refs = dv.collect_code_refs()
+        dv.analizar(reqs, refs)
+        self.assertTrue(any("Draft" in w for w in dv.warnings))
+
+    def test_strict_falla_con_advertencias(self):
+        self._req(estado="Implementado")  # sin referencias -> advertencia
+        with mock.patch.object(sys, "argv", ["doc_validator.py", "--strict"]), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(dv.main(), 1)
+
 
 class TestLessonsExtractor(unittest.TestCase):
     def setUp(self):
