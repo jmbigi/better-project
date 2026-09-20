@@ -232,3 +232,13 @@
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
+- id: LSN-028
+  proyecto: "Ecosistema / Jev (REQ-011)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El set v18 (328 casos, lote 17) dio accuracy global 0.6463 [0.593,0.696]; por tipo choice 0.787, noul 0.616, score 0.537; T=1.9; ECE 0.108. La exactitud se mantiene estable dentro del IC (v17 0.639 -> v18 0.646) y score sube ligeramente a 0.537."
+  recomendacion: "Con el objetivo >=100 casos/tipo cumplido (112/108/108), no seguir ampliando por exactitud: hacerlo solo por cobertura de escenarios. No presentar cambios dentro del IC como mejora; mantener score como experimental hasta estabilizarse."
+  resolucion: "Set v18 (328 casos) calibrado: T=1.9, accuracy 0.646 [0.593,0.696], ECE 0.108. Objetivo >=100/tipo cumplido (112/108/108). Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
+  estado: Resuelta
+  fecha: 2026-09-20
+  fecha_resolucion: 2026-09-20

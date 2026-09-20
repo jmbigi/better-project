@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "descripcion": "Lote 17 de candidatos de calibracion (REQ-011) propuestos por la IA el 2026-09-20. PENDIENTE de revision y aprobacion del programador (REQ-016). Fusionar con scripts/jev_calibration_merge.py --aplicar una vez aprobado; no se fusiona automaticamente (REQ-018).",
-  "estado": "pendiente",
+  "descripcion": "Lote 17 de candidatos de calibracion (REQ-011) propuestos por la IA. Revisados y aprobados por el programador el 2026-09-20 (18/18 aprobados, 0 correcciones). Fusionados con scripts/jev_calibration_merge.py --aplicar (REQ-018).",
+  "estado": "aprobado",
   "origen": [
     "AGENTS.md (P0/P1)",
     ".docs/lessons/2026.yaml (LSN-001..LSN-027)",
