@@ -252,3 +252,11 @@
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
+- id: LSN-030
+  proyecto: "MCP / opencode"
+  fase: "Configuracion"
+  categoria: "Riesgo_Tecnico"
+  problema: "En opencode.json/kilo.json el MCP local 'verify-local' apuntaba a 'bash scripts/verificar-proyecto.sh' con \"cwd\": \"${workspace}\". Dos defectos: (1) ${workspace} no es una variable valida de opencode; se pasa literal, el directorio no existe y el spawn falla con ENOENT 'bash' (aunque /bin/bash si existe); (2) un script shell de verificacion no implementa el protocolo MCP (JSON-RPC por stdio), por lo que aunque arrancara el servidor no podria conectar."
+  recomendacion: "Un servidor MCP local debe ser un proceso que hable JSON-RPC por stdio; no configurar scripts shell de proposito general como MCP. En 'cwd' usar solo rutas relativas al workspace o omitirlo (no existe ${workspace}). Exponer la verificacion como tool del servidor MCP existente (mcp_server.py: run_verification) y validar con 'opencode mcp list'."
+  estado: Abierta
+  fecha: 2026-09-20

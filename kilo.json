@@ -41,15 +41,6 @@
       "enabled": true,
       "oauth": {}
     },
-    "verify-local": {
-      "type": "local",
-      "command": [
-        "bash",
-        "scripts/verificar-proyecto.sh"
-      ],
-      "enabled": true,
-      "cwd": "${workspace}"
-    },
     "nemo-guardrails": {
       "type": "local",
       "command": [
@@ -59,10 +50,17 @@
         ".opencode/guardrails"
       ],
       "enabled": false,
-      "cwd": "${workspace}",
       "environment": {
         "NEMOGUARDRAILS_NO_USAGE_STATS": "1"
       }
+    },
+    "better-project": {
+      "type": "local",
+      "command": [
+        "python3",
+        "scripts/mcp_server.py"
+      ],
+      "enabled": true
     }
   },
   "provider": {

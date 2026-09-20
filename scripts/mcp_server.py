@@ -6,6 +6,7 @@ Expone las herramientas del ecosistema a opencode y otros agentes via stdio:
 - read_requirement(id): lee una especificacion REQ-XXX.
 - validate_requirements(): valida trazabilidad REQ (doc_validator).
 - create_lesson(...): anade una leccion a .docs/lessons/<anio>.yaml.
+- run_verification(): ejecuta scripts/verificar-proyecto.sh (verificacion integral).
 
 Sin dependencias externas. Framing stdio: JSON por linea (espec MCP 2025-06-18)
 con soporte retrocompatible de cabeceras Content-Length.
@@ -13,6 +14,7 @@ con soporte retrocompatible de cabeceras Content-Length.
 
 import json
 import re
+import subprocess
 import sys
 import time
 from datetime import date, datetime, timezone
@@ -86,6 +88,13 @@ TOOLS = [
             "required": ["problema", "recomendacion"],
         },
     },
+    {
+        # REQ-004: ejecucion de la verificacion integral del proyecto como
+        # herramienta MCP (antes configurada, por error, como servidor MCP).
+        "name": "run_verification",
+        "description": "Ejecuta la verificacion integral del repo (scripts/verificar-proyecto.sh) y devuelve su salida y codigo de salida.",
+        "inputSchema": {"type": "object", "properties": {}},
+    },
 ]
 
 
@@ -151,6 +160,8 @@ def handle_call(name: str, arguments: dict) -> tuple[list[dict], bool]:
                 content, ok = validate_requirements(), True
             elif name == "create_lesson":
                 content, ok = create_lesson(arguments), True
+            elif name == "run_verification":
+                content, ok = run_verification()
             else:
                 content = [{"type": "text", "text": f"tool desconocida: {name}"}]
         else:
@@ -265,6 +276,27 @@ def create_lesson(args: dict) -> list[dict]:
             fh.write("\n")
         fh.write("\n".join(lines) + "\n")
     return [{"type": "text", "text": f"leccion {entry['id']} anadida a {year_file.name}"}]
+
+
+def run_verification() -> tuple[list[dict], bool]:
+    # REQ-004: la verificacion es una herramienta del servidor MCP (no un
+    # servidor MCP por si misma); se ejecuta y se devuelve su salida.
+    # Devuelve (content, ok): ok=True solo si el script termina con exit 0.
+    script = SCRIPTS / "verificar-proyecto.sh"
+    try:
+        proc = subprocess.run(
+            ["bash", str(script)],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return [{"type": "text", "text": "error: la verificacion excedio el tiempo limite (300 s)"}], False
+    salida = (proc.stdout or "") + (proc.stderr or "")
+    estado = "OK" if proc.returncode == 0 else f"FALLO (exit {proc.returncode})"
+    return [{"type": "text", "text": f"verificacion {estado}\n\n{salida}"}], proc.returncode == 0
 
 
 class StdioServer:

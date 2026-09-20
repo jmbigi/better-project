@@ -259,7 +259,7 @@ Regla **P1.20**: se actualizan en `docs/LECCIONES-APRENDIDAS.md` tras cada prueb
 
 ## MCP y skills
 
-MCP (`mcp` en `opencode.json`/`kilo.json`, `enabled: true`; remotos con OAuth): `context7` (docs técnicas), `gh_grep` (código GitHub), `sentry` (issues), `verify-local` (`verificar-proyecto.sh`). Uso: `use <nombre>`. Skills (`.opencode/skills/<name>/SKILL.md`, frontmatter: name, description, license, compatibility; permisos `permission.skill`): `security-audit` (auditoría), `red-team-denies` (218 deny patterns vs matcher real), `owasp-mapping` (OWASP GenAI Top 10 2026), `dependency-check` (SBOM syft, grype, licencias), `cost-tracker` (tokens/coste/latencia). Uso: `skill({ name: "nombre" })`.
+MCP (`mcp` en `opencode.json`/`kilo.json`, `enabled: true`; remotos con OAuth): `context7` (docs técnicas), `gh_grep` (código GitHub), `sentry` (issues) y el servidor local `better-project` (knowledge, requisitos, lecciones y `run_verification`). Uso: `use <nombre>`. Skills (`.opencode/skills/<name>/SKILL.md`, frontmatter: name, description, license, compatibility; permisos `permission.skill`): `security-audit` (auditoría), `red-team-denies` (218 deny patterns vs matcher real), `owasp-mapping` (OWASP GenAI Top 10 2026), `dependency-check` (SBOM syft, grype, licencias), `cost-tracker` (tokens/coste/latencia). Uso: `skill({ name: "nombre" })`.
 
 ## Determinismo de inferencia (P1.9 — safeguard)
 
