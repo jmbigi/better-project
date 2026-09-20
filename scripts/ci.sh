@@ -57,6 +57,12 @@ echo "== CI local: mutacion multi-modulo (REQ-015) =="
 python3 scripts/mutation_check.py --batch --strict --umbral 0.8 \
     || fail "mutation_check --batch por debajo del umbral 0.8"
 
+if [ "${AUDIT:-0}" = "1" ]; then
+    echo "== CI local: advisories con severidad (AUDIT=1, REQ-020) =="
+    python3 scripts/audit_advisories.py --requirements requirements-optional.lock \
+        || echo "  [AVISO] auditoria no completada (pip-audit/red); no bloquea el CI"
+fi
+
 echo
 echo "CI local VERDE. Copia limpia conservada en: $EXPORT_DIR"
 echo "(borrala manualmente cuando quieras; no se auto-elimina, P0.3)"

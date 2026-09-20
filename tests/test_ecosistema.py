@@ -28,6 +28,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 import adr_validator as av  # noqa: E402
 import analyze_shell as ash  # noqa: E402
+import audit_advisories as aadm  # noqa: E402
 import auto_audit as aa  # noqa: E402
 import diagnostico as diag  # noqa: E402
 import download_jev_model as djm  # noqa: E402
@@ -2411,6 +2412,93 @@ class TestDownloadJevModel(unittest.TestCase):
                 mock.patch.object(sys, "stdout", io.StringIO()):
             with self.assertRaises(RuntimeError):
                 djm._download("http://x/m.gguf", dest, yes=True)
+
+
+class TestAuditAdvisories(unittest.TestCase):
+    """REQ-020: advisories con severidad CVSS via OSV."""
+
+    @staticmethod
+    def _proc(payload, returncode=1, stderr=""):
+        return mock.Mock(returncode=returncode, stdout=json.dumps(payload), stderr=stderr)
+
+    @staticmethod
+    def _resp(payload):
+        class _R:
+            def read(self):
+                return json.dumps(payload).encode("utf-8")
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+        return _R()
+
+    def test_run_pip_audit_dedup_y_parse(self):
+        dep = {
+            "name": "chromadb",
+            "version": "1.5.9",
+            "vulns": [
+                {"id": "PYSEC-1", "fix_versions": [], "aliases": ["CVE-1"],
+                 "description": "algo malo. mas detalle"},
+                {"id": "PYSEC-1", "fix_versions": [], "aliases": ["CVE-1"],
+                 "description": "duplicado"},
+            ],
+        }
+        filas = aadm.run_pip_audit(
+            Path("x.lock"), runner=lambda: self._proc({"dependencies": [dep]})
+        )
+        self.assertEqual(len(filas), 1)
+        self.assertEqual(filas[0]["advisory"], "PYSEC-1")
+        self.assertEqual(filas[0]["fix"], "sin parche")
+        self.assertEqual(filas[0]["resumen"], "algo malo")
+
+    def test_run_pip_audit_fallo_explicito(self):
+        with self.assertRaises(RuntimeError):
+            aadm.run_pip_audit(Path("x.lock"),
+                               runner=lambda: self._proc({}, returncode=2, stderr="boom"))
+
+    def test_osv_detalle(self):
+        payload = {
+            "severity": [{"type": "CVSS_V4", "score": "CVSS:4.0/AV:N"}],
+            "aliases": ["CVE-1"],
+            "summary": "resumen",
+        }
+        detalle = aadm.osv_detalle("PYSEC-1", opener=lambda url, timeout=0: self._resp(payload))
+        self.assertEqual(detalle["cvss"], "CVSS:4.0/AV:N")
+        self.assertEqual(detalle["aliases"], ["CVE-1"])
+
+    def test_osv_detalle_error_red(self):
+        def opener(url, timeout=0):
+            raise urllib.error.URLError("sin red")
+        with self.assertRaises(RuntimeError):
+            aadm.osv_detalle("PYSEC-1", opener=opener)
+
+    def test_enriquecer_offline(self):
+        filas = [{"advisory": "PYSEC-1", "paquete": "p", "version": "1",
+                  "fix": "sin parche", "aliases": [], "resumen": "r"}]
+        aadm.enriquecer(filas, offline=True)
+        self.assertEqual(filas[0]["cvss"], "(offline)")
+
+    def test_render_markdown(self):
+        filas = [{"advisory": "A", "paquete": "p", "version": "1", "fix": "sin parche",
+                  "cvss": "CVSS:4.0/X", "aliases": ["CVE-1"], "resumen": "r"}]
+        md = aadm.render_markdown(filas)
+        self.assertIn("| Advisory |", md)
+        self.assertIn("CVE-1", md)
+
+    def test_main_offline(self):
+        filas = [{"advisory": "A", "paquete": "p", "version": "1", "fix": "sin parche",
+                  "aliases": [], "resumen": "r"}]
+        with mock.patch.object(aadm, "run_pip_audit", return_value=filas), \
+                mock.patch.object(sys, "stdout", io.StringIO()) as out:
+            self.assertEqual(aadm.main(["--offline"]), 0)
+        self.assertIn("(offline)", out.getvalue())
+
+    def test_main_error_controlado(self):
+        with mock.patch.object(aadm, "run_pip_audit", side_effect=RuntimeError("no pip-audit")), \
+                mock.patch.object(sys, "stderr", io.StringIO()):
+            self.assertEqual(aadm.main([]), 1)
 
 
 if __name__ == "__main__":

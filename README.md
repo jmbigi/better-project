@@ -249,20 +249,22 @@ REQ (`--strict`), lecciones, indice de conocimiento y la suite de tests.
 
 ## Dependencias opcionales
 
-Sin dependencias, el ecosistema funciona con stdlib (indice JSON TF-IDF). Para
-busqueda vectorial real (`requirements-optional.txt`):
+Sin dependencias, el ecosistema funciona con stdlib (indice JSON TF-IDF). Los
+extras estan aislados: `requirements-vector.txt` (busqueda vectorial, REQ-002) y
+`requirements-jev.txt` (motor Jev, REQ-011); `requirements-optional.txt` los
+incluye. El contrato reproducible es `requirements-optional.lock` (117 paquetes
+con hashes transitivos, generado con `uv pip compile --generate-hashes`).
 
 ```bash
-bash scripts/setup.sh    # las instala en .venv, solo tras doble confirmacion
+bash scripts/setup.sh    # instala el lock con --require-hashes, tras doble confirmacion
 ```
 
-⚠️ P0.18: la auditoria `pip-audit` del 2026-09-20
-(`docs/SBOM-2026-09-20.cdx.json`, 119 componentes resueltos) encontro 5
-advisories ABIERTOS sin version de parche: 4 en chromadb 1.5.9 (inyeccion de
-codigo y autorizacion en modo SERVIDOR) y 1 en diskcache 5.6.3 (dependencia
-transitiva). `requirements-optional.txt` fija las versiones directas; el uso
-local embebido no expone esa superficie, pero instalarlas implica aceptar el
-riesgo por escrito; el backend stdlib es el recomendado por defecto.
+⚠️ P0.18/REQ-020: la auditoria `pip-audit` del 2026-09-20
+(`docs/SBOM-2026-09-20.cdx.json`, 121 componentes) encontro 5 advisories
+ABIERTOS sin version de parche: 4 en chromadb 1.5.9 y 1 en diskcache 5.6.3. La
+severidad real (CVSS/CVE) se obtiene con `python3 scripts/audit_advisories.py`;
+son de nivel alto en modo **servidor**, mitigados por el uso local embebido
+(PersistentClient sin red). El backend stdlib sigue siendo el recomendado.
 
 ## Verificacion y seguridad
 

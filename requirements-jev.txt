@@ -1,0 +1,2 @@
+# Extra: motor Jev local con llama.cpp (REQ-011). Opcional.
+llama-cpp-python==0.3.35

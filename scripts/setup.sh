@@ -64,10 +64,10 @@ esac
 case "$RESPUESTA" in
     s|S|si|SI|y|Y)
         python3 -m venv .venv || fail "no se pudo crear .venv"
-        .venv/bin/pip install --quiet -r requirements-optional.txt \
-            || fail "fallo pip install; revisa la salida"
-        echo "  [OK] dependencias opcionales en .venv"
-        echo "  NOTA (P0.18): regenera el SBOM tras instalar y adjuntalo en docs/"
+        .venv/bin/pip install --quiet --require-hashes -r requirements-optional.lock \
+            || fail "fallo pip install del lock; revisa la salida (REQ-020)"
+        echo "  [OK] dependencias opcionales en .venv (lock con hashes)"
+        echo "  NOTA (P0.18/REQ-020): regenera el SBOM tras instalar y adjuntalo en docs/"
         ;;
     *)
         echo "  [SKIP] backend stdlib (TF-IDF JSON); puedes instalarlas despues"

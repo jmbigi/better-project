@@ -33,17 +33,19 @@ completa y la mutación multi-módulo, y falla si algo está en rojo (REQ-009).
 El script **no** borra el directorio temporal (P0.3); imprime su ruta
 `/tmp/better-project-ci-XXXXXX` para que el operador lo elimine manualmente.
 
-## Reproducir el SBOM (P0.18)
+## Reproducir el SBOM y la severidad (P0.18/REQ-020)
 
 ```bash
-pip-audit -f cyclonedx-json -r requirements-optional.txt \
+pip-audit --no-deps -f cyclonedx-json -r requirements-optional.lock \
     -o docs/SBOM-$(date +%F).cdx.json
+python3 scripts/audit_advisories.py --requirements requirements-optional.lock
 ```
 
-Las versiones directas están fijadas en `requirements-optional.txt`. Hallazgo
-vigente (2026-09-20): 5 advisories sin parche (4 en chromadb 1.5.9, 1 en
-diskcache 5.6.3), aceptados por escrito para uso local embebido (LSN-007); ver
-`docs/HERRAMIENTAS-Y-FUENTES.md`.
+El contrato reproducible es `requirements-optional.lock` (hashes transitivos).
+Hallazgo vigente (2026-09-20): 5 advisories sin parche (4 en chromadb 1.5.9, 1
+en diskcache 5.6.3), de severidad alta en modo **servidor** y mitigados por el
+uso local embebido (LSN-007); CVSS/CVE via OSV en la salida de
+`audit_advisories.py`.
 
 ## Qué NO cubre
 
