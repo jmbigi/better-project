@@ -165,9 +165,20 @@ cautelas estadisticas del artefacto de revision.
   `.docs/.storage/jev_review.json` (generado) sin tocar los documentos.
 - SBOM actual: `docs/SBOM-2026-09-19.cdx.json` (CycloneDX, 119 componentes, 5
   advisories) generado con `pip-audit -f cyclonedx-json -r
-  requirements-optional.txt`; el `.venv` no contiene chromadb, por lo que un
-  escaneo del entorno no reflejaria el grafo resuelto. `auto_audit evidencias` y
-  el verificador reconocen `.spdx.json` y `.cdx.json`.
+  requirements-optional.txt`; el `.venv` ahora contiene chromadb y
+  sentence-transformers (instalados 2026-09-19), pero el SBOM se genera del
+  grafo resuelto de `requirements-optional.txt` para cubrirlo con o sin venv.
+  `auto_audit evidencias` y el verificador reconocen `.spdx.json` y `.cdx.json`.
+- Revision y aplicacion (2026-09-19): el programador reviso y aprobo las 60
+  clasificaciones generadas con el modelo real (Qwen3.5-4B Q4_K_M) y se
+  aplicaron **33 diferencias** a los documentos: 9 prioridades en
+  `.docs/requirements/` y 24 campos (`fase`/`categoria`) en `.docs/lessons/`.
+  Es una accion humana explicita (P1.17/P1.25); el registro generado
+  (`.docs/.storage/jev_review.json`, `ok=60`, `pendiente=0`) no se versiona.
+- Indice Chroma (REQ-002): al instalar chromadb se detecto y corrigio un bug de
+  IDs duplicados entre archivos homonimos (LSN-022); indice reconstruido con
+  `.venv/bin/python scripts/index_knowledge.py --all` (6 archivos, 41 chunks) y
+  busqueda semantica verificada.
 
 ## Lote 11 de calibracion completado (2026-09-19)
 

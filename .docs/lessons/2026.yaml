@@ -1,23 +1,23 @@
 - id: LSN-001
   proyecto: Ecosistema
   fase: Implementacion
-  categoria: Proceso
+  categoria: Seguridad
   problema: "El validador de trazabilidad arranca sin indice de conocimiento y devuelve falsa alarma"
   recomendacion: "Hacer que el servidor MCP caiga a busqueda directa sobre los Markdown cuando no existe indice, y avisar de que falta indexar"
   estado: Resuelta
   fecha: 2026-08-06
 - id: LSN-002
   proyecto: Ecosistema
-  fase: Deploy
-  categoria: Seguridad
+  fase: Implementacion
+  categoria: Riesgo_Tecnico
   problema: "Scripts con dependencias opcionales fallaban en entornos limpios sin aviso claro"
   recomendacion: "Disenar con backend de reserva sin dependencias (stdlib) y mensajes de advertencia explicitos en stderr"
   estado: Resuelta
   fecha: 2026-08-06
 - id: LSN-003
   proyecto: Ecosistema
-  fase: Implementacion
-  categoria: Proceso
+  fase: Testing
+  categoria: Seguridad
   problema: "Un proyecto demo dentro del repo contamina la trazabilidad: sus REQ-XXX aparecian como referencias rotas en el validador principal"
   recomendacion: "Excluir demo/ del escaneo por defecto y validar proyectos externos con doc_validator --root <carpeta>"
   estado: Resuelta
@@ -33,7 +33,7 @@
 - id: LSN-005
   proyecto: Ecosistema
   fase: Testing
-  categoria: Riesgo_Tecnico
+  categoria: Proceso
   problema: "El test de integracion del hook pre-commit fallaba en la copia temporal: con HEAD no nacido, git fsck emite avisos ('HEAD apunta a un branch no nacido') que el check 'sin objetos huerfanos' (test -z sobre la salida) toma como fallo; ademas la suite dentro de la copia re-ejecutaba el propio test de integracion (recursion)"
   recomendacion: "En repos de prueba hacer un commit bootstrap con --no-verify antes de instalar el hook, y usar una variable de entorno guarda (BETTER_TEST_INTEGRACION) para que la suite anidada omita el test de integracion"
   estado: Resuelta
@@ -41,14 +41,14 @@
 - id: LSN-006
   proyecto: Ecosistema
   fase: Testing
-  categoria: Riesgo_Tecnico
+  categoria: Seguridad
   problema: "Al anadir el SBOM (docs/SBOM-2026-09-04.spdx.json) dos checks del verificador fallaron: versiones de 4 partes (13.0.3.0) matchean el regex de IP y los purls (pkg:pypi/nombre@version) el de emails; ademas GNU grep 3.11 IGNORA --exclude cuando el archivo tambien casa con --include, y el primer intento de fix documento los literales en un comentario del propio verificador, que se auto-matcheo"
   recomendacion: "Excluir los SBOM en el filtro final del pipeline (grep -v 'SBOM-') en vez de --exclude, y nunca escribir en comentarios de scripts verificados literales que un check de seguridad busca (IPs, purls con @, formatos de claves)"
   estado: Resuelta
   fecha: 2026-09-04
 - id: LSN-007
   proyecto: Ecosistema
-  fase: Implementacion
+  fase: Testing
   categoria: Seguridad
   problema: "pip-audit sobre requirements-optional.txt encontro 4 advisories ABIERTOS sin parche en chromadb 1.5.9 (PYSEC-2026-311, GHSA-2wm9-hf6c-p5cr, GHSA-36p7-vc44-83pf, GHSA-xph7-9rjv-w5fr; inyeccion de codigo y autorizacion en modo servidor)"
   recomendacion: "Backend stdlib TF-IDF por defecto; chromadb solo local embebido (PersistentClient, sin servidor) y tras doble confirmacion de riesgo en setup.sh; SBOM registrado en docs/SBOM-2026-09-04.spdx.json (P0.18)"
@@ -57,7 +57,7 @@
 - id: LSN-008
   proyecto: "Ecosistema / Jev (REQ-011)"
   fase: "Testing"
-  categoria: "Riesgo_Tecnico"
+  categoria: "Proceso"
   problema: "El motor Jev (REQ-011) pasaba los tests con mocks que simulaban scores como lista plana; el objeto real de llama-cpp-python expone scores 2D (n_ctx, vocab) y solo guarda logits si se pasa logits_all=True. La inferencia real fallaba con TypeError y ademas JEV_MODEL_PATH era ignorado."
   recomendacion: "Los mocks deben reproducir la forma y semantica reales de la dependencia (dimensionalidad, indices, flags de configuracion) y deben fallar con el codigo defectuoso. Validar siempre una inferencia end-to-end con un modelo real pequeno antes de declarar un REQ implementado (P1.1/P1.21)."
   estado: Resuelta
@@ -65,7 +65,7 @@
 - id: LSN-009
   proyecto: "Ecosistema / Jev (REQ-011)"
   fase: "Testing"
-  categoria: "Riesgo_Tecnico"
+  categoria: "Proceso"
   problema: "La calibracion real de REQ-011 (Qwen3.5-4B Q4_K_M, 40 casos basados en lecciones/historial) mostro accuracy 0.65 global: choice 0.917, noul 0.625, score 0.417. El tipo score (escala ordinal) es poco fiable con el proxy de primer token. La temperatura T=2.0 reducirco NLL/Brier/ECE pero no la accuracy (correcto por diseno: temperature scaling preserva el argmax)."
   recomendacion: "No usar decisiones tipo score como guardarrail ni umbral de decision sin calibracion propia y revision humana de las etiquetas. Recalibrar la temperatura al cambiar de modelo o dominio. T puede mejorar la confianza sin mejorar la accuracy: reportar siempre ambas y no presentar la calibracion como mejora de exactitud."
   resolucion: "Tras ampliar a 220 casos (Lote 11, REQ-018), accuracy global 0.668 [0.601,0.730], choice 0.864, noul 0.629, score 0.515; T recomendada 1.6. Score mejora de 0.417 a 0.515 pero sigue siendo el tipo mas débil; no usar como guardarrail sin revision humana."
@@ -82,23 +82,23 @@
   fecha: 2026-09-19
 - id: LSN-011
   proyecto: "Ecosistema"
-  fase: "Implementacion"
-  categoria: "Riesgo_Tecnico"
+  fase: "Testing"
+  categoria: "Proceso"
   problema: "El primer auditor de sesgos documental (REQ-014) marco 6 alertas en AGENTS.md y docs/REGLAS-COMPLETAS.md porque el lenguaje normativo usa terminos absolutos deliberados ('100%', 'sin errores') como reglas, no como afirmaciones; eran falsos positivos."
   recomendacion: "Un auditor de prosa sin contexto produce ruido: excluir los documentos normativos (AGENTS.md, REGLAS-COMPLETAS.md) y limitar el analisis a la documentacion narrativa (README, arquitectura, ADR, knowledge), con lista blanca para catalogos de ejemplos."
   estado: Resuelta
   fecha: 2026-09-19
 - id: LSN-012
   proyecto: "Ecosistema"
-  fase: "Diseno"
-  categoria: "Proceso"
+  fase: "Implementacion"
+  categoria: "Seguridad"
   problema: "Al investigar herramientas y fuentes para el Pilar 4, la tentacion era adoptar las mas populares (Vale, mutmut) sin evaluar coste/beneficio (ad populum) y citar fuentes sin verificarlas (P0.2/P0.18)."
   recomendacion: "Separar siempre lo verificado (URL/licencia comprobadas) de lo candidato; adoptar una herramienta solo con ADR de >= 2 alternativas y tras pasar P0.18 (SBOM, escaneo, licencia)."
   estado: Resuelta
   fecha: 2026-09-19
 - id: LSN-013
   proyecto: "Ecosistema"
-  fase: "Deploy"
+  fase: "Testing"
   categoria: "Seguridad"
   problema: "El re-escaneo de dependencias del 2026-09-19 (auto_audit vulns, pip-audit) encontro advisories nuevos respecto del SBOM del 2026-09-04: 4 en chromadb 1.5.9 y 1 en diskcache 5.6.3, todos sin parche. Un SBOM fechado caduca: comprobar solo su antiguedad no detecta advisories nuevos."
   recomendacion: "Ademas de auditar la antiguedad del SBOM, re-escanear con pip-audit/osv-scanner (auto_audit vulns) antes de releases y regenerar el SBOM con syft; aceptar el riesgo por escrito solo para uso local embebido (LSN-007)."
@@ -107,7 +107,7 @@
 - id: LSN-014
   proyecto: "Ecosistema"
   fase: "Testing"
-  categoria: "Riesgo_Tecnico"
+  categoria: "Proceso"
   problema: "El chequeo de mutaciones (REQ-015) encontro un mutante supervivente en adr_validator.py: 'if hit and not re.search(...)' mutado a 'or'. La suite no distinguia el caso 'sin adjetivo ambiguo y sin metrica', que el mutante convertia en una alerta espuria."
   recomendacion: "Usar el chequeo de mutaciones para hallar huecos que la cobertura de lineas no ve; al cerrar cada hueco, anadir el caso que mate al mutante y re-ejecutar hasta score 1.0 en el modulo."
   estado: Resuelta
@@ -115,15 +115,15 @@
 - id: LSN-015
   proyecto: "Ecosistema"
   fase: "Testing"
-  categoria: "Riesgo_Tecnico"
+  categoria: "Proceso"
   problema: "mutmut 3.6 (ya instalado) no es viable en este proyecto sin una configuracion especifica de pytest: exige source_paths/pytest_add_cli_args_test_selection y su recoleccion de stats (run_stats) falla con BadTestExecutionCommandsException sobre la suite unittest, aunque pytest 9 si recoge TestADRValidator por separado (14 passed)."
   recomendacion: "Medir mutaciones con el chequeo stdlib scripts/mutation_check.py (REQ-015); si se quiere mutmut, migrar a un layout pytest con config dedicada y probarlo en copia aislada (P1.21). No adoptar una herramienta por popularidad (ad populum, Pilar 4)."
   estado: Resuelta
   fecha: 2026-09-19
 - id: LSN-016
   proyecto: "Ecosistema"
-  fase: "Implementacion"
-  categoria: "Riesgo_Tecnico"
+  fase: "Testing"
+  categoria: "Proceso"
   problema: "Al integrar vale (Pilar 4) hubo dos fricciones: 'vale .' aborta con E201 al parsear el frontmatter YAML de los agentes en .kilo/.opencode y .valeignore no se respeto; y la regla 'garantiza' daba falso positivo en 'no garantiza' y en documentos normativos/catalogos/evidencia."
   recomendacion: "Ejecutar vale sobre rutas explicitas (vale README.md docs .docs), excluir documentos normativos/catalogos/evidencia por seccion en .vale.ini, y refinar tokens con lookbehind ('(?<!no )garantiza') para no marcar negaciones. Instalar vale con 'go install' (usuario, sin sudo)."
   estado: Resuelta
@@ -131,14 +131,14 @@
 - id: LSN-017
   proyecto: "Ecosistema"
   fase: "Testing"
-  categoria: "Riesgo_Tecnico"
+  categoria: "Proceso"
   problema: "mutmut 3.6 no era viable (LSN-015). Se evaluo cosmic-ray 8.7.0 en .venv y copia aislada: funciono con config minima (module-path, test-command, distributor local) y genero 160 mutantes de adr_validator, 124 eliminados (77.5%) usando un solo objetivo de test."
   recomendacion: "Adoptar cosmic-ray como herramienta opcional de mutacion (mas rica que mutation_check.py) y usar un objetivo de test amplio (idealmente toda la suite) para reducir supervivientes; probarla en copia aislada (P1.21) y registrar la config minima."
   estado: Resuelta
   fecha: 2026-09-19
 - id: LSN-018
   proyecto: "Ecosistema"
-  fase: "Deploy"
+  fase: "Implementacion"
   categoria: "Seguridad"
   problema: "Regenerar el SBOM escaneando el .venv no refleja el grafo de requirements-optional.txt (chromadb no esta instalado en el .venv, solo pip-audit lo resuelve); ademas el SBOM SPDX previo habia quedado obsoleto."
   recomendacion: "Generar el SBOM del grafo resuelto con 'pip-audit -f cyclonedx-json -r requirements-optional.txt' (sin instalar), versionarlo en docs/ y ampliar las exclusiones de seguridad (verificador y auto_audit) a .cdx.json, que tambien contiene purls."
@@ -147,7 +147,7 @@
 - id: LSN-019
   proyecto: "Ecosistema / Jev (REQ-011)"
   fase: "Implementacion"
-  categoria: "Riesgo_Tecnico"
+  categoria: "Proceso"
   problema: "La revision con el modelo real tardo mas de 280s para 35 items (~8s/item) y, al agotarse el timeout, se perdio todo el progreso porque jev_review guardaba solo al final."
   recomendacion: "Guardar la revision y la cache de clasificaciones de forma incremental por item; la cache (clave pilar|id|sha1(texto)) evita recalcular en reejecuciones. Para sets grandes, acotar con --pilar/--limit o revisar interactivamente y salir con q (guarda lo revisado)."
   estado: Resuelta
@@ -155,7 +155,7 @@
 - id: LSN-020
   proyecto: "Ecosistema / Jev (REQ-011)"
   fase: "Testing"
-  categoria: "Riesgo_Tecnico"
+  categoria: "Proceso"
   problema: "Tras ampliar el set de calibracion de 40 a 58 casos (v3), la accuracy global se mantuvo en ~0.655 y por tipo: choice 0.889, noul 0.636, score 0.444; la T recomendada bajo de 2.0 a 1.8. El tipo score sigue poco fiable."
   recomendacion: "No presentar la ampliacion como mejora de exactitud (no lo es); reportar accuracy e IC junto a NLL/Brier/ECE. Seguir ampliando hacia >=100/tipo y no usar score como guardarrail hasta que supere ~0.6."
   resolucion: "Set ampliado a 220 casos (Lote 11, REQ-018): accuracy 0.668 [0.601,0.730] (mejora respecto a 0.655), choice 0.864, noul 0.629, score 0.515 (supera 0.6); T=1.6. La ampliacion si mejoro accuracy y score; la recomendacion de reportar IC junto a metricas se mantiene."
@@ -165,7 +165,7 @@
 - id: LSN-021
   proyecto: "Ecosistema / Jev (REQ-011)"
   fase: "Testing"
-  categoria: "Riesgo_Tecnico"
+  categoria: "Proceso"
   problema: "El lote 3 (set v4, 76 casos) bajo la accuracy global de 0.655 a 0.632 y subio la T recomendada a 2.1; choice 0.833, noul 0.607, score 0.458. Ampliar el set con casos mas exigentes no mejora la exactitud."
   recomendacion: "No prometer mejoras de exactitud al ampliar el set; reportar accuracy, IC y metricas de calibracion. Mantener score como experimental y revisar si los casos nuevos son mas dificiles o menos representativos."
   resolucion: "Con 220 casos (Lote 11, REQ-018), accuracy 0.668 (supera el 0.655 inicial y el 0.632 del lote 3), choice 0.864, noul 0.629, score 0.515; T=1.6. Ampliar con casos exigentes si mejoro accuracy a largo plazo; score ya supera 0.6 pero mantener como experimental hasta >=100/tipo estable."
