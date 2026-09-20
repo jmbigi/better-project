@@ -259,6 +259,15 @@ class TestIndexKnowledge(unittest.TestCase):
         top_timeout = ik.search_json("timeout")[0]
         self.assertIn("timeout", top_timeout["contenido"])
 
+    def test_chunk_id_unico_entre_homonimos(self):
+        a = self.know / "architecture" / "ecosistema.md"
+        b = self.know / "business-rules" / "ecosistema.md"
+        a.parent.mkdir(parents=True)
+        b.parent.mkdir(parents=True)
+        a.write_text("## A\ncontenido\n")
+        b.write_text("## B\ncontenido\n")
+        self.assertNotEqual(ik._chunk_id(a, 0), ik._chunk_id(b, 0))
+
     def test_check_fresh(self):
         (self.know / "a.md").write_text("## A\ncontenido\n")
         ik.build_json_index()

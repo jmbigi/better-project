@@ -124,6 +124,12 @@ def build_json_index() -> tuple[int, int]:
     return len(files), len(chunks_meta)
 
 
+def _chunk_id(path: Path, idx: int) -> str:
+    """ID unico por chunk usando la ruta relativa (evita colisiones entre
+    archivos homonimos en directorios distintos)."""
+    return f"{path.relative_to(KNOWLEDGE_DIR)}:{idx}"
+
+
 def build_chroma_index() -> tuple[int, int]:
     """Indice vectorial ChromaDB + sentence-transformers."""
     import chromadb
@@ -141,7 +147,7 @@ def build_chroma_index() -> tuple[int, int]:
         text = path.read_text(encoding="utf-8", errors="replace")
         for idx, chunk in enumerate(_chunks(text)):
             texts.append(chunk)
-            ids.append(f"{path.name}:{idx}")
+            ids.append(_chunk_id(path, idx))
             metas.append({"archivo": str(path.relative_to(ROOT))})
 
     if texts:

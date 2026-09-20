@@ -172,3 +172,13 @@
   estado: Resuelta
   fecha: 2026-09-19
   fecha_resolucion: 2026-09-19
+- id: LSN-022
+  proyecto: "Ecosistema (REQ-002)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El backend ChromaDB de index_knowledge.py (REQ-002) nunca se habia ejercitado porque chromadb no estaba instalado; al instalarlo (2026-09-19) la indexacion fallo con chromadb.errors.DuplicateIDError. Causa: los IDs de chunk usaban solo el nombre del archivo (path.name), por lo que architecture/ecosistema.md y business-rules/ecosistema.md colisionaban en ecosistema.md:0..3. La suite de tests solo cubria el backend JSON TF-IDF, no el de Chroma."
+  recomendacion: "Los IDs de chunk deben derivarse de la ruta relativa, no del nombre de archivo. Al anadir un backend opcional, ejercitarlo de verdad (instalarlo y ejecutarlo end-to-end) antes de declararlo implementado, y anadir un test que pueda fallar (P1.1/P1.21) sin depender del paquete opcional."
+  resolucion: "IDs migrados a la ruta relativa con el helper _chunk_id(path, idx); test de regresion test_chunk_id_unico_entre_homonimos; indice Chroma reconstruido (6 archivos, 41 chunks) y busqueda semantica verificada. 151 tests OK."
+  estado: Resuelta
+  fecha: 2026-09-19
+  fecha_resolucion: 2026-09-19
