@@ -192,3 +192,13 @@
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
+- id: LSN-024
+  proyecto: "Ecosistema / Jev (REQ-011)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El set v14 (256 casos, lote 13) dio accuracy global 0.6641 [0.604,0.719] frente a 0.6597 del v13 (238); por tipo choice 0.833, noul 0.636, score 0.524; T recomendada 1.6. La variacion es marginal y cae dentro del IC."
+  recomendacion: "No interpretar diferencias dentro del IC como mejora o empeoramiento; reportar accuracy con IC junto a NLL/Brier/ECE y exigir >=100 casos/tipo antes de conclusiones estables. Mantener score como experimental."
+  resolucion: "Set v14 (256 casos) calibrado: T=1.6, accuracy 0.664 [0.604,0.719]. Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md sin presentarlo como mejora."
+  estado: Resuelta
+  fecha: 2026-09-20
+  fecha_resolucion: 2026-09-20

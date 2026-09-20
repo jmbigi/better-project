@@ -76,12 +76,12 @@ Salida previa con un modelo local alternativo
 - `1f62e37` — feat(jev): calibracion por temperatura con NLL/Brier/ECE.
 - Push a `origin/main`: sincronizado.
 
-## Calibracion (2026-09-19, set v13 de 238 casos)
+## Calibracion (2026-09-20, set v14 de 256 casos)
 
 Se anadio `scripts/jev_calibration.py` y `JEV_TEMPERATURE` al motor. El set
-`.docs/knowledge/ai/jev_calibration_set.json` (v13, 238 casos: 82 noul, 78
-choice, 78 score) se basa en P0/P1, el estado de los REQ y las lecciones LSN;
-sus etiquetas fueron **revisadas y aprobadas** por el programador (lotes 2-12;
+`.docs/knowledge/ai/jev_calibration_set.json` (v14, 256 casos: 88 noul, 84
+choice, 84 score) se basa en P0/P1, el estado de los REQ y las lecciones LSN;
+sus etiquetas fueron **revisadas y aprobadas** por el programador (lotes 2-13;
 P1.15). La integridad del set se audita con `auto_audit calibracion`.
 
 Metodologia segun Guo 2017 (arXiv:1706.04599), Nixon 2019 (arXiv:1904.01685) y
@@ -90,21 +90,21 @@ primarios con **IC bootstrap** (n=500, seed 20260919), ECE (equal-width y
 **adaptativo** equal-mass) secundario, validacion cruzada k-fold e **intervalo
 de Wilson 95 %** de la accuracy (P0.1). Las predicciones se cachean.
 
-Resultado medido (Qwen3.5-4B Q4_K_M, 238 casos):
+Resultado medido (Qwen3.5-4B Q4_K_M, 256 casos):
 
-| Metrica | T=1 | T=1.5 | CV antes | CV despues |
+| Metrica | T=1 | T=1.6 | CV antes | CV despues |
 |---|---|---|---|---|
-| NLL | 0.785 | 0.756 | 0.785 | 0.771 |
-| Brier | 0.470 | 0.455 | 0.470 | 0.463 |
-| ECE | 0.134 | 0.107 | 0.191 | 0.188 |
-| Accuracy | 0.660 | 0.660 | 0.659 | 0.659 |
+| NLL | 0.807 | 0.771 | 0.808 | 0.778 |
+| Brier | 0.468 | 0.454 | 0.468 | 0.458 |
+| ECE | 0.132 | 0.103 | 0.169 | 0.173 |
+| Accuracy | 0.664 | 0.664 | 0.664 | 0.664 |
 
-Accuracy por tipo (T=1.5): choice 0.846 [0.750, 0.910] (n=78), noul 0.622
-[0.514, 0.719] (n=82), score 0.513 [0.404, 0.621] (n=78); global 0.660
-[0.597, 0.717]. Respecto al set v12 (220 casos, 0.668) la ampliacion **no
-mejora la exactitud**; se reporta sin presentarla como mejora (LSN-020/021/023).
+Accuracy por tipo (T=1.6): choice 0.833 [0.740, 0.898] (n=84), noul 0.636
+[0.532, 0.729] (n=88), score 0.524 [0.418, 0.627] (n=84); global 0.664
+[0.604, 0.719]. Respecto al v13 (238 casos, 0.660) la variacion es marginal y
+dentro del IC; no se presenta como mejora (LSN-020/021/023/024).
 Informe JSON (generado, no versionado) en `.docs/.storage/jev_calibration.json`.
-Aplicar con `JEV_TEMPERATURE=1.5`.
+Aplicar con `JEV_TEMPERATURE=1.6`.
 
 ## Etiquetas aprobadas (2026-09-19)
 
