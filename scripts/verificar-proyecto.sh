@@ -188,16 +188,12 @@ assert policies[0] == {'effect': 'deny', 'action': 'provider.use', 'resource': '
 allowed = [p['resource'] for p in policies if p['effect'] == 'allow']
 assert set(allowed) == {'opencode', 'opencode-go', 'kilo', 'deepseek'}, allowed
 "
-check "agente determinista: temperature/top_p en build, plan y audit (sin seed, sin maxSteps)" python3 -c "
+check "agente determinista: temperature/top_p/seed/maxSteps en build, plan y audit" python3 -c "
 import json
 a = json.load(open('opencode.json'))['agent']
-assert a['build']['temperature'] == 0.3 and a['build']['top_p'] == 1.0, a['build']
-assert a['plan']['temperature'] == 0.1 and a['plan']['top_p'] == 1.0, a['plan']
-assert a['audit']['temperature'] == 0.0 and a['audit']['top_p'] == 1.0, a['audit']
-for k in ('seed', 'maxSteps', 'steps'):
-    assert k not in a['build'], 'build no debe llevar ' + k
-    assert k not in a['plan'], 'plan no debe llevar ' + k
-    assert k not in a['audit'], 'audit no debe llevar ' + k
+assert a['build']['temperature'] == 0.3 and a['build']['top_p'] == 1.0 and a['build']['seed'] == 42 and a['build']['maxSteps'] == 50, a['build']
+assert a['plan']['temperature'] == 0.1 and a['plan']['top_p'] == 1.0 and a['plan']['seed'] == 42 and a['plan']['maxSteps'] == 30, a['plan']
+assert a['audit']['temperature'] == 0.0 and a['audit']['top_p'] == 1.0 and a['audit']['seed'] == 42 and a['audit']['maxSteps'] == 20, a['audit']
 "
 if [ "$LITE_MODE" = "false" ]; then
     check "conteos de patrones en README coherentes con la config" python3 -c "
@@ -409,7 +405,9 @@ check "hook pre-commit instalado identico al script" bash -c "cmp -s scripts/hoo
 check "hook commit-msg instalado identico al script" bash -c "cmp -s scripts/hooks/commit-msg .git/hooks/commit-msg"
 check "sin objetos huerfanos en git (fsck)" bash -c "test -z \"\$(git fsck --unreachable 2>&1)\""
 if [ "$PRE_COMMIT_MODE" = "true" ]; then
-    echo "  [SKIP] comprobaciones de repositorio (modo pre-commit: los archivos staged son el cambio)"
+    check "sin cambios sin stagear (solo staged permitido)" bash -c "test -z \"\$(git status --porcelain | grep '^ [^ ]')\""
+    check "rama main sincronizada con origin" bash -c "test -z \"\$(git status --porcelain --branch | grep -E 'adelant|ahead|behind|adelanta')\""
+    check "HEAD remoto apunta a main" bash -c "test \"\$(git ls-remote origin HEAD | cut -f1)\" = \"\$(git ls-remote origin refs/heads/main | cut -f1)\""
 else
     check "arbol de trabajo limpio" bash -c "test -z \"\$(git status --porcelain)\""
     check "rama main sincronizada con origin" bash -c "test -z \"\$(git status --porcelain --branch | grep -E 'adelant|ahead|behind|adelanta')\""

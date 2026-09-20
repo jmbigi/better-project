@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# safe-wget — Wrapper determinista para bloquear pipes a bash/sh
+# Uso: safe-wget [args...]  (bloquea si detecta pipe a bash/sh en SAFE_WGET_ORIGINAL_CMD)
+#      safe-wget --allow-pipe [args...]  (permite pipe, solo para testing controlado)
+#
+# Integración: añadir al .bashrc/.zshrc:
+#   alias curl='SAFE_CURL_ORIGINAL_CMD="$BASH_COMMAND" safe-curl'
+#   alias wget='SAFE_WGET_ORIGINAL_CMD="$BASH_COMMAND" safe-wget'
+# O usar DEBUG trap para capturar BASH_COMMAND antes de cada comando.
+
+set -euo pipefail
+
+ALLOW_PIPE=false
+if [[ "${1:-}" == "--allow-pipe" ]]; then
+    ALLOW_PIPE=true
+    shift
+fi
+
+# Detectar si el comando original contiene pipe a bash/sh
+ORIGINAL_CMD="${SAFE_WGET_ORIGINAL_CMD:-$*}"
+
+if [[ "$ALLOW_PIPE" == "false" ]]; then
+    if [[ "$ORIGINAL_CMD" =~ (curl|wget).*[|].*(bash|sh) ]]; then
+        echo "❌ BLOQUEADO: Pipe a bash/sh detectado en: $ORIGINAL_CMD" >&2
+        echo "   Regla P0.8: Nunca ejecutes código descargado sin revisarlo" >&2
+        echo "   Usa --allow-pipe solo en testing controlado con revisión previa" >&2
+        exit 1
+    fi
+fi
+
+exec wget "$@"
