@@ -29,15 +29,19 @@ git config user.email dummy@example.com
 git config user.name "ci local"
 git add -A || fail "git add fallo"
 git commit -qm "ci export" --no-verify || fail "commit bootstrap fallo"
-cp scripts/hooks/pre-commit .git/hooks/pre-commit || fail "no se pudo instalar el hook"
+for hook in pre-commit commit-msg; do
+    cp "scripts/hooks/$hook" ".git/hooks/$hook" || fail "no se pudo instalar el hook $hook"
+    chmod +x ".git/hooks/$hook" || fail "no se pudo marcar ejecutable $hook"
+done
 
 echo "== CI local: sintaxis python =="
-python3 -m py_compile scripts/doc_validator.py scripts/index_knowledge.py \
-    scripts/lessons_extractor.py scripts/mcp_server.py scripts/tui.py \
-    || fail "py_compile fallo"
+for f in scripts/*.py; do
+    python3 -m py_compile "$f" || fail "py_compile fallo en $f"
+done
+echo "  [OK] py_compile en todos los scripts"
 
 echo "== CI local: sintaxis bash =="
-for s in scripts/*.sh scripts/hooks/pre-commit; do
+for s in scripts/*.sh scripts/hooks/pre-commit scripts/hooks/commit-msg; do
     bash -n "$s" || fail "sintaxis bash rota en $s"
 done
 echo "  [OK] bash -n en todos los scripts"
