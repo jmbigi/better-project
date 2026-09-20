@@ -179,6 +179,12 @@ cautelas estadisticas del artefacto de revision.
   IDs duplicados entre archivos homonimos (LSN-022); indice reconstruido con
   `.venv/bin/python scripts/index_knowledge.py --all` (6 archivos, 41 chunks) y
   busqueda semantica verificada.
+- Verificacion de cierre (2026-09-19): `151 tests OK`; `bash scripts/ci.sh` en
+  verde (41 OK, 0 fallos, sobre copia limpia de HEAD); `vale README.md docs
+  .docs` 0 errores/0 avisos en 38 archivos; `mutation_check` 16/16 (score 1.000)
+  y `adr_validator --strict` 0 errores. `auto_audit ia` mantiene 2 alertas: los
+  commits `36d0fe9` y `92e74e4` se publicaron sin trailer `Assisted-by:` (via
+  fast-forward, sin reescribir historia; trade-off aceptado).
 
 ## Lote 11 de calibracion completado (2026-09-19)
 
