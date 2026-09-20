@@ -214,6 +214,9 @@ python3 scripts/mutation_check.py
 # Mutacion multi-modulo con score global (lo corre tambien scripts/ci.sh)
 python3 scripts/mutation_check.py --batch --strict --umbral 0.8
 
+# Mutacion de todos los modulos con test (mas lenta, a demanda)
+python3 scripts/mutation_check.py --all --max-mutantes 20
+
 # Revisar clasificaciones Jev con UI (REQ-016): OK / corregir / saltar
 python3 scripts/jev_review.py
 

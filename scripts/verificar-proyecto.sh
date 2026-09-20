@@ -302,6 +302,11 @@ otel_start_span "verificar.ecosistema"
 echo "== 4. Ecosistema better-project =="
 check "sintaxis python de todos los scripts" bash -c 'for f in scripts/*.py; do python3 -m py_compile "$f" || exit 1; done'
 check_ruff
+# Mutacion selectiva en pre-commit: opt-in (lenta), no por defecto (REQ-015).
+if [ "${MUTATION_PRECHECK:-0}" = "1" ]; then
+    check "mutacion rapida adr_validator (MUTATION_PRECHECK=1)" \
+        python3 scripts/mutation_check.py --strict --umbral 0.8
+fi
 check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 scripts/doc_validator.py --strict"
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py && python3 scripts/index_knowledge.py --check"

@@ -15,6 +15,7 @@ Es una heuristica: complementa, no reemplaza, herramientas maduras como
 Uso:
     python3 scripts/mutation_check.py
     python3 scripts/mutation_check.py --batch [--json] [--strict] [--umbral 0.8]
+    python3 scripts/mutation_check.py --all [--max-mutantes 20] [--json]
     python3 scripts/mutation_check.py --module scripts/auto_audit.py \\
         --test test_ecosistema.TestAutoAudit --max-mutantes 20 [--json] [--strict]
 """
@@ -46,6 +47,20 @@ DEFAULT_BATCH: list[tuple[str, str]] = [
     ("scripts/auto_audit.py", "test_ecosistema.TestAutoAudit"),
     ("scripts/diagnostico.py", "test_ecosistema.TestDiagnostico"),
     ("scripts/mcp_server.py", "test_ecosistema.TestMCPServer"),
+]
+
+# Modo --all: todos los modulos con test acoplado (mas lento; a demanda).
+# Se excluye mutation_check.py (se mutaria a si mismo durante la ejecucion).
+ALL_BATCH: list[tuple[str, str]] = DEFAULT_BATCH + [
+    ("scripts/analyze_shell.py", "test_ecosistema.TestAnalyzeShell"),
+    ("scripts/audit_advisories.py", "test_ecosistema.TestAuditAdvisories"),
+    ("scripts/download_jev_model.py", "test_ecosistema.TestDownloadJevModel"),
+    ("scripts/jev_calibration.py", "test_ecosistema.TestJevCalibration"),
+    ("scripts/jev_calibration_merge.py", "test_ecosistema.TestJevCalibrationMerge"),
+    ("scripts/jev_llama.py", "test_ecosistema.TestJevLlama"),
+    ("scripts/jev_pillars.py", "test_ecosistema.TestJevPillars"),
+    ("scripts/jev_review.py", "test_ecosistema.TestJevReview"),
+    ("scripts/tui.py", "test_ecosistema.TestTUI"),
 ]
 
 OP_MAP: dict[type, type] = {
@@ -204,6 +219,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--module", default=DEFAULT_MODULE, help="Modulo a mutar (ruta relativa)")
     parser.add_argument("--test", default=DEFAULT_TEST, help="Objetivo unittest (modulo.Clase)")
     parser.add_argument("--batch", action="store_true", help="Mide DEFAULT_BATCH y agrega el score global")
+    parser.add_argument("--all", action="store_true", help="Mide ALL_BATCH (todos los modulos con test; lento)")
     parser.add_argument("--max-mutantes", type=int, default=DEFAULT_MAX)
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT, help="Timeout por mutante (s)")
     parser.add_argument("--umbral", type=float, default=DEFAULT_UMBRAL, help="Score minimo con --strict")
@@ -214,8 +230,9 @@ def main(argv: list[str] | None = None) -> int:
 
     root = ROOT if args.in_place else _copia_temporal(ROOT)
     try:
-        if args.batch:
-            resultado = medir_batch(root, None, args.max_mutantes, args.timeout)
+        if args.batch or args.all:
+            pares = ALL_BATCH if args.all else None
+            resultado = medir_batch(root, pares, args.max_mutantes, args.timeout)
         else:
             resultado = medir(root, args.module, args.test, args.max_mutantes, args.timeout)
     finally:
@@ -224,7 +241,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.json:
         print(json.dumps(resultado, indent=2, ensure_ascii=False))
-    elif args.batch:
+    elif args.batch or args.all:
         for r in resultado["batch"]:
             print(f"  {r['modulo']:<34} {r['mutantes_muertos']:>3}/{r['total']:<3} score {r['score']:.3f}")
         print(f"Batch: {resultado['mutantes_muertos']}/{resultado['total']}  score {resultado['score']:.3f}")

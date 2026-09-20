@@ -2033,6 +2033,19 @@ class TestMutationCheck(unittest.TestCase):
             rc = mc.main(["--batch", "--in-place", "--strict", "--umbral", "0.8"])
         self.assertEqual(rc, 1)
 
+    def test_all_batch_incluye_default_y_excluye_mutation(self):
+        modulos = {modulo for modulo, _ in mc.ALL_BATCH}
+        self.assertTrue({modulo for modulo, _ in mc.DEFAULT_BATCH} <= modulos)
+        self.assertNotIn("scripts/mutation_check.py", modulos)
+
+    def test_main_all_usa_all_batch(self):
+        res = {"batch": [], "total": 2, "mutantes_muertos": 2, "score": 1.0}
+        with mock.patch.object(mc, "medir_batch", return_value=res) as mb, \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            rc = mc.main(["--all", "--in-place"])
+        self.assertEqual(rc, 0)
+        self.assertEqual(mb.call_args.args[1], mc.ALL_BATCH)
+
 
 class TestJevReview(unittest.TestCase):
     """REQ-016: revision humana asistida de clasificaciones Jev (UI/report)."""

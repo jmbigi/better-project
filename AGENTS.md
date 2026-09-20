@@ -307,8 +307,10 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
 - `python scripts/auto_audit.py {sesgos|evidencias|decisiones|tests|ia|calibracion|vulns|all}` —
   auto-auditoria del proyecto (REQ-014); catalogo de herramientas y fuentes en
   `docs/HERRAMIENTAS-Y-FUENTES.md`.
-- `python scripts/mutation_check.py` — chequeo de mutaciones (fuerza de la
-  suite) en copia temporal, sin dependencias (REQ-015).
+- `python scripts/mutation_check.py [--batch|--all]` — chequeo de mutaciones
+  (fuerza de la suite) en copia temporal, sin dependencias (REQ-015); `--batch`
+  corre en `ci.sh`, `--all` a demanda, `MUTATION_PRECHECK=1` lo activa en el
+  verificador.
 - `python scripts/jev_review.py [--report]` — UI (curses) para revisar y
   confirmar las clasificaciones de `jev_pillars.py` (REQ-016); no modifica los
   documentos.

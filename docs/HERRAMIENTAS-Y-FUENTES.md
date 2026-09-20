@@ -122,7 +122,9 @@ sentencias, 510 sin cubrir). Tras los tests de integración, `mcp_server.py`
 
 `mutation_check.py` (REQ-015, heurística stdlib). El modo `--batch` mide varios
 módulos y agrega el score ponderado por mutantes (integrado en `scripts/ci.sh`
-con `--strict --umbral 0.8`, ~110 s):
+con `--strict --umbral 0.8`, ~110 s); `--all` mide todos los módulos con test
+acoplado (más lento, a demanda). Mutación selectiva **opt-in** en el pre-commit
+con `MUTATION_PRECHECK=1`:
 
 | Módulo | Mutantes | Score |
 |---|---|---|
