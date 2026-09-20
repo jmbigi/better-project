@@ -180,7 +180,7 @@ recomienda un orden de magnitud más de casos por clase (cientos) [4][5].
    tres pilares).
 
 Total original: **40 casos** (16 `noul`, 12 `choice`, 12 `score`). Tras las
-ampliaciones (sección 7): **274 casos** (94/90/90), set `version: 15`.
+ampliaciones (sección 7): **292 casos** (100/96/96), set `version: 16`.
 
 ## 7. Ampliaciones posteriores
 
@@ -228,13 +228,19 @@ ampliaciones (sección 7): **274 casos** (94/90/90), set `version: 15`.
   → `version: 15`, **274 casos** (94 `noul`, 90 `choice`, 90 `score`).
   Calibracion re-ejecutada: T=1.7; accuracy global 0.650 [0.591, 0.704]
   (choice 0.811, noul 0.628, score 0.511); ECE mejora a 0.095.
-- **Lote 15 (2026-09-20, PENDIENTE)**: 18 candidatos (N95-N100, C91-C96,
-  S91-S96) propuestos por la IA con escenarios nuevos (validados sin duplicados
+- **Lote 15 (2026-09-20)**: 18 candidatos (N95-N100, C91-C96, S91-S96)
+  revisados y aprobados por el programador sin correcciones (18/18) y
+  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  → `version: 16`, **292 casos** (100 `noul`, 96 `choice`, 96 `score`).
+  Calibracion re-ejecutada: T=1.9; accuracy global 0.644 [0.587, 0.697]
+  (choice 0.792, noul 0.620, score 0.521); ECE 0.099.
+- **Lote 16 (2026-09-20, PENDIENTE)**: 18 candidatos (N101-N106, C97-C102,
+  S97-S102) propuestos por la IA con escenarios nuevos (validados sin duplicados
   ni errores de esquema con `jev_calibration_merge.py --forzar --json`).
   Pendientes de revision y aprobacion del programador (REQ-016) antes de
   fusionar (REQ-018); no se fusionan automaticamente.
 - Objetivo a medio plazo: ≥100 casos por tipo para estabilizar ECE y la accuracy
-  de `score` (actualmente 94/90/90; con el lote 15 aprobado serian 100/96/96).
+  de `score` (actualmente 100/96/96; con el lote 16 aprobado serian 106/102/102).
 
 ## Referencias
 

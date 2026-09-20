@@ -212,3 +212,13 @@
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
+- id: LSN-026
+  proyecto: "Ecosistema / Jev (REQ-011)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El set v16 (292 casos, lote 15) dio accuracy global 0.6438 [0.587,0.697] frente a 0.6496 del v15 (274); por tipo choice 0.792, noul 0.620, score 0.521; T recomendada 1.9. La exactitud baja dentro del IC solapado; el ECE se mantiene bajo (0.099)."
+  recomendacion: "La ampliacion del set no mejora la exactitud de forma consistente; seguir reportando accuracy e IC junto a ECE y no concluir con intervalos solapados. Mantener score como experimental hasta >=100/tipo estable."
+  resolucion: "Set v16 (292 casos) calibrado: T=1.9, accuracy 0.644 [0.587,0.697], ECE 0.099. Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
+  estado: Resuelta
+  fecha: 2026-09-20
+  fecha_resolucion: 2026-09-20

@@ -1,6 +1,6 @@
 {
-  "version": 15,
-  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') fueron validadas por el programador el 2026-09-19 (40/40 aprobadas, 0 correcciones); los casos S03, S06, S11 y S12 conservan su criterio de adjudicacion documentado en docs/REVISION-SET-CALIBRACION.md. Fusion (REQ-018, 2026-09-19): +18 casos aprobados (Lote 11). Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados.",
+  "version": 16,
+  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') fueron validadas por el programador el 2026-09-19 (40/40 aprobadas, 0 correcciones); los casos S03, S06, S11 y S12 conservan su criterio de adjudicacion documentado en docs/REVISION-SET-CALIBRACION.md. Fusion (REQ-018, 2026-09-19): +18 casos aprobados (Lote 11). Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados.",
   "revision_humana": {
     "estado": "Aprobada",
     "fecha": "2026-09-19",
@@ -312,6 +312,29 @@
           "S88",
           "S89",
           "S90"
+        ]
+      },
+      {
+        "fecha": "2026-09-20",
+        "casos": [
+          "N95",
+          "N96",
+          "N97",
+          "N98",
+          "N99",
+          "N100",
+          "C91",
+          "C92",
+          "C93",
+          "C94",
+          "C95",
+          "C96",
+          "S91",
+          "S92",
+          "S93",
+          "S94",
+          "S95",
+          "S96"
         ]
       }
     ]
@@ -3230,6 +3253,198 @@
         "critico"
       ],
       "esperado": 1
+    },
+    {
+      "id": "N95",
+      "tipo": "noul",
+      "estado": "Se definen limites de consumo (tokens, coste y tiempo) por sesion con alerta al 80%.",
+      "instrucciones": "Es correcto segun P0.19?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N96",
+      "tipo": "noul",
+      "estado": "Se publican datos personales de un cliente en la documentacion.",
+      "instrucciones": "Esta permitido por P0.9?",
+      "esperado": "no"
+    },
+    {
+      "id": "N97",
+      "tipo": "noul",
+      "estado": "Ante un conflicto entre dos reglas se aplica la jerarquia de P1.36 y se documenta.",
+      "instrucciones": "Es correcto segun P1.36?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N98",
+      "tipo": "noul",
+      "estado": "El agente afirma que una prueba paso sin mostrar su salida.",
+      "instrucciones": "Es correcto segun P0.1?",
+      "esperado": "no"
+    },
+    {
+      "id": "N99",
+      "tipo": "noul",
+      "estado": "El agente detiene la tarea y emite una excepcion controlada ante una ambiguedad insalvable.",
+      "instrucciones": "Es correcto segun P1.19?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N100",
+      "tipo": "noul",
+      "estado": "Se hace merge de una rama sin revisar su diff ni ejecutar las pruebas.",
+      "instrucciones": "Es correcto segun P1.11?",
+      "esperado": "no"
+    },
+    {
+      "id": "C91",
+      "tipo": "choice",
+      "estado": "El agente no respeta los limites de consumo y agota el presupuesto.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "proceso": "limites de consumo",
+        "determinismo": "reproducibilidad",
+        "seguridad": "proteccion"
+      },
+      "esperado": "proceso"
+    },
+    {
+      "id": "C92",
+      "tipo": "choice",
+      "estado": "Un cambio rompe la retrocompatibilidad de la API sin aviso.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "documentacion": "versionado y aviso",
+        "verificacion": "tests",
+        "proceso": "gestion"
+      },
+      "esperado": "documentacion"
+    },
+    {
+      "id": "C93",
+      "tipo": "choice",
+      "estado": "Un test mockea una dependencia con una forma distinta a la real.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "verificacion": "fidelidad de mocks",
+        "determinismo": "reproducibilidad",
+        "documentacion": "docs"
+      },
+      "esperado": "verificacion"
+    },
+    {
+      "id": "C94",
+      "tipo": "choice",
+      "estado": "La busqueda semantica usa embeddings sin validar hash ni procedencia.",
+      "instrucciones": "Que pilar esta afectado?",
+      "criterios": {
+        "conocimiento": "embeddings",
+        "seguridad": "procedencia",
+        "verificacion": "tests"
+      },
+      "esperado": "conocimiento"
+    },
+    {
+      "id": "C95",
+      "tipo": "choice",
+      "estado": "Un ADR no registra las consecuencias de la decision.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "documentacion": "registro de decisiones",
+        "requisitos": "trazabilidad REQ",
+        "verificacion": "tests"
+      },
+      "esperado": "documentacion"
+    },
+    {
+      "id": "C96",
+      "tipo": "choice",
+      "estado": "El agente usa dos esquemas distintos para la misma salida segun la ejecucion.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "determinismo": "esquemas formales",
+        "verificacion": "tests",
+        "documentacion": "docs"
+      },
+      "esperado": "determinismo"
+    },
+    {
+      "id": "S91",
+      "tipo": "score",
+      "estado": "El agente no define limites de consumo de tokens ni de coste.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 2
+    },
+    {
+      "id": "S92",
+      "tipo": "score",
+      "estado": "Se publican datos personales de un cliente en un repositorio publico.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 3
+    },
+    {
+      "id": "S93",
+      "tipo": "score",
+      "estado": "Se define un healthcheck para un servicio critico.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 0
+    },
+    {
+      "id": "S94",
+      "tipo": "score",
+      "estado": "Se activa un feature flag sin mecanismo de apagado.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 2
+    },
+    {
+      "id": "S95",
+      "tipo": "score",
+      "estado": "Un agente no tiene limite de transiciones y puede entrar en bucle.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 2
+    },
+    {
+      "id": "S96",
+      "tipo": "score",
+      "estado": "Se anade una prueba con una asercion que puede fallar.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 0
     }
   ]
 }
