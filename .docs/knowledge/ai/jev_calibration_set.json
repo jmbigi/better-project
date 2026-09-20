@@ -1,6 +1,6 @@
 {
-  "version": 16,
-  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') fueron validadas por el programador el 2026-09-19 (40/40 aprobadas, 0 correcciones); los casos S03, S06, S11 y S12 conservan su criterio de adjudicacion documentado en docs/REVISION-SET-CALIBRACION.md. Fusion (REQ-018, 2026-09-19): +18 casos aprobados (Lote 11). Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados.",
+  "version": 17,
+  "descripcion": "Set de calibracion para el motor Jev (REQ-011). Cada caso tiene respuesta inequivoca fijada por las reglas P0/P1 de AGENTS.md, el estado de los REQ y las lecciones LSN-001..LSN-008. Las etiquetas ('esperado') fueron validadas por el programador el 2026-09-19 (40/40 aprobadas, 0 correcciones); los casos S03, S06, S11 y S12 conservan su criterio de adjudicacion documentado en docs/REVISION-SET-CALIBRACION.md. Fusion (REQ-018, 2026-09-19): +18 casos aprobados (Lote 11). Fusion (REQ-018, 2026-09-19): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados. Fusion (REQ-018, 2026-09-20): +18 casos aprobados.",
   "revision_humana": {
     "estado": "Aprobada",
     "fecha": "2026-09-19",
@@ -335,6 +335,29 @@
           "S94",
           "S95",
           "S96"
+        ]
+      },
+      {
+        "fecha": "2026-09-20",
+        "casos": [
+          "N101",
+          "N102",
+          "N103",
+          "N104",
+          "N105",
+          "N106",
+          "C97",
+          "C98",
+          "C99",
+          "C100",
+          "C101",
+          "C102",
+          "S97",
+          "S98",
+          "S99",
+          "S100",
+          "S101",
+          "S102"
         ]
       }
     ]
@@ -3445,6 +3468,198 @@
         "critico"
       ],
       "esperado": 0
+    },
+    {
+      "id": "N101",
+      "tipo": "noul",
+      "estado": "Se ejecuta un rollback automatico tras un canary fallido.",
+      "instrucciones": "Es correcto segun P1.35?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N102",
+      "tipo": "noul",
+      "estado": "Se ignora un error de red con un reintento infinito.",
+      "instrucciones": "Esta permitido por P1.34?",
+      "esperado": "no"
+    },
+    {
+      "id": "N103",
+      "tipo": "noul",
+      "estado": "Se anonimizan los datos personales antes de publicar un informe.",
+      "instrucciones": "Es correcto segun P0.9?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N104",
+      "tipo": "noul",
+      "estado": "El agente modifica AGENTS.md para saltarse una regla P0.",
+      "instrucciones": "Esta permitido por P1.8?",
+      "esperado": "no"
+    },
+    {
+      "id": "N105",
+      "tipo": "noul",
+      "estado": "Se comprueba que cada import declarado exista y se use antes de commitear.",
+      "instrucciones": "Es correcto segun P1.18?",
+      "esperado": "yes"
+    },
+    {
+      "id": "N106",
+      "tipo": "noul",
+      "estado": "Se commitea un binario grande y artefactos de build al repositorio.",
+      "instrucciones": "Esta permitido por P0.7?",
+      "esperado": "no"
+    },
+    {
+      "id": "C97",
+      "tipo": "choice",
+      "estado": "Un informe publico incluye correos y telefonos reales de clientes.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "seguridad": "privacidad",
+        "documentacion": "publicacion",
+        "proceso": "gestion"
+      },
+      "esperado": "seguridad"
+    },
+    {
+      "id": "C98",
+      "tipo": "choice",
+      "estado": "Un reintento sin backoff satura un servicio.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "proceso": "resiliencia",
+        "verificacion": "tests",
+        "seguridad": "proteccion"
+      },
+      "esperado": "proceso"
+    },
+    {
+      "id": "C99",
+      "tipo": "choice",
+      "estado": "El changelog no registra un cambio incompatible.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "documentacion": "versionado",
+        "requisitos": "trazabilidad REQ",
+        "verificacion": "tests"
+      },
+      "esperado": "documentacion"
+    },
+    {
+      "id": "C100",
+      "tipo": "choice",
+      "estado": "Un agente ejecuta una transicion sin que las aserciones pasen.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "determinismo": "FSM y aserciones",
+        "verificacion": "tests",
+        "seguridad": "proteccion"
+      },
+      "esperado": "determinismo"
+    },
+    {
+      "id": "C101",
+      "tipo": "choice",
+      "estado": "El indice de conocimiento no se regenera tras cambiar un documento.",
+      "instrucciones": "Que pilar esta afectado?",
+      "criterios": {
+        "conocimiento": "indice",
+        "documentacion": "docs",
+        "verificacion": "tests"
+      },
+      "esperado": "conocimiento"
+    },
+    {
+      "id": "C102",
+      "tipo": "choice",
+      "estado": "Un test de integracion deja artefactos en el repositorio real.",
+      "instrucciones": "Que ambito esta afectado?",
+      "criterios": {
+        "verificacion": "aislamiento",
+        "seguridad": "higiene",
+        "documentacion": "docs"
+      },
+      "esperado": "verificacion"
+    },
+    {
+      "id": "S97",
+      "tipo": "score",
+      "estado": "Se ejecuta un rollback manual tras un canary fallido.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 0
+    },
+    {
+      "id": "S98",
+      "tipo": "score",
+      "estado": "Un reintento no tiene backoff ni limite y satura el servicio.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 2
+    },
+    {
+      "id": "S99",
+      "tipo": "score",
+      "estado": "Se filtran correos y telefonos de clientes en un informe publico.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 3
+    },
+    {
+      "id": "S100",
+      "tipo": "score",
+      "estado": "Se publica un cambio incompatible sin actualizar el changelog.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 2
+    },
+    {
+      "id": "S101",
+      "tipo": "score",
+      "estado": "Se anonimizan los datos antes de publicar un informe.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 0
+    },
+    {
+      "id": "S102",
+      "tipo": "score",
+      "estado": "Un agente puede transicionar sin validar el esquema.",
+      "instrucciones": "Que severidad tiene?",
+      "niveles": [
+        "bajo",
+        "medio",
+        "alto",
+        "critico"
+      ],
+      "esperado": 2
     }
   ]
 }
