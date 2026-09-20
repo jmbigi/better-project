@@ -214,7 +214,7 @@ ampliaciones (sección 7): **256 casos** (88/84/84), set `version: 14`.
   revisados y aprobados por el programador sin correcciones (18/18) y
   fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
   → `version: 13`, **238 casos** (82 `noul`, 78 `choice`, 78 `score`).
-   Calibracion re-ejecutada: T=1.5; accuracy global 0.660 [0.597, 0.717]
+  Calibracion re-ejecutada: T=1.5; accuracy global 0.660 [0.597, 0.717]
   (choice 0.846, noul 0.622, score 0.513).
 - **Lote 13 (2026-09-20)**: 18 candidatos (N83-N88, C79-C84, S79-S84)
   revisados y aprobados por el programador sin correcciones (18/18) y
@@ -222,8 +222,13 @@ ampliaciones (sección 7): **256 casos** (88/84/84), set `version: 14`.
   → `version: 14`, **256 casos** (88 `noul`, 84 `choice`, 84 `score`).
   Calibracion re-ejecutada: T=1.6; accuracy global 0.664 [0.604, 0.719]
   (choice 0.833, noul 0.636, score 0.524).
+- **Lote 14 (2026-09-20, PENDIENTE)**: 18 candidatos (N89-N94, C85-C90,
+  S85-S90) propuestos por la IA con escenarios nuevos (validados sin duplicados
+  ni errores de esquema con `jev_calibration_merge.py --forzar --json`).
+  Pendientes de revision y aprobacion del programador (REQ-016) antes de
+  fusionar (REQ-018); no se fusionan automaticamente.
 - Objetivo a medio plazo: ≥100 casos por tipo para estabilizar ECE y la accuracy
-  de `score` (actualmente 88/84/84).
+  de `score` (actualmente 88/84/84; con el lote 14 aprobado serian 94/90/90).
 
 ## Referencias
 
