@@ -6,6 +6,11 @@ lessons_context.txt
 __pycache__/
 *.pyc
 
+# Cobertura (coverage.py)
+.coverage
+.coverage.*
+htmlcov/
+
 # Secretos (P0.10)
 .env
 .env.*
