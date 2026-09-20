@@ -210,8 +210,14 @@ ampliaciones (sección 7): **202 casos** (70/66/66), set `version: 11`.
   → `version: 12`, **220 casos** (76 `noul`, 72 `choice`, 72 `score`).
   13 alertas de escenario duplicado (candidatos reutilizan textos de
   N60-N64/C55-C60/S55-S60) son informativas, no errores.
+- **Lote 12 (2026-09-19, PENDIENTE)**: 18 candidatos (N77-N82, C73-C78,
+  S73-S78) propuestos por la IA con escenarios nuevos (validados sin duplicados
+  ni errores de esquema con `jev_calibration_merge.py --forzar --json`).
+  Pendientes de revision y aprobacion del programador (REQ-016) antes de
+  fusionar (REQ-018); no se fusionan automaticamente.
 - Objetivo a medio plazo: ≥100 casos por tipo para estabilizar ECE y la accuracy
-  de `score`.
+  de `score` (con el lote 12 aprobado quedarian 82 `noul`, 78 `choice`, 78
+  `score`).
 
 ## Referencias
 
