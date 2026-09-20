@@ -663,13 +663,15 @@ class TestIntegracionHook(unittest.TestCase):
             boot = self._git("commit", "-q", "--no-verify", "-m", "bootstrap")
             self.assertEqual(boot.returncode, 0, boot.stdout + boot.stderr)
             hooks = self.repo / ".git" / "hooks"
-            shutil.copy(self.repo / "scripts" / "hooks" / "pre-commit", hooks / "pre-commit")
+            for nombre in ("pre-commit", "commit-msg"):
+                shutil.copy(self.repo / "scripts" / "hooks" / nombre, hooks / nombre)
 
-            # Commit verde: el hook debe dejar pasar el repo intacto.
+            # Commit verde: los hooks deben dejar pasar el repo intacto.
+            # Incluye Assisted-by: porque el hook commit-msg lo exige (REQ-019).
             with (self.repo / "scripts" / "tui.py").open("a", encoding="utf-8") as fh:
                 fh.write("\n# comentario inocuo para el commit verde\n")
             self._git("add", "-A")
-            verde = self._git("commit", "-q", "-m", "verde")
+            verde = self._git("commit", "-q", "-m", "verde", "-m", "Assisted-by: test")
             self.assertEqual(verde.returncode, 0, verde.stdout + verde.stderr)
 
             # Commit roto: referencia a un REQ inexistente (doc_validator falla).
@@ -710,7 +712,8 @@ class TestVerificador(unittest.TestCase):
         subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
         # bootstrap sin hook: con HEAD no nacido git fsck emite avisos (LSN-005)
         subprocess.run(["git", "commit", "-qm", "bootstrap", "--no-verify"], cwd=repo, check=True)
-        shutil.copy(repo / "scripts" / "hooks" / "pre-commit", repo / ".git" / "hooks" / "pre-commit")
+        for nombre in ("pre-commit", "commit-msg"):
+            shutil.copy(repo / "scripts" / "hooks" / nombre, repo / ".git" / "hooks" / nombre)
         return repo
 
     def _verifica(self, repo):

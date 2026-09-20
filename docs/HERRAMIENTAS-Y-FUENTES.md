@@ -71,12 +71,15 @@
 | 4 | Linter de prosa `vale` con estilo propio de "claims sin métrica" (`.vale.ini` + `.vale/styles/BetterProject/Claims.yml`) | Implementado (2026-09-19) |
 | 5 | Re-escaneo de dependencias (`auto_audit vulns` con pip-audit/osv-scanner) | Implementado (2026-09-19) |
 
-**Hallazgo del re-escaneo (2026-09-19)**: `auto_audit vulns` detectó 4
-advisories sin parche en chromadb 1.5.9 y 1 en diskcache 5.6.3. Son
-dependencias opcionales y el riesgo se acepta para uso **local embebido**
-(LSN-007); el backend stdlib sigue siendo el recomendado por defecto. El SBOM
-versionado (`docs/SBOM-2026-09-04.spdx.json`) queda desactualizado: regenerarlo
-con `syft` cuando esté disponible (P0.18).
+**Hallazgo del re-escaneo (2026-09-20)**: `auto_audit vulns` detectó 5
+advisories sin parche: 4 en chromadb 1.5.9 y 1 en diskcache 5.6.3 (transitiva).
+Son dependencias opcionales y el riesgo se acepta para uso **local embebido**
+(LSN-007); el backend stdlib sigue siendo el recomendado por defecto. SBOM
+vigente: `docs/SBOM-2026-09-20.cdx.json` (CycloneDX, 119 componentes, 5
+advisories), regenerado con `pip-audit -f cyclonedx-json -r
+requirements-optional.txt`; las versiones directas están fijadas en
+`requirements-optional.txt` (P0.18). Pendiente: lock con hashes de dependencias
+transitivas.
 
 **Evaluación de `mutmut` (2026-09-19)**: se probó `mutmut` 3.6 en una copia
 aislada; exige configuración específica de pytest y su recolección de stats

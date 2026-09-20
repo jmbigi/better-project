@@ -23,23 +23,28 @@ python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" \
     || fail "se requiere python3 >= 3.10 (tienes $(python3 --version 2>&1))"
 echo "  [OK] bash, git y python3 >= 3.10"
 
-echo "== 2. Hook de pre-commit =="
-HOOK=.git/hooks/pre-commit
+echo "== 2. Hooks de git =="
 if [ ! -d .git ]; then
     fail "no es un repositorio git (ejecuta desde la raiz del clon)"
 fi
-if cmp -s scripts/hooks/pre-commit "$HOOK" 2>/dev/null; then
-    echo "  [OK] hook ya instalado e identico (idempotente: sin cambios)"
-else
-    cp scripts/hooks/pre-commit "$HOOK" || fail "no se pudo instalar el hook"
-    echo "  [OK] hook instalado en $HOOK"
-fi
+for par in "pre-commit:pre-commit" "commit-msg:commit-msg"; do
+    src="scripts/hooks/${par%%:*}"
+    dst=".git/hooks/${par##*:}"
+    if cmp -s "$src" "$dst" 2>/dev/null; then
+        echo "  [OK] $dst ya instalado e identico (idempotente)"
+    else
+        cp "$src" "$dst" || fail "no se pudo instalar $dst"
+        chmod +x "$dst" || fail "no se pudo marcar ejecutable $dst"
+        echo "  [OK] $dst instalado"
+    fi
+done
+# REQ-019: el hook commit-msg exige el trailer Assisted-by: (P1.14).
 
 echo "== 3. Dependencias opcionales (busqueda vectorial) =="
 echo "  Sin ellas el ecosistema funciona con stdlib (indice JSON TF-IDF)."
 echo "  Con ellas (chromadb + sentence-transformers) la busqueda es semantica."
-echo "  AVISO (P0.18, auditoria pip-audit del 2026-09-04, docs/SBOM-2026-09-04.spdx.json):"
-echo "  chromadb 1.5.9 tiene 4 advisories ABIERTOS sin version de parche"
+echo "  AVISO (P0.18, auditoria pip-audit del 2026-09-20, docs/SBOM-2026-09-20.cdx.json):"
+echo "  chromadb 1.5.9 tiene 4 advisories ABIERTOS sin version de parche (+1 en diskcache 5.6.3)"
 echo "  (inyeccion de codigo y autorizacion en su modo SERVIDOR). El uso local"
 echo "  embebido (PersistentClient, sin servidor ni red) no expone esa superficie,"
 echo "  pero la instalacion implica aceptar el riesgo por escrito."

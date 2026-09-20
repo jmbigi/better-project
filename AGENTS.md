@@ -259,11 +259,11 @@ Regla **P1.20**: se actualizan en `docs/LECCIONES-APRENDIDAS.md` tras cada prueb
 
 ## MCP y skills
 
-MCP (`mcp` en `opencode.json`/`kilo.json`, `enabled: true`; remotos con OAuth): `context7` (docs técnicas), `gh_grep` (código GitHub), `sentry` (issues) y el servidor local `better-project` (knowledge, requisitos, lecciones y `run_verification`). Uso: `use <nombre>`. Skills (`.opencode/skills/<name>/SKILL.md`, frontmatter: name, description, license, compatibility; permisos `permission.skill`): `security-audit` (auditoría), `red-team-denies` (218 deny patterns vs matcher real), `owasp-mapping` (OWASP GenAI Top 10 2026), `dependency-check` (SBOM syft, grype, licencias), `cost-tracker` (tokens/coste/latencia). Uso: `skill({ name: "nombre" })`.
+MCP (`mcp` en `opencode.json`/`kilo.json`, `enabled: true`; remotos con OAuth): `context7` (docs técnicas), `gh_grep` (código GitHub), `sentry` (issues) y el servidor local `better-project` (knowledge, requisitos, lecciones y `run_verification`). Uso: `use <nombre>`. Skills opcionales (`.opencode/skills/<name>/SKILL.md`, frontmatter: name, description, license, compatibility; permisos `permission.skill`): este repo NO incluye skills; su revisión de solo lectura vive en los subagentes de `.opencode/agents/` (`code-reviewer`, `security-auditor`, `compliance-checker`, `cost-optimizer`, `dependency-auditor`). Uso de skills si el proyecto las añade: `skill({ name: "nombre" })`.
 
 ## Determinismo de inferencia (P1.9 — safeguard)
 
-Agentes críticos usan perfiles deterministas (`temperature`/`top_p` por rol) para evidencia reproducible (P0.1, P1.10). Detalle, estados y limitaciones (incluido el `seed` pendiente de verificación empírica): `docs/ARQUITECTURA-DETERMINISMO.md`. El test post-esfuerzo (`bash scripts/test-determinism.py`) es OPCIONAL (gasta tokens, P0.19); no corre en el hook pre-commit.
+Agentes críticos usan perfiles deterministas (`temperature`/`top_p` por rol) para evidencia reproducible (P0.1, P1.10). Detalle, estados y limitaciones (incluido el `seed` pendiente de verificación empírica): `docs/ARQUITECTURA-DETERMINISMO.md`. El test post-esfuerzo de determinismo (descrito allí; script no incluido en este repo, gasta tokens, P0.19) es OPCIONAL y no corre en el hook pre-commit.
 
 ## Referencias
 

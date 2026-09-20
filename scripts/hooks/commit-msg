@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# commit-msg (REQ-019): exige el trailer Assisted-by: (P1.14) en commits que
+# toquen docs/, scripts/ o .docs/. Instalacion:
+#   cp scripts/hooks/commit-msg .git/hooks/commit-msg
+set -u
+
+MSG="$1"
+
+cambios="$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)"
+if ! printf '%s\n' "$cambios" | grep -qE '^(docs/|scripts/|\.docs/|AGENTS\.md)'; then
+    exit 0
+fi
+
+if grep -qE '^Assisted-by:' "$MSG"; then
+    exit 0
+fi
+
+echo "[commit-msg] Falta el trailer 'Assisted-by:' (P1.14/REQ-019)." >&2
+echo "  Este commit toca docs/, scripts/ o .docs/." >&2
+echo "  Anade, p.ej.: Assisted-by: <herramienta> (<modelo>)" >&2
+exit 1

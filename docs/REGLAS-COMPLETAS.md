@@ -214,8 +214,9 @@ un boundary de seguridad. NUNCA incluir secretos, credenciales, tokens, claves A
 rutas de claves, IPs internas, lógica de autorización ni datos personales en el system
 prompt. Tratar `AGENTS.md` como público por defecto; las reglas de seguridad críticas
 deben reforzarse con guardrails deterministas fuera del modelo (P1.9) y no depender de
-que el prompt permanezca oculto. El red-team de `scripts/redteam-prompt-injection.py`
-verifica esta hipótesis.
+que el prompt permanezca oculto. El red-team del system prompt (verificación
+manual y con el subagente de solo lectura `.opencode/agents/security-auditor.md`)
+contrasta esta hipótesis.
 
 #### Ejemplos de separación entre contexto confiable y datos no confiables
 Cuando se incluya contenido externo en una solicitud al modelo, se deben usar

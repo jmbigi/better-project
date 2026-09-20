@@ -65,12 +65,12 @@ check "20 reglas P0 definidas en AGENTS.md" bash -c "test \$(grep -cE '^### P0' 
 check "37 reglas P1 definidas en AGENTS.md" bash -c "test \$(grep -cE '^### P1' AGENTS.md) -eq 37"
 check "IDs identicos en REGLAS-COMPLETAS" bash -c "diff <(grep -oE '^### P[0-2]\\.[0-9]+' AGENTS.md | sort -V) <(grep -oE '^### P[0-2]\\.[0-9]+' docs/REGLAS-COMPLETAS.md | sort -V)"
 check "titulos de reglas identicos en REGLAS-COMPLETAS" bash -c "diff <(grep -E '^### P0|^### P1' AGENTS.md) <(grep -E '^### P0|^### P1' docs/REGLAS-COMPLETAS.md)"
-check "referencias a rutas docs/ y scripts/ existen" python3 -c "
+check "referencias a rutas docs/, scripts/ y .opencode/ existen" python3 -c "
 import re, os
 files = ['AGENTS.md', 'README.md', 'CHECKLIST.md', 'docs/REGLAS-COMPLETAS.md', 'docs/PRUEBAS.md']
 rutas = set()
 for f in files:
-    for m in re.findall(r'(?:docs/|scripts/)[A-Za-z0-9_./-]+\\.(?:md|sh)', open(f).read()):
+    for m in re.findall(r'(?:docs/|scripts/|\\.opencode/)[A-Za-z0-9_./-]+\\.(?:md|sh|py)', open(f).read()):
         rutas.add(m)
 faltan = [r for r in sorted(rutas) if not os.path.exists(r)]
 assert not faltan, 'referencias rotas: ' + str(faltan)
@@ -290,7 +290,7 @@ otel_end_span "verificar.seguridad"
 
 otel_start_span "verificar.ecosistema"
 echo "== 4. Ecosistema better-project =="
-check "sintaxis python de los scripts" bash -c "python3 -m py_compile scripts/doc_validator.py scripts/index_knowledge.py scripts/lessons_extractor.py scripts/mcp_server.py scripts/tui.py scripts/adr_validator.py scripts/auto_audit.py scripts/mutation_check.py scripts/jev_review.py scripts/diagnostico.py scripts/jev_llama.py scripts/jev_pillars.py scripts/jev_calibration.py scripts/jev_calibration_merge.py scripts/download_jev_model.py scripts/analyze_shell.py"
+check "sintaxis python de todos los scripts" bash -c 'for f in scripts/*.py; do python3 -m py_compile "$f" || exit 1; done'
 check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 scripts/doc_validator.py --strict"
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py && python3 scripts/index_knowledge.py --check"
@@ -304,6 +304,7 @@ otel_end_span "verificar.ecosistema"
 otel_start_span "verificar.repositorio"
 echo "== 5. Repositorio =="
 check "hook pre-commit instalado identico al script" bash -c "cmp -s scripts/hooks/pre-commit .git/hooks/pre-commit"
+check "hook commit-msg instalado identico al script" bash -c "cmp -s scripts/hooks/commit-msg .git/hooks/commit-msg"
 check "sin objetos huerfanos en git (fsck)" bash -c "test -z \"\$(git fsck --unreachable 2>&1)\""
 if [ "${1:-}" = "--pre-commit" ]; then
     echo "  [SKIP] comprobaciones de repositorio (modo pre-commit: los archivos staged son el cambio)"

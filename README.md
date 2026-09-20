@@ -256,12 +256,13 @@ busqueda vectorial real (`requirements-optional.txt`):
 bash scripts/setup.sh    # las instala en .venv, solo tras doble confirmacion
 ```
 
-⚠️ P0.18: la auditoria `pip-audit` del 2026-09-04
-(`docs/SBOM-2026-09-04.spdx.json`, 117 paquetes resueltos) encontro 4
-advisories ABIERTOS en chromadb 1.5.9 sin version de parche (inyeccion de
-codigo y autorizacion en modo SERVIDOR). El uso local embebido no expone esa
-superficie, pero instalarlas implica aceptar el riesgo por escrito; el
-backend stdlib es el recomendado por defecto.
+⚠️ P0.18: la auditoria `pip-audit` del 2026-09-20
+(`docs/SBOM-2026-09-20.cdx.json`, 119 componentes resueltos) encontro 5
+advisories ABIERTOS sin version de parche: 4 en chromadb 1.5.9 (inyeccion de
+codigo y autorizacion en modo SERVIDOR) y 1 en diskcache 5.6.3 (dependencia
+transitiva). `requirements-optional.txt` fija las versiones directas; el uso
+local embebido no expone esa superficie, pero instalarlas implica aceptar el
+riesgo por escrito; el backend stdlib es el recomendado por defecto.
 
 ## Verificacion y seguridad
 
@@ -269,7 +270,8 @@ backend stdlib es el recomendado por defecto.
 P0.10) y estado del repositorio antes de cada commit. Los subagentes
 `@code-reviewer`, `@security-auditor`, `@compliance-checker`,
 `@cost-optimizer` y `@dependency-auditor` anaden una revision humana de solo
-lectura (P1.13, P1.15).
+lectura (P1.13, P1.15). Un tercero puede reproducir la verificacion completa con
+`bash scripts/ci.sh`; procedimiento y limites en `docs/AUDITORIA-EXTERNA.md`.
 
 ## Licencia
 
