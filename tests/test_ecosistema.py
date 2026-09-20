@@ -58,6 +58,11 @@ VALID = {
 
 
 class TestDocValidator(unittest.TestCase):
+    tmp: Path
+    reqs: Path
+    old_req_dir: Path
+    old_root: Path
+
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         self.reqs = self.tmp / ".docs" / "requirements"
@@ -2242,13 +2247,15 @@ class TestADRValidator(unittest.TestCase):
         "## Metricas de exito\n\n- p99 < 200 ms.\n"
     )
 
+    tmp: Path
+
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def _adr(self, content: str, name: str = "ADR-100-prueba.md") -> Path:
+    def _adr(self, content: str, name: str = "ADR-100-prueba.md") -> Path:  # type: ignore[return-value]
         path = self.tmp / name
         path.write_text(content, encoding="utf-8")
         return path
@@ -2336,13 +2343,15 @@ class TestAutoAudit(unittest.TestCase):
         "        self.assertEqual(1 + 1, 2)\n"
     )
 
+    tmp: Path
+
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def _write(self, name: str, content: str) -> Path:
+    def _write(self, name: str, content: str) -> Path:  # type: ignore[return-value]
         path = self.tmp / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")

@@ -3,7 +3,8 @@
 # GitLab): exporta HEAD a un directorio limpio y verifica alli, como haria
 # un CI remoto con un clon fresco. Uso: bash scripts/ci.sh
 set -u
-cd "$(dirname "$0")/.." || exit 1
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)" || exit 1
+cd "$REPO_ROOT" || exit 1
 
 fail() {
     echo "[CI ERROR] $1" >&2
@@ -29,6 +30,8 @@ git config user.email dummy@example.com
 git config user.name "ci local"
 git add -A || fail "git add fallo"
 git commit -qm "ci export" --no-verify || fail "commit bootstrap fallo"
+# Copiar mypy.ini para type checking
+cp "$REPO_ROOT/mypy.ini" . 2>/dev/null || true
 for hook in pre-commit commit-msg; do
     cp "scripts/hooks/$hook" ".git/hooks/$hook" || fail "no se pudo instalar el hook $hook"
     chmod +x ".git/hooks/$hook" || fail "no se pudo marcar ejecutable $hook"
@@ -52,6 +55,18 @@ BETTER_TEST_INTEGRACION=1 python3 -m unittest discover -s tests -q || fail "suit
 echo "== CI local: verificacion completa =="
 BETTER_TEST_INTEGRACION=1 bash scripts/verificar-proyecto.sh --pre-commit \
     || fail "verificar-proyecto.sh en rojo"
+
+echo "== CI local: type checking (mypy strict on tests) =="
+mypy --config-file mypy.ini tests/ || fail "mypy --strict en tests en rojo"
+
+echo "== CI local: coverage gate 90% =="
+python3 -m pytest --cov=scripts --cov-fail-under=90 -q || fail "coverage bajo 90%"
+
+echo "== CI local: verificacion hooks git (hash parity) =="
+for hook in pre-commit commit-msg; do
+    diff -q "scripts/hooks/$hook" ".git/hooks/$hook" >/dev/null 2>&1 || fail "hook $hook desincronizado (hash mismatch)"
+done
+echo "  [OK] hooks sincronizados"
 
 echo "== CI local: mutacion multi-modulo (REQ-015) =="
 python3 scripts/mutation_check.py --batch --strict --umbral 0.8 \
