@@ -120,14 +120,18 @@ Si el maintainer principal no está disponible:
 
 ## Métricas de salud del proyecto
 
-| Métrica | Objetivo | Actual | Herramienta |
-|---------|----------|--------|-------------|
-| Cobertura tests | ≥ 85% | 89% | `coverage` |
-| Mutation score | ≥ 0.8 | 0.98 (batch) | `mutation_check.py --batch` |
-| Recall@10 retrieval | ≥ 0.7 | TBD | `verificar-proyecto.sh` |
-| ADRs con alertas | 0 | 0 | `adr_validator.py --strict` |
-| Lecciones abiertas > 180 días | 0 | TBD | `auto_audit.py decisiones` |
-| Commits sin `Assisted-by` | 0 | TBD | `auto_audit.py ia` |
+| Métrica | Objetivo | Actual (21-09-2026) | Herramienta / comando |
+|---------|----------|---------------------|-----------------------|
+| Cobertura scripts | ≥ 85% | 89% (2632/2945) | `pytest --cov=scripts` (omite scripts manuales vía `.coveragerc`) |
+| Mutation score (batch) | ≥ 0.8 | 0.898 (168/187) | `python3 scripts/mutation_check.py --batch --strict` |
+| Recall@10 retrieval | ≥ 0.7 | check en verde | `verificar-proyecto.sh` (REQ-002) |
+| ADRs con alertas | 0 | 0 (8 ADR) | `python3 scripts/adr_validator.py` |
+| Lecciones abiertas > 180 días | 0 | 0 (2 abiertas, recientes) | `python3 scripts/auto_audit.py decisiones` |
+| Commits sin `Assisted-by` | 0 | TBD | `python3 scripts/auto_audit.py ia` |
+
+> Las cifras son el último valor **medido**; al actualizarlas se cita el comando
+> y la fecha (una métrica sin procedencia no es evidencia, P0.1). El gate de
+> cobertura del CI es ≥ 85% (era 90%, inalcanzable con la suite actual).
 
 ## Revisión periódica
 
