@@ -256,7 +256,7 @@ test, REQ-026; alternativa in-process: `python3 -m unittest discover -s tests -q
 
 ## Lecciones aprendidas
 
-Regla **P1.20**: se actualizan en `docs/LECCIONES-APRENDIDAS.md` tras cada prueba/fallo/hallazgo; 2+ fallos ⇒ regla nueva o endurecimiento.
+Regla **P1.20**: se actualizan tras cada prueba/fallo/hallazgo; 2+ fallos ⇒ regla nueva o endurecimiento. En ESTE repositorio conviven dos registros complementarios: `docs/LECCIONES-APRENDIDAS.md` (memoria **narrativa** del ruleset) y `.docs/lessons/<año>.yaml` (Pilar 3 **máquina-legible**, REQ-003, exportado por `scripts/lessons_extractor.py`). Un hallazgo relevante se registra en ambos.
 
 ## MCP y skills
 
@@ -264,7 +264,7 @@ MCP (`mcp` en `opencode.json`/`kilo.json`, `enabled: true`; remotos con OAuth): 
 
 ## Determinismo de inferencia (P1.9 — safeguard)
 
-Agentes críticos usan perfiles deterministas (`temperature`/`top_p` por rol) para evidencia reproducible (P0.1, P1.10). Detalle, estados y limitaciones (incluido el `seed` pendiente de verificación empírica): `docs/ARQUITECTURA-DETERMINISMO.md`. El test post-esfuerzo de determinismo (descrito allí; script no incluido en este repo, gasta tokens, P0.19) es OPCIONAL y no corre en el hook pre-commit.
+Agentes críticos usan perfiles deterministas (`temperature`/`top_p` y `steps` por rol) para evidencia reproducible (P0.1, P1.10). `seed` NO se adopta: no es una opción nativa de `AgentConfig` (verificado contra `https://opencode.ai/config.json`, 21-09-2026). Detalle, estados y limitaciones: `docs/ARQUITECTURA-DETERMINISMO.md` y `docs/decisions/ADR-009.md`. El test empírico `scripts/test_determinism.py` (gasta tokens, P0.19) es OPCIONAL y no corre en el hook pre-commit.
 
 ## Referencias
 

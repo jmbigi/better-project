@@ -1,7 +1,13 @@
-# LECCIONES-APRENDIDAS — Memoria del proyecto better-ai
+# LECCIONES-APRENDIDAS — Memoria narrativa de better-project
 
 > Cada prueba, fallo o hallazgo relevante se documenta aquí con su solución.
 > Si algo falla 2+ veces, la lección pasa a ser regla en `AGENTS.md`.
+>
+> **Relación con el Pilar 3**: este archivo es la memoria narrativa del ruleset
+> (fechas, evidencia, rondas de pruebas). Las lecciones máquina-legibles que
+> consume el ecosistema viven en `.docs/lessons/<año>.yaml` (REQ-003) y se
+> exportan con `scripts/lessons_extractor.py`. Un hallazgo relevante se registra
+> en ambos: narrativa aquí y entrada YAML con id `LSN-NNN` allí.
 
 ## Cómo se actualiza
 

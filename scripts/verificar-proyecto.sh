@@ -189,12 +189,25 @@ assert policies[0] == {'effect': 'deny', 'action': 'provider.use', 'resource': '
 allowed = [p['resource'] for p in policies if p['effect'] == 'allow']
 assert set(allowed) == {'opencode', 'opencode-go', 'kilo', 'deepseek'}, allowed
 "
-check "agente determinista: temperature/top_p/seed/maxSteps en build, plan y audit" python3 -c "
+    check "agente determinista: temperature/top_p/steps (sin seed ni maxSteps deprecado)" python3 -c "
 import json
 a = json.load(open('opencode.json'))['agent']
-assert a['build']['temperature'] == 0.3 and a['build']['top_p'] == 1.0 and a['build']['seed'] == 42 and a['build']['maxSteps'] == 50, a['build']
-assert a['plan']['temperature'] == 0.1 and a['plan']['top_p'] == 1.0 and a['plan']['seed'] == 42 and a['plan']['maxSteps'] == 30, a['plan']
-assert a['audit']['temperature'] == 0.0 and a['audit']['top_p'] == 1.0 and a['audit']['seed'] == 42 and a['audit']['maxSteps'] == 20, a['audit']
+# Verificado contra https://opencode.ai/config.json (2026-09-21): 'steps' es el
+# campo soportado; 'maxSteps' esta @deprecated; 'seed' no es opcion nativa de
+# AgentConfig (solo se reenviaria al proveedor como model option, sin garantia).
+for perfil, temp, pasos in (('build', 0.3, 50), ('plan', 0.1, 30), ('audit', 0.0, 20)):
+    cfg = a[perfil]
+    assert cfg['temperature'] == temp, (perfil, cfg)
+    assert cfg['top_p'] == 1.0, (perfil, cfg)
+    assert cfg['steps'] == pasos, (perfil, cfg)
+    assert 'seed' not in cfg, (perfil, 'seed no es opcion nativa de opencode')
+    assert 'maxSteps' not in cfg, (perfil, 'maxSteps deprecado: usar steps')
+"
+    check "init.sh genera perfiles con steps (sin seed ni maxSteps)" python3 -c "
+t = open('scripts/init.sh').read()
+assert '\"maxSteps\"' not in t, 'init.sh aun usa maxSteps (deprecado)'
+assert '\"seed\"' not in t, 'init.sh aun usa seed (no nativo)'
+assert t.count('\"steps\"') == 3, 'init.sh debe definir steps en build, plan y audit'
 "
 if [ "$LITE_MODE" = "false" ]; then
     check "conteos de patrones en README coherentes con la config" python3 -c "

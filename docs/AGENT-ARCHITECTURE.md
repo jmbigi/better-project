@@ -93,8 +93,9 @@ contra las P0, donde la regla gana y se consulta.
 
 ## 5. Verificación sin proveedores
 
-Todo local y open source: `scripts/verificar-proyecto.sh` (41 checks),
-`scripts/ci.sh` (REQ-009: exporta HEAD a copia limpia y verifica allí, como
-un clon fresco), hook pre-commit local y suite unittest stdlib. No se usa
+Todo local y open source: `scripts/verificar-proyecto.sh` (más de 50
+comprobaciones, ver el propio script), `scripts/ci.sh` (REQ-009: exporta HEAD a
+copia limpia y verifica allí, como un clon fresco), hook pre-commit local y
+suite unittest stdlib. No se usa
 GitHub Actions, GitLab CI ni servicios externos por decisión del programador
 (2026-09-04).

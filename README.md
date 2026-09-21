@@ -45,7 +45,9 @@ dependencias. Indizado incremental por mtimes.
 `.docs/lessons/<anio>.yaml` (campos `id` LSN-NNN, `proyecto`, `fase`,
 `categoria`, `problema`, `recomendacion`, `estado`, `fecha`).
 `scripts/lessons_extractor.py` valida y exporta `lessons_context.txt`, que
-los agentes leen antes de depurar.
+los agentes leen antes de depurar. Es la fuente **máquina-legible** del Pilar 3;
+el ruleset conserva además su memoria **narrativa** (fechas, evidencia, rondas)
+en `docs/LECCIONES-APRENDIDAS.md`, documentada como complementaria.
 
 ## Pilar 4: control de sesgos y falacias (la calidad)
 

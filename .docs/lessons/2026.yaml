@@ -298,3 +298,23 @@
   recomendacion: "Todo camino que ejecute tests o verificacion dentro de otra verificacion debe propagar una guarda de reentrada por variable de entorno. mutation_check ahora inyecta BETTER_MUTATION_ACTIVE=1 y BETTER_TEST_INTEGRACION=1 en los tests mutantes; verificar-proyecto.sh omite el check de mutacion cuando BETTER_MUTATION_ACTIVE=1 (evita la reentrada sin perder cobertura: el CI ejecuta la mutacion explicitamente)."
   estado: Abierta
   fecha: 2026-09-21
+- id: LSN-035
+  proyecto: "Ecosistema / determinismo (REQ-022)"
+  fase: "Implementacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "El bloque agent de opencode.json usaba `maxSteps` (campo @deprecated) y `seed` (no es una opcion de AgentConfig en el $schema oficial de opencode). Tres documentos vigentes se contradecian: ARQUITECTURA-DETERMINISMO.md decia que seed no se adopta, ADR-006 lo adoptaba como 'validado empiricamente' y verificar-proyecto.sh exigia seed/maxSteps. El script test_determinism.py ya advertia 'esperado sin seed real en modelo'."
+  recomendacion: "Verificar cada campo de configuracion contra el $schema oficial (https://opencode.ai/config.json) antes de declararlo soportado: `steps` es el campo nativo, `maxSteps` esta deprecado y `seed` no existe en AgentConfig (solo se reenviaria al proveedor como model option sin garantia). Ante una decision que contradice otra, resolver por evidencia y, si el ADR esta Aceptado, reemplazarlo con un ADR nuevo en vez de editarlo."
+  resolucion: "Migrado a steps (build=50, plan=30, audit=20) y retirado seed en opencode.json e init.sh; verificar-proyecto.sh exige steps y ausencia de seed/maxSteps (tambien en init.sh); scripts/test_determinism.py y ARQUITECTURA-DETERMINISMO.md actualizados; ADR-009 reemplaza a ADR-006 (marcado Reemplazado)."
+  estado: Resuelta
+  fecha: 2026-09-21
+  fecha_resolucion: 2026-09-21
+- id: LSN-036
+  proyecto: "Ecosistema (REQ-024)"
+  fase: "Documentacion"
+  categoria: "Proceso"
+  problema: "REQ-024 (dashboard de KPIs en CI) estaba marcado 'Implementado' sin implementacion real: no existia docs/health.md ni generador de KPIs, y la unica referencia era un comentario '# REQ-024' en ci.sh. En paralelo, GOVERNANCE.md publicaba metricas no reproducibles (cobertura 89% y mutation 0.98) frente a valores medidos distintos (cobertura scripts 86% del ultimo artefacto .coverage; mutation batch 0.898), y el gate de cobertura del CI era 90%."
+  recomendacion: "Un requisito solo pasa a Implementado cuando sus criterios de aceptacion son verificables con evidencia (P0.1): un comentario en un script no es implementacion. Las metricas de gobernanza deben citar el comando exacto y la fecha de medicion, no valores sin procedencia; y el umbral del CI debe ser alcanzable por la suite actual o acompanarse de un plan para subir la cobertura."
+  resolucion: "REQ-024 corregido a Draft y eliminado el comentario enganoso en ci.sh; GOVERNANCE.md actualizado con valores medidos, comando y fecha. Pendiente (no en este cambio): implementar el dashboard y subir la cobertura de scripts/index_knowledge y scripts/mutation_check."
+  estado: Resuelta
+  fecha: 2026-09-21
+  fecha_resolucion: 2026-09-21

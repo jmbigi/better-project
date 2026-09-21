@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
-"""Test empírico de determinismo: verifica que seed/maxSteps reducen varianza.
+"""Test empírico de determinismo: mide la varianza real de los perfiles.
 
-REQ: validar que los perfiles deterministas (build/plan/audit) con seed=42
-producen salidas consistentes en múltiples ejecuciones.
+REQ-022. Verificado contra https://opencode.ai/config.json (2026-09-21):
+`steps` es el campo soportado para limitar iteraciones; `maxSteps` está
+@deprecated; `seed` no es una opción nativa de AgentConfig (no aparece en el
+esquema oficial). opencode reenviaría opciones desconocidas al proveedor como
+model option, pero sin garantía de que las respete, por lo que NO se adopta
+(ver docs/ARQUITECTURA-DETERMINISMO.md y docs/decisions/ADR-009.md).
+
+Este script valida la CONFIGURACIÓN (steps presente, sin seed/maxSteps) y mide
+empíricamente el determinismo con temperature=0.0 (nunca asume reproducción
+bit a bit: la reporta).
 """
 import json
 import os
@@ -31,8 +39,12 @@ def run_opencode_task(task: str, profile: str = "audit") -> str:
         return '\n'.join(lines[2:]).strip()
     return stdout
 
-def test_seed_consistency():
-    """Verifica que el mismo seed produce la misma salida en múltiples runs."""
+def test_temperature_consistency():
+    """Mide si temperature=0.0 produce la misma salida en múltiples runs.
+
+    No hay seed soportado por opencode: se reporta la varianza real, no se
+    asume determinismo (P0.1).
+    """
     task = "Responde solo con un número entero entre 1 y 100, sin explicación."
 
     outputs = []
@@ -41,20 +53,21 @@ def test_seed_consistency():
         outputs.append(out)
         print(f"  Run {i+1}: {out}")
 
-    # Con seed fijo, todas las salidas deberían ser idénticas
+    # Se reporta la varianza real; con temperature=0.0 se espera baja, pero no
+    # se garantiza reproducibilidad bit a bit (limitacion declarada).
     unique = set(outputs)
     print(f"  Salidas únicas: {len(unique)} / {len(outputs)}")
     print(f"  Valores: {unique}")
 
     if len(unique) == 1:
-        print("  ✅ Determinismo perfecto: todas las salidas idénticas")
+        print("  ✅ Determinismo observado: todas las salidas idénticas")
         return True
     else:
-        print("  ⚠️  Variabilidad detectada (esperado sin seed real en modelo)")
+        print("  ⚠️  Variabilidad detectada (no se garantiza reproducibilidad bit a bit)")
         return False
 
-def test_maxsteps_limit():
-    """Verifica que maxSteps limita el número de pasos."""
+def test_steps_limit():
+    """Verifica que `steps` limita el número de iteraciones del agente."""
     # Tarea que podría generar muchos pasos si no hay límite
     task = "Cuenta del 1 al 1000, un número por línea, sin parar hasta llegar a 1000."
 
@@ -62,35 +75,35 @@ def test_maxsteps_limit():
     lines = [line for line in out.split('\n') if line.strip().isdigit()]
     print(f"  Líneas numéricas generadas: {len(lines)}")
 
-    # Con maxSteps=20, no debería llegar a 1000
+    # Con steps=20, no debería llegar a 1000
     if len(lines) <= 25:  # margen para pasos de control
-        print("  ✅ maxSteps parece limitar la ejecución")
+        print("  ✅ steps parece limitar la ejecución")
         return True
     else:
-        print("  ⚠️  maxSteps no parece estar limitando (o el modelo ignoró la instrucción)")
+        print("  ⚠️  steps no parece estar limitando (o el modelo ignoró la instrucción)")
         return False
 
 def main():
-    print("=== Test de determinismo (seed/maxSteps) ===\n")
+    print("=== Test de determinismo (temperature/steps) ===\n")
 
-    # Verificar que opencode.json tiene los campos
+    # Verificar que opencode.json tiene los campos (verificado contra el $schema
+    # oficial el 2026-09-21: steps soportado, maxSteps @deprecated, seed no nativo)
     with open(ROOT / "opencode.json") as f:
         config = json.load(f)
 
     agent = config.get("agent", {})
     for profile in ("build", "plan", "audit"):
         p = agent.get(profile, {})
-        seed = p.get("seed")
-        max_steps = p.get("maxSteps")
-        print(f"Perfil {profile}: seed={seed}, maxSteps={max_steps}")
-        assert seed == 42, f"{profile}: seed debe ser 42, es {seed}"
-        assert max_steps is not None, f"{profile}: maxSteps requerido"
+        print(f"Perfil {profile}: temperature={p.get('temperature')}, top_p={p.get('top_p')}, steps={p.get('steps')}")
+        assert p.get("steps") is not None, f"{profile}: steps requerido"
+        assert "seed" not in p, f"{profile}: seed no es opcion nativa de opencode"
+        assert "maxSteps" not in p, f"{profile}: maxSteps deprecado; usar steps"
 
-    print("\n--- Test 1: Consistencia con seed ---")
-    test_seed_consistency()
+    print("\n--- Test 1: Consistencia con temperature=0.0 ---")
+    test_temperature_consistency()
 
-    print("\n--- Test 2: Límite maxSteps ---")
-    test_maxsteps_limit()
+    print("\n--- Test 2: Límite steps ---")
+    test_steps_limit()
 
     print("\n=== Fin ===")
     return 0

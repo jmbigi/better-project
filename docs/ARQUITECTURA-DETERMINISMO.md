@@ -1,4 +1,4 @@
-# ARQUITECTURA-DETERMINISMO — Determinismo y control de generación en better-ai
+# ARQUITECTURA-DETERMINISMO — Determinismo y control de generación en better-project
 
 > Documento de diseño técnico (adoptado 26-08-2026, tras revisar la propuesta
 > "Determinismo y Control de Generación en better-ai" del programador).
@@ -22,8 +22,8 @@ del test de determinismo:
 |---|---|---|---|
 | `temperature` (por agente) | ✅ Nativo (JSON + frontmatter MD) | Doc oficial "Options → Temperature" + runtime JSON válido | **Aplicado** |
 | `top_p` (por agente) | ✅ Nativo | Doc oficial "Options → Top P" | **Aplicado** |
-| `seed` (por agente) | ❌ **No soportado verificablemente** | No aparece en `$schema` oficial (validado 26-08-2026) ni en `opencode run --help` (1.18.25); no existe flag `--seed` ni campo documentado para fijarlo en el frontmatter de agentes primarios | **NO se adopta**. La reproducibilidad se maximiza con `temperature=0.0` y se mide por modelo |
-| `steps` (límite de iteraciones) | ✅ Nativo (`steps`; `maxSteps` **DEPRECIADO**) | Doc oficial "Options → Max steps" | No aplicado (no necesario) |
+| `seed` (por agente) | ❌ **No nativo** | No aparece en `AgentConfig` del `$schema` oficial (re-verificado 21-09-2026 sobre `https://opencode.ai/config.json`); la doc "Additional" indica que las opciones desconocidas se reenvían al proveedor como model option, sin garantía de que las respete | **NO se adopta**. La reproducibilidad se maximiza con `temperature=0.0` y se mide por modelo |
+| `steps` (límite de iteraciones) | ✅ Nativo (`steps`; `maxSteps` **DEPRECIADO**) | `$schema` oficial: `steps` documentado, `maxSteps` marcado `@deprecated Use 'steps' field instead.` (re-verificado 21-09-2026); doc "Options → Max steps" | **Aplicado** (build=50, plan=30, audit=20). Ver ADR-009 |
 | `model` (por agente) | ✅ Nativo | Doc oficial "Options → Model" | No aplicado (no forzar; sigue config global) |
 | `tools:` en frontmatter MD | ⚠️ DEPRECIADO → usar `permission` | Doc oficial "Options → Tools (deprecated)" | Nuestros subagentes ya usan `permission` (correcto) |
 | Bloque `agent` en `kilo.json` | ❌ Sin evidencia de soporte | $schema de kilo no verificado | **NO aplicado** — solo en `opencode.json** |
@@ -33,19 +33,27 @@ del test de determinismo:
 > oficial actual → el plan se ajustó (`steps`/`permission`).
 > **Nota (28-08-2026)**: se añade agente primario `audit` con `temperature=0.0`
 > para tareas de auditoría/revisión críticas.
+> **Nota (21-09-2026)**: el bloque `agent` de `opencode.json` usaba `maxSteps`
+> (campo deprecado) y `seed` (no nativo). Se migró a `steps` y se retiró `seed`;
+> `scripts/verificar-proyecto.sh` ahora exige `steps` y la AUSENCIA de
+> `seed`/`maxSteps`. Decisión y alternativas: `docs/decisions/ADR-009.md`
+> (reemplaza a ADR-006).
 
 ## 3. Perfiles de muestreo por rol (aplicado)
 
-| Rol / Agente | temperature | top_p | Tipo de operación |
-|---|---|---|---|
-| `build` (primario) | 0.3 | 1.0 | Generativa (implementar, refactor) |
-| `plan` (primario) | 0.1 | 1.0 | Análisis/planificación |
-| `audit` (primario) | 0.0 | 1.0 | Crítica (auditoría determinista) |
-| `security-auditor` (subagente) | 0.0 | 1.0 | Crítica (auditoría) |
-| `code-reviewer` (subagente) | 0.0 | 1.0 | Crítica (revisión) |
-| `compliance-checker` (subagente) | 0.0 | 1.0 | Crítica (compliance) |
-| `dependency-auditor` (subagente) | 0.0 | 1.0 | Crítica (supply chain) |
-| `cost-optimizer` (subagente) | 0.1 | 1.0 | Análisis |
+| Rol / Agente | temperature | top_p | steps | Tipo de operación |
+|---|---|---|---|---|
+| `build` (primario) | 0.3 | 1.0 | 50 | Generativa (implementar, refactor) |
+| `plan` (primario) | 0.1 | 1.0 | 30 | Análisis/planificación |
+| `audit` (primario) | 0.0 | 1.0 | 20 | Crítica (auditoría determinista) |
+| `security-auditor` (subagente) | 0.0 | 1.0 | — | Crítica (auditoría) |
+| `code-reviewer` (subagente) | 0.0 | 1.0 | — | Crítica (revisión) |
+| `compliance-checker` (subagente) | 0.0 | 1.0 | — | Crítica (compliance) |
+| `dependency-auditor` (subagente) | 0.0 | 1.0 | — | Crítica (supply chain) |
+| `cost-optimizer` (subagente) | 0.1 | 1.0 | — | Análisis |
+
+Los subagentes no declaran `steps` en su frontmatter (heredan el límite del
+agente primario que los invoca).
 
 **Decisión (26-08-2026, programador)**: opción mínima — sin regla P0/P1 nueva;
 el determinismo entra como safeguard listado en **P1.9** y como configuración
@@ -57,11 +65,12 @@ regla extra diluiría las existentes (fuente Anthropic 5: no sobreconstreñir).
 
 ### 4.1 Configuraciones afectadas
 
-- `opencode.json` → bloque `agent` (`build`, `plan`, `audit`), sin `model` ni `seed` ni `steps`.
+- `opencode.json` → bloque `agent` (`build`, `plan`, `audit`) con `temperature`, `top_p` y `steps`; sin `model` ni `seed`.
 - `.opencode/agents/*.md` → frontmatter `temperature`/`top_p` (5 subagentes).
-- `scripts/verificar-proyecto.sh` → check "agente determinista" (valida presencia,
-  valores correctos y **ausencia** de `seed`/`maxSteps`; desde 28-08-2026 también
-  valida la existencia del agente primario `audit`).
+- `scripts/verificar-proyecto.sh` → check "agente determinista" (valida
+  `temperature`/`top_p`/`steps`, los valores correctos y la **ausencia** de
+  `seed`/`maxSteps`; desde 28-08-2026 también valida la existencia del agente
+  primario `audit`).
 - `kilo.json` / `.kilo/kilo.json` → **NO modificados** (sin evidencia de soporte
   del bloque `agent`; pendiente de verificación con su $schema).
 
@@ -70,7 +79,7 @@ regla extra diluiría las existentes (fuente Anthropic 5: no sobreconstreñir).
 - La config global usa `experimental.policies` (deny all + allow list) — sin cambios.
 - Los subagentes mantienen `permission` (edit/bash deny) — sin cambios.
 
-## 5. Test de determinismo (`scripts/test-determinism.py`)
+## 5. Test de determinismo (`scripts/test_determinism.py`)
 
 Alineado a la propuesta (EMR ≥ 95 %) con las reglas del proyecto:
 
@@ -90,17 +99,22 @@ Alineado a la propuesta (EMR ≥ 95 %) con las reglas del proyecto:
   (`opencode-go/deepseek-v4-flash`) devolvieron `APIError` por límite de servicio;
   no se reporta EMR inventado (P0.1).
 
-## 6. Decisión sobre `seed` (cerrada el 28-08-2026)
+## 6. Decisión sobre `seed` (cerrada el 28-08-2026; ratificada el 21-09-2026)
 
-1. Se verificó que `seed` **no está documentado ni expuesto por el CLI** de opencode
-   1.18.25 (no existe flag `--seed`; no aparece en `$schema` oficial).
+1. Se verificó que `seed` **no aparece en `AgentConfig`** del `$schema` oficial
+   (re-verificado el 21-09-2026 sobre `https://opencode.ai/config.json`) ni existe
+   flag `--seed` en el CLI.
 2. No hay mecanismo verificable para fijar la semilla en el frontmatter de agentes
-   primarios ni en `opencode.json`.
+   primarios ni en `opencode.json`. La doc "Additional" permite reenviar opciones
+   desconocidas al proveedor como model option, pero sin garantía de que las respete.
 3. **Decisión**: `seed` NO se adopta. El proyecto no reclama reproducibilidad bit a
    bit; la reduce al máximo con `temperature=0.0` (agente `audit`) y mide la varianza
-   real con `test-determinism.py`.
+   real con `test_determinism.py`.
 4. Si en el futuro opencode documenta soporte nativo de `seed`, se reevaluará con el
    protocolo: medir EMR con y sin `seed`; solo adoptar si mejora estadísticamente.
+5. **Corrección (21-09-2026)**: ADR-006 había adoptado `seed=42` y `maxSteps` sin
+   evidencia verificable del esquema. `ADR-009` reemplaza a ADR-006: migra a
+   `steps` (campo soportado) y retira `seed`.
 
 ## 7. Limitaciones declaradas
 

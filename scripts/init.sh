@@ -508,22 +508,19 @@ cat > "$TARGET_ROOT/opencode.json" <<EOF
       "mode": "primary",
       "temperature": 0.3,
       "top_p": 1.0,
-      "seed": 42,
-      "maxSteps": 50
+      "steps": 50
     },
     "plan": {
       "mode": "primary",
       "temperature": 0.1,
       "top_p": 1.0,
-      "seed": 42,
-      "maxSteps": 30
+      "steps": 30
     },
     "audit": {
       "mode": "primary",
       "temperature": 0.0,
       "top_p": 1.0,
-      "seed": 42,
-      "maxSteps": 20
+      "steps": 20
     }
   },
 $(generate_bash_patterns "$STACKS")
