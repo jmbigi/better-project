@@ -1592,7 +1592,7 @@ class TestJevLlama(unittest.TestCase):
                 sys.modules.pop("numpy", None)
 
     def test_demo_funcion(self):
-        # _demo() crea un cliente y llama decide - solo verificamos que no falle con mocks
+        # _demo() crea un cliente y llama decide - verificamos que decide() funciona
         client = self._client()
         self._set_logit(client, "y", 5.0)
         self._set_logit(client, "n", 1.0)
@@ -1600,7 +1600,11 @@ class TestJevLlama(unittest.TestCase):
         self._set_logit(client, "b", 5.0)
         self._set_logit(client, "0", 1.0)
         self._set_logit(client, "1", 5.0)
-        # No llamamos _demo() directamente porque imprime, pero verificamos los metodos que usa
+        # Llamar decide() y verificar estructura de respuesta
+        result = client.decide("test", {"q": {"type": "noul", "instructions": "?"}})
+        self.assertIn("q", result)
+        self.assertIn("type", result["q"])
+        self.assertEqual(result["q"]["type"], "noul")
 
     def test_main_demo(self):
         with mock.patch.object(sys, "argv", ["jev_llama.py", "--demo"]), \
