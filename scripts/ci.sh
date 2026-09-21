@@ -51,7 +51,7 @@ done
 echo "  [OK] bash -n en todos los scripts"
 
 echo "== CI local: suite de tests =="
-BETTER_TEST_INTEGRACION=1 python3 -m unittest discover -s tests -q || fail "suite de tests en rojo"
+BETTER_TEST_INTEGRACION=1 python3 scripts/run_tests_isolated.py || fail "suite de tests en rojo"
 
 echo "== CI local: verificacion completa =="
 BETTER_TEST_INTEGRACION=1 bash scripts/verificar-proyecto.sh --pre-commit \

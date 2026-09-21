@@ -8,7 +8,6 @@ Usa directorios temporales para no tocar el estado real del repo.
 
 import argparse
 import ast
-import builtins
 import io
 import json
 import math

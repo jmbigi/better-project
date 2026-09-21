@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -135,9 +136,16 @@ def generar_mutantes(source: str) -> list[tuple[str, str]]:
 
 
 def _ejecutar_tests(root: Path, test_target: str, timeout: int) -> int:
+    # Guardas anti-recursion (REQ-010/REQ-015): un test mutante puede invocar
+    # scripts/verificar-proyecto.sh, que a su vez corre mutation_check --batch y
+    # volveria a mutar/verificar sin limite. BETTER_MUTATION_ACTIVE hace que el
+    # verificador omita el chequeo de mutacion en la reentrada; ademas se aisman
+    # los tests de integracion.
+    env = {**os.environ, "BETTER_MUTATION_ACTIVE": "1", "BETTER_TEST_INTEGRACION": "1"}
     proc = subprocess.run(
         [sys.executable, "-m", "unittest", test_target],
         cwd=str(root / "tests"), capture_output=True, text=True, timeout=timeout,
+        env=env,
     )
     return proc.returncode
 

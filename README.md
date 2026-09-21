@@ -167,6 +167,7 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │   ├── setup.sh             # onboarding guiado (REQ-008)
 │   ├── ci.sh                # CI local sin proveedores (REQ-009)
 │   ├── verificar-proyecto.sh# verificacion de coherencia del repo (tests: REQ-010)
+│   ├── run_tests_isolated.py# tests aislados por proceso (REQ-026)
 │   ├── adr_validator.py    # valida ADRs y audita sesgos (REQ-013)
 │   ├── auto_audit.py       # auto-auditoria del proyecto (REQ-014)
 │   ├── mutation_check.py   # chequeo de mutaciones (REQ-015)
@@ -243,7 +244,10 @@ python3 scripts/jev_calibration_merge.py
 # Diagnosticar los 4 pilares en otro proyecto (REQ-017, solo lectura)
 python3 scripts/diagnostico.py --root <carpeta>
 
-# Suite de tests (278 casos, stdlib unittest)
+# Suite de tests: cada test en un proceso separado (REQ-026, menos memoria)
+python3 scripts/run_tests_isolated.py
+
+# Alternativa in-process (mas rapida, mas memoria): unittest descubre la suite
 python3 -m unittest discover -s tests -q
 
 # Verificacion completa previa a commit

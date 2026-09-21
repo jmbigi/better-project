@@ -282,3 +282,19 @@
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
+- id: LSN-033
+  proyecto: "Ecosistema (tests)"
+  fase: "Testing"
+  categoria: "Proceso"
+  problema: "tests/test_ecosistema.py tenia `import builtins` sin uso (solo se usaba como literal \"builtins.input\" en mock.patch). Con ruff 0.15.14 instalado, el check \"lint ruff (ruff.toml)\" de verificar-proyecto.sh devolvia 1; en cascada los tests de integracion TestIntegracionHook y TestVerificador fallaban porque su verificar-proyecto.sh anidado devolvia 1. Con ruff no instalado el fallo era invisible (el verificador omite el check sin marcar fallo)."
+  recomendacion: "Ejecutar el verificador y los tests de integracion CON las herramientas opcionales instaladas (ruff), no solo con el minimo stdlib, porque los tests de integracion asumen que verificar-proyecto.sh sale 0. Mantener `ruff check scripts tests` en verde. Al usar mock.patch con cadenas (\"builtins.input\") no importar el modulo builtins."
+  estado: Abierta
+  fecha: 2026-09-21
+- id: LSN-034
+  proyecto: "Ecosistema (REQ-015)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "mutation_check._ejecutar_tests ejecutaba los tests mutantes SIN guarda anti-recursion. Un mutante de scripts/mcp_server.py hacia que un test invocara scripts/verificar-proyecto.sh, que a su vez corre `mutation_check.py --batch` sobre una copia temporal, que vuelve a mutar y verificar: recursion ilimitada (decenas de procesos y directorios /tmp/mutation_check_*; CPU y riesgo de OOM). Se manifesto al correr TestVerificador/TestIntegracionHook con ruff en verde."
+  recomendacion: "Todo camino que ejecute tests o verificacion dentro de otra verificacion debe propagar una guarda de reentrada por variable de entorno. mutation_check ahora inyecta BETTER_MUTATION_ACTIVE=1 y BETTER_TEST_INTEGRACION=1 en los tests mutantes; verificar-proyecto.sh omite el check de mutacion cuando BETTER_MUTATION_ACTIVE=1 (evita la reentrada sin perder cobertura: el CI ejecuta la mutacion explicitamente)."
+  estado: Abierta
+  fecha: 2026-09-21

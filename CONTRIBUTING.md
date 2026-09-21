@@ -41,7 +41,7 @@
 4. **Valida**:
    ```bash
    python3 scripts/doc_validator.py --strict
-   python3 -m unittest discover -s tests -q
+   python3 scripts/run_tests_isolated.py
    bash scripts/verificar-proyecto.sh
    ```
 5. **Registra lección** si hubo hallazgos:

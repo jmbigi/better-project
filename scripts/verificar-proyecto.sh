@@ -138,12 +138,12 @@ tools = [k for k, v in mcp.items() if v.get('enabled', True)]
 assert len(tools) == 4, f'tools MCP habilitados = {len(tools)}: {tools}'
 assert set(tools) == {'context7', 'gh_grep', 'sentry', 'better-project'}, tools
 "
-    check "rondas PRUEBAS.md = 32 (coherente en todo el doc)" python3 -c "
+    check "rondas PRUEBAS.md = 33 (coherente en todo el doc)" python3 -c "
 import re
 txt = open('docs/PRUEBAS.md').read()
 rondas = set(int(m) for m in re.findall(r'Ronda (\\d+)', txt))
-assert max(rondas) == 35, f'rondas max = {max(rondas)}, esperado 35'
-assert len(rondas) == 32, f'rondas únicas = {len(rondas)}, esperado 32 (faltan 32, 33, 34)'
+assert max(rondas) == 36, f'rondas max = {max(rondas)}, esperado 36'
+assert len(rondas) == 33, f'rondas únicas = {len(rondas)}, esperado 33 (faltan 32, 33, 34)'
 "
 fi
 otel_end_span "verificar.reglas"
@@ -347,8 +347,14 @@ echo "== 4. Ecosistema better-project =="
 check "sintaxis python de todos los scripts" bash -c 'for f in scripts/*.py; do python3 -m py_compile "$f" || exit 1; done'
 check_ruff
 # Mutacion obligatoria en pre-commit para modulos criticos (REQ-015).
-check "mutacion rapida batch critico (umbral 0.85)" \
-    python3 scripts/mutation_check.py --batch --strict --umbral 0.85
+# Guarda anti-recursion: si venimos de una ejecucion de tests mutantes
+# (BETTER_MUTATION_ACTIVE=1), omitir la mutacion para no reentrar sin limite.
+if [ "${BETTER_MUTATION_ACTIVE:-0}" = "1" ]; then
+    check "mutacion rapida batch critico (omitida: reentrada de mutacion)" true
+else
+    check "mutacion rapida batch critico (umbral 0.85)" \
+        python3 scripts/mutation_check.py --batch --strict --umbral 0.85
+fi
 check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 scripts/doc_validator.py --strict"
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py && python3 scripts/index_knowledge.py --check"
@@ -392,7 +398,7 @@ if recall < 0.7:
     print(f'FAIL: recall@10 {recall:.2f} < 0.7')
     sys.exit(1)
 "
-check "suite de tests del ecosistema" bash -c "python3 -m unittest discover -s tests -q"
+check "suite de tests del ecosistema (aislada por proceso)" bash -c "python3 scripts/run_tests_isolated.py"
 if [ "$LITE_MODE" = "false" ]; then
     check "demo valida con --root" bash -c "python3 scripts/doc_validator.py --root demo"
     check "ADRs validos + auditoria de sesgos (REQ-013)" bash -c "python3 scripts/adr_validator.py"

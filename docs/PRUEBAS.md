@@ -505,6 +505,37 @@ rechazo solo pueda venir del matcher) y después con la config REAL.
 | 132 | `verificar-proyecto.sh` tras los cambios (modo pre-commit) | ✅ 26 OK, 0 FALLOS (modo normal: solo falla "árbol de trabajo limpio", esperado pre-commit) |
 | 133 | Demostración en vivo: `rm -rf /tmp/opencode/permtests` (limpieza de mis propios archivos de prueba) | ✅ BLOQUEADO por el deny `rm -rf *` — el ruleset se aplica también a los intentos del agente de limpiar sus artefactos |
 
+## Ronda 36 — Tests aislados por proceso y guarda de reentrada de mutación (21-09-2026)
+
+La suite (367 tests) corría en un único proceso: el estado y la memoria de los
+módulos se acumulan y, con las dependencias opcionales instaladas
+(torch/sentence-transformers, chromadb, llama.cpp), el pico crece sin liberarse
+entre tests. Se añadió `scripts/run_tests_isolated.py` (REQ-026), que descubre
+cada test y lo ejecuta en un subproceso independiente.
+
+Al probarlo se destaparon dos defectos reales: (1) `import builtins` sin uso en
+`tests/test_ecosistema.py` hacía fallar el check `lint ruff` con ruff 0.15.14, y
+en cascada los tests de integración (`TestIntegracionHook`, `TestVerificador`)
+porque su `verificar-proyecto.sh` anidado devolvía 1; (2) `mutation_check`
+ejecutaba los tests mutantes sin guarda de reentrada, de modo que un mutante que
+invocaba `verificar-proyecto.sh` recursaba sin límite (decenas de procesos).
+
+| # | Prueba | Resultado |
+|---|---|---|
+| 134 | `run_tests_isolated.py` descubre la suite y ejecuta cada test en un subproceso | ✅ 367 tests, uno por proceso |
+| 135 | Run completo aislado (pico total ~256 MB, menor que in-process) | ✅ 367 OK, 0 FALLOS en 543.5s |
+| 136 | Fallback anti-recursión: con `BETTER_TEST_INTEGRACION=1` ejecuta in-process | ✅ Verificado con `--pattern 'test_seed*'` |
+| 137 | Patrón sin coincidencias | ✅ Exit 1 ("no se descubrieron tests") |
+| 138 | Fix del lint preexistente: `import builtins` eliminado | ✅ `ruff check scripts tests` en verde |
+| 139 | Tests de integración con ruff en verde | ✅ `TestIntegracionHook` + `TestVerificador`: `Ran 3 tests in 544.9s OK` |
+| 140 | Guarda de reentrada de mutación (`BETTER_MUTATION_ACTIVE`) | ✅ `mutation_check.py --batch --strict` exit 0; máximo 2 verificadores anidados (antes ilimitado) |
+| 141 | Coherencia documental tras los cambios | ✅ `doc_validator --strict` OK (26 REQs), 34 lecciones 0 errores, `bash -n` OK |
+
+**Hallazgo (LSN-034)**: toda verificación que ejecute tests dentro de otra
+verificación debe propagar una guarda de reentrada por variable de entorno;
+`mutation_check` inyecta `BETTER_MUTATION_ACTIVE=1` + `BETTER_TEST_INTEGRACION=1`
+y el verificador omite el chequeo de mutación en la reentrada.
+
 ## Pendiente de verificar (declaración honesta)
 
 - **BD real**: CERRADO en la ronda 18 — probado contra cluster PostgreSQL 16 temporal
