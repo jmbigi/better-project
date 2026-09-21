@@ -1,3 +1,5 @@
 # Extra: busqueda vectorial (REQ-002). Opcional; sin esto se usa el indice JSON TF-IDF.
-chromadb==1.5.9
-sentence-transformers==6.1.0
+# ADVERTENCIA: chromadb 1.5.9 tiene 4 advisories ABIERTOS sin parche (CVE-2026-45829, 45830, 45831, 45833).
+# Solo instalar si se acepta el riesgo y se usa en modo EMBEDDED LOCAL (sin servidor).
+# chromadb==1.5.9
+# sentence-transformers==6.1.0

@@ -1,8 +1,15 @@
-# Dependencias opcionales del ecosistema (busqueda vectorial, REQ-002).
+# Dependencias opcionales del ecosistema (busqueda vectorial, REQ-002; motor Jev, REQ-011).
 # Sin ellas todo funciona con stdlib (indice JSON TF-IDF).
 # Instalacion SOLO en .venv del proyecto y bajo confirmacion (P0.5):
 #   bash scripts/setup.sh
-# Dependencias opcionales del ecosistema. Versiones fijadas (P0.18) y separadas
-# por extra para poder aislarlas. Lock con hashes: requirements-optional.lock.
--r requirements-vector.txt
--r requirements-jev.txt
+# 
+# ADVERTENCIA (P0.18): las dependencias de abajo tienen advisories ABIERTOS sin parche:
+# - chromadb 1.5.9: 4 advisories (CVE-2026-45829, 45830, 45831, 45833) - inyeccion codigo/autorizacion en modo SERVIDOR
+# - diskcache 5.6.3 (via llama-cpp-python): 1 advisory (CVE-2025-69872) - unsafe pickle deserialization
+# El uso local embebido (PersistentClient sin red, llama.cpp local) mitiga la superficie de ataque,
+# pero la instalacion implica aceptar el riesgo por escrito.
+#
+# Para instalar aceptando el riesgo:
+#   pip install -r requirements-vector.txt -r requirements-jev.txt
+# 
+# Lock con hashes (regenerar tras instalar): requirements-optional.lock
