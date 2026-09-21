@@ -99,9 +99,16 @@ Ver `CHECKLIST.md` — completar **TODAS** las casillas P0 con evidencia real.
 
 ## Reportar problemas
 
-- **Seguridad**: Abre issue con `⚠️ SECURITY` en el título
+- **Seguridad**: **no abras un issue público**. Sigue `SECURITY.md` (GitHub
+  Security Advisories o contacto privado del maintainer)
 - **Bugs**: Incluye pasos para reproducir, salida real, entorno
 - **Mejoras**: Referencia REQ existente o crea uno nuevo
+
+## Código de conducta
+
+La participación en el proyecto se rige por `CODE_OF_CONDUCT.md` (adaptación
+del Contributor Covenant v2.1). Los reportes de conducta se canalizan en
+privado, igual que los de seguridad.
 
 ## Licencia
 

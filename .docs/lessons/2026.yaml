@@ -318,3 +318,13 @@
   estado: Resuelta
   fecha: 2026-09-21
   fecha_resolucion: 2026-09-21
+- id: LSN-037
+  proyecto: "Ecosistema (GOVERNANCE/README)"
+  fase: "Documentacion"
+  categoria: "Proceso"
+  problema: "GOVERNANCE.md citaba SECURITY.md y docs/CHANGELOG.md como si existieran, pero ninguno de los dos estaba en el repositorio; ademas CONTRIBUTING.md indicaba reportar seguridad abriendo un issue publico con '⚠️ SECURITY', en contradiccion con la divulgacion responsable. El check del verificador 'referencias a rutas docs/, scripts/ y .opencode/ existen' solo escanea 5 archivos (AGENTS.md, README.md, CHECKLIST.md, docs/REGLAS-COMPLETAS.md, docs/PRUEBAS.md), por lo que las referencias rotas de GOVERNANCE.md/CONTRIBUTING.md pasaron desapercibidas y la verificacion seguia en verde (falso OK)."
+  recomendacion: "Un documento de gobernanza no debe prometer artefactos que no existen: cada referencia a un archivo (SECURITY.md, CHANGELOG, etc.) es un requisito implicito de publicacion. Al ampliar el conjunto de docs con health files, actualizar tambien el check de referencias para cubrirlos (con exclusion explicita de placeholders como ADR-XXX). Reportar vulnerabilidades solo por canal privado (GitHub Security Advisories o contacto del maintainer), nunca por issue publico."
+  resolucion: "Creados SECURITY.md, docs/CHANGELOG.md y CODE_OF_CONDUCT.md; CONTRIBUTING.md corregido para enlazar SECURITY.md y el codigo de conducta (sin issue publico). Pendiente (no en este cambio): extender el check de referencias del verificador a GOVERNANCE.md/CONTRIBUTING.md con lista de placeholders."
+  estado: Resuelta
+  fecha: 2026-09-21
+  fecha_resolucion: 2026-09-21
