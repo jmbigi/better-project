@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""doc_validator.py — Valida la trazabilidad REQ: código <-> .docs/requirements/ (REQ-001).
+"""doc_validator.py — Valida la trazabilidad REQ: código <-> .docs/requirements/ (REQ-001, REQ-021).
 
 REQ-001: los requisitos se documentan en .docs/requirements/ con frontmatter YAML
 y el código que los implementa lleva una referencia `REQ-XXX` (o `// IMPLEMENTS: REQ-XXX`).
+REQ-021: proposito del proyecto (meta-proyecto vs producto)
 
 Uso:
     python scripts/doc_validator.py            # errores -> exit 1

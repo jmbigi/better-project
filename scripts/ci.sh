@@ -2,6 +2,7 @@
 # REQ-009: pipeline de verificacion local, sin proveedores (ni GitHub ni
 # GitLab): exporta HEAD a un directorio limpio y verifica alli, como haria
 # un CI remoto con un clon fresco. Uso: bash scripts/ci.sh
+# REQ-024: KPIs dashboard en CI
 set -u
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)" || exit 1
 cd "$REPO_ROOT" || exit 1

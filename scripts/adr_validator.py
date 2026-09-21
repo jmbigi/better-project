@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""adr_validator.py — Valida ADR y audita sesgos de decision (REQ-013).
+"""adr_validator.py — Valida ADR y audita sesgos de decision (REQ-013, REQ-023).
 
 # REQ-013
+# REQ-023
 
 Valida los Registros de Decision de Arquitectura de `docs/decisions/` y emite
 alertas heuristicas de sesgos y falacias del Pilar 4

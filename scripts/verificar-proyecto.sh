@@ -3,6 +3,7 @@
 # como paso previo a cada commit). Uso: bash scripts/verificar-proyecto.sh [--lite] [--pre-commit]
 # REQ-010: este verificador esta cubierto por TestVerificador en
 # tests/test_ecosistema.py (modo verde y modo fallo).
+# REQ-022: verificador determinista (sin falsos positivos por arbol sucio)
 # Instrumentado con OpenTelemetry (P1.30) para traces distribuidos
 set -u
 cd "$(dirname "$0")/.." || exit 1
