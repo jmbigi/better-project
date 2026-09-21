@@ -1,5 +1,19 @@
 # better-project
 
+**Meta-proyecto (framework metodologico)** para gobernar proyectos asistidos por IA.
+No es una aplicacion para usuarios finales; es un **framework de verificacion, trazabilidad y gobernanza** que garantiza:
+
+- Trazabilidad bidireccional REQ <-> codigo
+- Conocimiento versionado y consultable
+- Lecciones aprendidas sistematicas
+- Control de sesgos y falacias en decisiones (Pilar 4)
+- Verificacion ejecutable y determinista
+- MCP local para agentes
+
+La demo (`demo/`) es un **proyecto de ejemplo minimo** que valida el framework.
+
+> **ADR-0001** define el proposito. **ADR-0002/0003/0004** documentan decisiones arquitectonicas clave. Ver `docs/decisions/`.
+
 Ecosistema local de gestion de proyecto: requisitos, conocimiento y lecciones
 viven en el repositorio como archivos; Git es el versionado; los scripts de
 `scripts/` son las herramientas; los agentes de IA (opencode) las consumen
