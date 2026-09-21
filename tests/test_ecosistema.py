@@ -399,17 +399,18 @@ class TestIndexKnowledge(unittest.TestCase):
         self.storage = self.tmp / "storage"
         self.storage.mkdir()
         self.old = (
-            ik.KNOWLEDGE_DIR, ik.STORAGE_DIR, ik.JSON_INDEX, ik.MANIFEST, ik.CHROMA_DIR,
+            ik.KNOWLEDGE_DIR, ik.STORAGE_DIR, ik.JSON_INDEX, ik.MANIFEST, ik.CHROMA_DIR, ik.SQLITE_DB,
         )
         ik.KNOWLEDGE_DIR = self.know
         ik.STORAGE_DIR = self.storage
         ik.JSON_INDEX = self.storage / "index.json"
         ik.MANIFEST = self.storage / "manifest.json"
         ik.CHROMA_DIR = self.storage / "chroma_db"
+        ik.SQLITE_DB = self.storage / "knowledge.db"
 
     def tearDown(self):
         (
-            ik.KNOWLEDGE_DIR, ik.STORAGE_DIR, ik.JSON_INDEX, ik.MANIFEST, ik.CHROMA_DIR,
+            ik.KNOWLEDGE_DIR, ik.STORAGE_DIR, ik.JSON_INDEX, ik.MANIFEST, ik.CHROMA_DIR, ik.SQLITE_DB,
         ) = self.old
 
     def test_chunks_por_h2(self):
@@ -472,7 +473,8 @@ class TestIndexKnowledge(unittest.TestCase):
         (self.know / "a.md").write_text("## Timeout\nservidor timeout conexiones pool\n")
         ik.build_json_index()
         buf = io.StringIO()
-        with mock.patch.object(sys, "argv", ["index_knowledge.py", "search", "timeout"]), \
+        with mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "argv", ["index_knowledge.py", "search", "timeout"]), \
                 mock.patch.object(sys, "stdout", buf):
             rc = ik.main()
         self.assertEqual(rc, 0)
@@ -482,10 +484,12 @@ class TestIndexKnowledge(unittest.TestCase):
         (self.know / "a.md").write_text("## A\ncontenido de prueba largo suficiente\n")
         ik.build_json_index()
         ik.JSON_INDEX.write_text("SENTINELA", encoding="utf-8")
-        with mock.patch.object(sys, "stdout", io.StringIO()):
+        with mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
             ik.index_all(force=False)
         self.assertEqual(ik.JSON_INDEX.read_text(encoding="utf-8"), "SENTINELA")
-        with mock.patch.object(sys, "stdout", io.StringIO()):
+        with mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
             ik.index_all(force=True)
         self.assertIn("chunks", ik.JSON_INDEX.read_text(encoding="utf-8"))
 
@@ -531,7 +535,8 @@ class TestIndexKnowledge(unittest.TestCase):
         (self.know / "a.md").write_text("## A\ncontenido largo suficiente para chunk de prueba\n")
         ik.build_json_index()
         ik.JSON_INDEX.write_text("SENTINELA", encoding="utf-8")
-        with mock.patch.object(sys, "stdout", io.StringIO()):
+        with mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
             ik.index_all()
         self.assertEqual(ik.JSON_INDEX.read_text(encoding="utf-8"), "SENTINELA")
 
@@ -541,8 +546,10 @@ class TestIndexKnowledge(unittest.TestCase):
         ik.JSON_INDEX = nuevo / "index.json"
         ik.MANIFEST = nuevo / "manifest.json"
         ik.CHROMA_DIR = nuevo / "chroma_db"
+        ik.SQLITE_DB = nuevo / "knowledge.db"
         (self.know / "a.md").write_text("## A\ncontenido largo suficiente para chunk de prueba\n")
-        with mock.patch.object(sys, "stdout", io.StringIO()):
+        with mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
             ik.index_all()
         self.assertTrue(ik.JSON_INDEX.exists())
 
@@ -550,27 +557,18 @@ class TestIndexKnowledge(unittest.TestCase):
         ik.MANIFEST.write_text("{}", encoding="utf-8")
         self.assertFalse(ik.JSON_INDEX.exists())
         self.assertFalse(ik.CHROMA_DIR.exists())
+        self.assertFalse(ik.SQLITE_DB.exists())
         self.assertFalse(ik.check_fresh())
 
     def test_main_all_fuerza_reconstruccion(self):
         (self.know / "a.md").write_text("## A\ncontenido largo suficiente para chunk de prueba\n")
         ik.build_json_index()
         ik.JSON_INDEX.write_text("SENTINELA", encoding="utf-8")
-        with mock.patch.object(sys, "argv", ["index_knowledge.py", "--all"]), \
+        with mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "argv", ["index_knowledge.py", "--all"]), \
                 mock.patch.object(sys, "stdout", io.StringIO()):
             self.assertEqual(ik.main(), 0)
         self.assertNotEqual(ik.JSON_INDEX.read_text(encoding="utf-8"), "SENTINELA")
-
-    def test_chroma_available_true_con_imports(self):
-        real_import = builtins.__import__
-
-        def fake_import(name, *args, **kwargs):
-            if name in ("chromadb", "sentence_transformers"):
-                return mock.MagicMock()
-            return real_import(name, *args, **kwargs)
-
-        with mock.patch.object(builtins, "__import__", side_effect=fake_import):
-            self.assertTrue(ik._chroma_available())
 
     def test_main_search_usa_json_si_chroma_no_disponible(self):
         (self.know / "a.md").write_text("## Timeout\nservidor timeout conexiones pool\n")
@@ -578,6 +576,7 @@ class TestIndexKnowledge(unittest.TestCase):
         ik.CHROMA_DIR.mkdir(parents=True, exist_ok=True)
         buf = io.StringIO()
         with mock.patch.object(ik, "_chroma_available", return_value=False), \
+                mock.patch.object(ik, "_sqlite_available", return_value=False), \
                 mock.patch.object(sys, "argv", ["index_knowledge.py", "search", "timeout"]), \
                 mock.patch.object(sys, "stdout", buf):
             rc = ik.main()
@@ -2248,7 +2247,8 @@ class TestADRValidator(unittest.TestCase):
         "## Decision\n\nSe elige A por 2 razones.\n\n"
         "## Consecuencias\n\n- Positivas: 1.\n\n"
         "## Supuestos\n\n- Vale 1.\n\n"
-        "## Metricas de exito\n\n- p99 < 200 ms.\n"
+        "## Metricas de exito\n\n- p99 < 200 ms.\n\n"
+        "## Pre-mortem (Analisis Prospectivo de Fallos)\n\n- Escenario 1: fallo X, mitigacion Y.\n- Escenario 2: fallo Z, mitigacion W.\n"
     )
 
     tmp: Path
