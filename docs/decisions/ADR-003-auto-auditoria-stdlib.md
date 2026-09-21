@@ -56,13 +56,11 @@ adoptan solo si un ADR posterior justifica su coste.
 - El verificador mantiene 40 checks (39 previos + 1 de auto-auditoria) en verde.
 - 0 dependencias nuevas en `requirements-optional.txt` por este ADR.
 
-## Premortem
+## Pre-mortem (Análisis Prospectivo de Fallos)
 
-Si en 6 meses la auto-auditoria produce ruido y se ignora, las causas probables
-serian: (1) demasiados falsos positivos, (2) alertas sin responsables, o (3) no
-integrarse en el flujo. Mitigacion: mantener la lista blanca de documentos
-normativos, integrarla en el pre-commit y revisar las alertas en la
-retrospectiva.
+- **Escenario 1 — Ruido excesivo (falsos positivos)**: las heurísticas textuales y de AST generan alertas que el equipo ignora. *Mitigación*: lista blanca de documentos normativos (`SESGOS_WHITELIST`); umbrales ajustables; alertas solo avisos salvo `--strict`.
+- **Escenario 2 — Sin responsable claro**: las alertas se detectan pero nadie actúa sobre ellas. *Mitigación*: integración en pre-commit (bloquea si hay errores); revisión obligatoria de alertas en retrospectiva mensual.
+- **Escenario 3 — No integra en el flujo**: el script existe pero no se ejecuta habitualmente. *Mitigación*: ya integrado en `verificar-proyecto.sh` y `ci.sh`; `auto_audit.py all` es check obligatorio.
 
 ## Referencias
 

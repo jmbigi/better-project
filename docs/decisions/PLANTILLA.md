@@ -2,8 +2,8 @@
 
 > Copiar a `docs/decisions/ADR-NNN-titulo-corto.md` y completar **todas** las
 > secciones. El validador `scripts/adr_validator.py` exige `Contexto`,
-> `Alternativas consideradas`, `Decision` y `Consecuencias`; recomienda
-> `Supuestos`, `Metricas de exito` y `Premortem`.
+> `Alternativas consideradas`, `Decision`, `Consecuencias` y `Pre-mortem (Análisis Prospectivo de Fallos)` para estados Propuesto/Aceptado; recomienda
+> `Supuestos`, `Metricas de exito`.
 
 ```markdown
 ---
@@ -50,10 +50,11 @@ premisas ocultas.>
 <Como se sabra si la decision fue correcta: numeros verificables (p. ej.,
 p99 < 200 ms, accuracy >= 0.6, coste mensual <= X).>
 
-## Premortem
+## Pre-mortem (Análisis Prospectivo de Fallos)
 
-<Imaginar que la decision fracaso y enumerar hacia atras las causas posibles;
-indicar mitigaciones.>
+<Imaginar que la decision fracaso catastroficamente y enumerar hacia atras
+al menos DOS causas posibles con sus mitigaciones; esto neutraliza el
+optimismo y el sesgo de confirmacion (Pilar 4).>
 
 ## Referencias
 

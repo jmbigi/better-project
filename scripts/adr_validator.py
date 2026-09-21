@@ -33,6 +33,8 @@ ALLOWED_ESTADOS = {"Propuesto", "Aceptado", "Rechazado", "Reemplazado", "Depreca
 REQUIRED_FIELDS = {"id", "titulo", "estado", "fecha"}
 REQUIRED_SECTIONS = ("contexto", "alternativas consideradas", "decision", "consecuencias")
 RECOMMENDED_SECTIONS = ("supuestos", "metricas de exito")
+# Seccion obligatoria para ADRs en estado Propuesto/Aceptado (Fase 3 Pilar 4)
+PREMORTEM_SECTION = "pre-mortem (analisis prospectivo de fallos)"
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.S)
 H2_RE = re.compile(r"^##\s+(.+?)\s*$", re.M)
 ITEM_RE = re.compile(r"^\s*(?:[-*]|\d+\.)\s+\S", re.M)
@@ -118,6 +120,16 @@ def validate(directory: Path = ADR_DIR) -> tuple[list[str], list[str]]:
         for section in RECOMMENDED_SECTIONS:
             if section not in sections:
                 warnings.append(f"{rel}: falta la seccion recomendada '## {section.title()}' (premisas/metricas)")
+        # Validar pre-mortem para ADRs en estado Propuesto o Aceptado
+        estado = meta.get("estado", "")
+        if estado in ("Propuesto", "Aceptado"):
+            if PREMORTEM_SECTION not in sections:
+                errors.append(f"{rel}: falta la seccion obligatoria '## Pre-mortem (Análisis Prospectivo de Fallos)' para estado {estado}")
+            else:
+                premortem_body = sections[PREMORTEM_SECTION]
+                # Debe tener al menos 2 escenarios de fallo (items de lista)
+                if _count_items(premortem_body) < 2:
+                    errors.append(f"{rel}: pre-mortem debe detallar al menos 2 escenarios hipoteticos de fallo con sus mitigaciones")
         alternativas = sections.get("alternativas consideradas", "")
         if alternativas and _count_items(alternativas) < 2:
             warnings.append(

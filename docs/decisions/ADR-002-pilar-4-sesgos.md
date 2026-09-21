@@ -55,12 +55,11 @@ ejecuta en cada pre-commit.
 - Al menos 2 ADR reales registrados en 2026 (ADR-001 y ADR-002 lo cumplen).
 - El verificador mantiene 39 checks en verde.
 
-## Premortem
+## Pre-mortem (Análisis Prospectivo de Fallos)
 
-Si en 6 meses el registro queda vacio, las causas probables son: (1) ADR
-demasiado largos, (2) el validador no se ejecuta, o (3) no se percibe utilidad.
-Mitigacion: plantilla corta, integracion en el hook pre-commit ya hecha y
-revision del registro en la retrospectiva.
+- **Escenario 1 — Registro abandonado**: los ADR se vuelven demasiado extensos y el equipo deja de escribirlos. *Mitigación*: plantilla concisa (esta); integración obligatoria en pre-commit; revisión trimestral en retrospectiva.
+- **Escenario 2 — Validador ignorado**: el hook pre-commit se desactiva o el validador se saltea con `--no-verify`. *Mitigación*: CI local (`ci.sh`) ejecuta el verificador completo; política de "no merge sin verificación".
+- **Escenario 3 — Falsos positivos/negativos**: la heurística textual genera ruido o no detecta sesgos reales. *Mitigación*: alertas son solo avisos (no errores) salvo `--strict`; juicio humano final (P1.15); iterar patrones tras cada retrospectiva.
 
 ## Referencias
 

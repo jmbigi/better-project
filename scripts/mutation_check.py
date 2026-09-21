@@ -36,7 +36,7 @@ DEFAULT_MODULE = "scripts/adr_validator.py"
 DEFAULT_TEST = "test_ecosistema.TestADRValidator"
 DEFAULT_MAX = 40
 DEFAULT_TIMEOUT = 60
-DEFAULT_UMBRAL = 0.8
+DEFAULT_UMBRAL = 0.85
 
 # Modulos con test acotado y rapido para el modo --batch (fuerza global).
 DEFAULT_BATCH: list[tuple[str, str]] = [

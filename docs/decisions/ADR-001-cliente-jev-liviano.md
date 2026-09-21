@@ -64,13 +64,11 @@ calidad se valida con un set etiquetado y calibracion por temperatura (REQ-011).
 - Calibracion: NLL y Brier disminuyen al aplicar `JEV_TEMPERATURE=2.0`.
 - Coste monetario por inferencia = 0.
 
-## Premortem
+## Pre-mortem (Análisis Prospectivo de Fallos)
 
-Si en 6 meses el cliente resulta inservible, las causas probables serian: (1)
-el modelo de 4B no mejora la precision de `score`, (2) el tiempo de carga en CPU
-vuelve inviable el uso interactivo, o (3) aparece un modelo GGUF mejor con el
-mismo coste. Mitigacion: mantener el motor desacoplado (`jev_llama.py`) y
-recalibrar/reemplazar solo el modelo, sin tocar REQ-012.
+- **Escenario 1 — Precisión insuficiente de `score`**: el modelo de 4B no mejora la accuracy del tipo `score` (actual 0.417) tras recalibraciones. *Mitigación*: marcar `score` como `experimental` y no usarlo como guardarraíl; recalibrar solo `choice` y `noul`.
+- **Escenario 2 — Latencia de carga en CPU**: el tiempo de carga del modelo (~30-60 s) vuelve inviable el uso interactivo frecuente. *Mitigación*: cachear el modelo en memoria entre invocaciones; evaluar `llama.cpp` server mode.
+- **Escenario 3 — Modelo superior disponible**: aparece un GGUF mejor (p. ej. 7B Q4_K_M) con mismo coste de RAM. *Mitigación*: arquitectura desacoplada (`jev_llama.py` + modelo en cache) permite swap sin tocar REQ-012.
 
 ## Referencias
 
