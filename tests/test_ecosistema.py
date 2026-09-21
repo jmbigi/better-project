@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Suite de tests del ecosistema better-project (REQ-001..REQ-006).
 
-stdlib unittest, sin dependencias. Ejecutar:
+stdlib unittest, sin dependencias. Ejecutar (un proceso por test, REQ-026):
+    python3 scripts/run_tests_isolated.py
+Alternativa in-process (mas rapida, mas memoria):
     python3 -m unittest discover -s tests -q
 Usa directorios temporales para no tocar el estado real del repo.
 """
