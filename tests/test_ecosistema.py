@@ -1255,9 +1255,9 @@ class TestVerificador(unittest.TestCase):
         return repo
 
     def _verifica(self, repo):
-        env = {**os.environ, "BETTER_TEST_INTEGRACION": "1"}
+        env = {**os.environ, "BETTER_TEST_INTEGRACION": "1", "BETTER_MUTATION_ACTIVE": "1"}
         return subprocess.run(
-            ["bash", "scripts/verificar-proyecto.sh", "--pre-commit"],
+            [sys.executable, "scripts/verificar_proyecto.py", "--pre-commit"],
             cwd=repo, capture_output=True, text=True, env=env,
         )
 

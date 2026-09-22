@@ -13,13 +13,15 @@ Uso:
     python3 scripts/jev_review.py --report        # tabla por consola + JSON
     python3 scripts/jev_review.py --fake --limit 5  # sin modelo (demo/tests)
 
+En Windows sin `windows-curses` instalado, la UI curses no esta disponible
+y el script cae automaticamente a modo `--report` con una advertencia.
+
 Teclas en la UI: y=OK  n=corregir (1..K elige opcion)  s=saltar  q=salir.
 """
 
 from __future__ import annotations
 
 import argparse
-import curses
 import hashlib
 import json
 import os
@@ -27,6 +29,12 @@ import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
+
+try:
+    import curses
+    HAS_CURSES = True
+except ImportError:
+    HAS_CURSES = False
 
 import jev_pillars as jp
 import lessons_extractor as le
@@ -252,6 +260,10 @@ def repl_curses(
     cache: dict | None = None, out: Path | None = None,
 ) -> list[dict[str, Any]]:
     """UI incremental: clasifica cada item y pregunta su confirmacion al momento."""
+    try:
+        import curses
+    except ImportError:
+        raise RuntimeError("curses no disponible (Windows sin windows-curses). Use --report.")
     filas: list[dict[str, Any]] = []
 
     def _guardar():
@@ -323,7 +335,9 @@ def main(argv: list[str] | None = None) -> int:
     out = Path(args.out or os.getenv("JEV_REVIEW_REPORT", str(DEFAULT_REPORT)))
     cache = cargar_cache()
     filas: list[dict[str, Any]] = []
-    if args.report or not sys.stdout.isatty():
+    if args.report or not sys.stdout.isatty() or not HAS_CURSES:
+        if not HAS_CURSES and not args.report:
+            print("[WARN] curses no disponible (Windows sin windows-curses). Usando modo --report.", file=sys.stderr)
         print(f"{'item':<14}{'pilar':<14}{'campo':<13}{'propuesta':<18}{'conf':>6}")
         for item in items:
             nuevas = filas_de_item(item, client, accuracy, cache)
