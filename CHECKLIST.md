@@ -98,6 +98,9 @@
 
 - [ ] ¿Ejecuté tests/lint/build/typecheck del proyecto? ¿Pasan? (adjuntar salida)
 - [ ] ¿Los tests que escribí pueden fallar de verdad (no vacíos ni de humo)?
+- [ ] ¿Verifiqué el estado de la suite de tests antes de declarar "listo para entrega"? (si la suite está rota, no se declara entrega sin justificación documentada)
+- [ ] ¿Reconozco y documenté advisorys de dependencias conocidas sin parchear? (documentado ≠ mitigado)
+- [ ] ¿Mis auto-evaluaciones son transparentes sobre limitaciones y no se auto-complacen? (P1.10, P1.31)
 - [ ] ¿No silencié errores con parches falsos (@ts-ignore, except: pass, catch {})?
 
 ## Estándares de la industria (P1.7)
