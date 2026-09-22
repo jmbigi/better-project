@@ -32,17 +32,19 @@ DEFAULT_REQ = ROOT / "requirements-optional.lock"
 OSV_URL = "https://api.osv.dev/v1/vulns/"
 
 
-def run_pip_audit(req_path: Path, runner=None) -> list[dict]:
+def run_pip_audit(req_path: Path, runner=None, pip_audit_path: str | None = None) -> list[dict]:
     """Ejecuta pip-audit y devuelve una fila por advisory."""
     if runner is None:
-        if shutil.which("pip-audit") is None:
+        if pip_audit_path is None:
+            pip_audit_path = shutil.which("pip-audit")
+        if pip_audit_path is None:
             raise RuntimeError(
                 "pip-audit no esta instalado (P0.18); instalalo en el usuario, no global"
             )
 
         def runner():
             return subprocess.run(
-                ["pip-audit", "--no-deps", "-f", "json", "-r", str(req_path)],
+                [pip_audit_path, "--no-deps", "-f", "json", "-r", str(req_path)],
                 capture_output=True, text=True, timeout=300, check=False,
             )
 
@@ -119,10 +121,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--requirements", default=str(DEFAULT_REQ), help="requirements/lock a auditar")
     parser.add_argument("--offline", action="store_true", help="No consultar OSV (sin CVSS)")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
+    parser.add_argument("--pip-audit-path", default=None, help="Ruta al ejecutable pip-audit (ej. .venv-audit/Scripts/pip-audit)")
     args = parser.parse_args(argv)
 
     try:
-        filas = run_pip_audit(Path(args.requirements))
+        filas = run_pip_audit(Path(args.requirements), pip_audit_path=args.pip_audit_path)
         filas = enriquecer(filas, offline=args.offline)
     except RuntimeError as exc:
         print(f"Error: {exc}", file=sys.stderr)
