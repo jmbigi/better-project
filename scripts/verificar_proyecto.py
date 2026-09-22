@@ -477,6 +477,43 @@ def _check_sbom() -> bool:
     return run_cmd([sys.executable, "scripts/generate_sbom.py", "--check"]).returncode == 0
 
 
+def _check_coverage() -> bool:
+    """Ejecuta tests con coverage y verifica umbral >= 30% en scripts/ (inicial, subir progresivamente)."""
+    # Ejecutar tests con coverage solo en scripts/ - solo tests que cubren scripts/
+    result = run_cmd([
+        sys.executable, "-m", "coverage", "run",
+        "--source=scripts",
+        "-m", "unittest",
+        "tests.test_ecosistema.TestDocValidator",
+        "tests.test_ecosistema.TestIndexKnowledge",
+        "tests.test_ecosistema.TestMCPServer",
+        "tests.test_ecosistema.TestLessonsExtractor",
+        "tests.test_ecosistema.TestJevLlama",
+        "-q"
+    ])
+    if result.returncode != 0:
+        print("  [FALLO] coverage: tests fallaron")
+        return False
+    # Obtener reporte y parsear total
+    report_result = run_cmd([sys.executable, "-m", "coverage", "report", "--format=total"])
+    if report_result.returncode != 0:
+        print("  [FALLO] coverage: no se pudo obtener reporte")
+        return False
+    try:
+        total_line = report_result.stdout.strip().splitlines()[-1]
+        coverage_pct = int(total_line.strip())
+    except (IndexError, ValueError):
+        print("  [FALLO] coverage: formato de reporte inesperado")
+        return False
+    # Umbral inicial 30% (subir progresivamente a 80%)
+    threshold = 30
+    if coverage_pct < threshold:
+        print(f"  [FALLO] coverage: {coverage_pct}% < {threshold}%")
+        return False
+    print(f"  [OK] coverage: {coverage_pct}% >= {threshold}%")
+    return True
+
+
 # == 5. Repositorio ==
 def _check_hook_installed(name: str) -> bool:
     hook_script = ROOT / "scripts" / "hooks" / name
@@ -579,6 +616,7 @@ def main():
     check("retrieval quality recall@10 >= 0.7", _check_retrieval_quality)
     check("suite de tests del ecosistema (aislada por proceso)", _run_tests_isolated)
     check("SBOM regenerable (Syft CycloneDX/SPDX)", _check_sbom)
+    check("coverage >= 80% en scripts/", _check_coverage)
     if not args.lite:
         check("demo valida con --root", _run_doc_validator_demo)
         check("ADRs validos + auditoria de sesgos (REQ-013)", _run_adr_validator)
