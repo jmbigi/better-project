@@ -406,4 +406,16 @@ hechos.
 archivos de prueba (`rm -rf /tmp/opencode/permtests`), el deny `rm -rf *` lo
 BLOQUEÓ — el ruleset se aplica a los artefactos del propio agente; la limpieza de
 artefactos temporales queda como tarea humana (pendiente: `/tmp/opencode/permtests`).
-**Estado**: cerrada.
+**Lección 4 (auto-evaluación sin baselines externas)**: la evaluación previa del proyecto
+dio 87/100 con metodología circular: las herramientas del proyecto puntuando al propio
+proyecto, sin baselines externas, sin mutation score, sin coverage real, sin verificación
+de suite de tests. Esto generó scores inflados (compliance 100 con reglas P0 internas
+violadas, seguridad 92 con advisories "documentados" pero no mitigados, tests 85 con
+suite rota y 5 tests fuera de clase). **Solución**: construir rubrica explicita con
+pesos por categoría, baselines externas (mutation score ≥80%, coverage ≥85%, P0 violations
+0) y checklist de honestidad (CHECKLIST.md items 101-103). Scores ajustados a ~77/100:
+"Sólido con deudas críticas". **Evidencia**: rubrica `.docs/rubric-evaluacion.md`, reporte
+de hallazgos en esta misma sección, CHECKLIST.md actualizada con items de verificación
+de evaluación honesta. **Lección**: toda auto-evaluación debe tener baselines externas
+obligatorias y declaraciones de limitaciones; sino es auto-complacencia, no auditoría.
+**Estado**: cerrada. Lección registrada para futuras evaluaciones (REQ-020/P1.31).
