@@ -26,3 +26,5 @@ venv/
 
 # Demo: artefacto de runtime
 demo/src/notas.json
+.venv-audit/
+
