@@ -473,6 +473,10 @@ def _run_diagnostico() -> bool:
     return run_cmd([sys.executable, "scripts/diagnostico.py", "--root", ".", "--min-score", "80"]).returncode == 0
 
 
+def _check_sbom() -> bool:
+    return run_cmd([sys.executable, "scripts/generate_sbom.py", "--check"]).returncode == 0
+
+
 # == 5. Repositorio ==
 def _check_hook_installed(name: str) -> bool:
     hook_script = ROOT / "scripts" / "hooks" / name
@@ -574,6 +578,7 @@ def main():
     check("indice de conocimiento generable", _check_knowledge_index)
     check("retrieval quality recall@10 >= 0.7", _check_retrieval_quality)
     check("suite de tests del ecosistema (aislada por proceso)", _run_tests_isolated)
+    check("SBOM regenerable (Syft CycloneDX/SPDX)", _check_sbom)
     if not args.lite:
         check("demo valida con --root", _run_doc_validator_demo)
         check("ADRs validos + auditoria de sesgos (REQ-013)", _run_adr_validator)
