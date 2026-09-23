@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+import adr_backfill as ab  # noqa: E402
 import adr_validator as av  # noqa: E402
 import analyze_shell as ash  # noqa: E402
 import audit_advisories as aadm  # noqa: E402
@@ -34,6 +35,7 @@ import auto_audit as aa  # noqa: E402
 import diagnostico as diag  # noqa: E402
 import download_jev_model as djm  # noqa: E402
 import doc_validator as dv  # noqa: E402
+import health_dashboard as hd  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import jev_calibration as jc  # noqa: E402
 import jev_calibration_merge as jcm  # noqa: E402
@@ -3461,6 +3463,245 @@ class TestAuditAdvisories(unittest.TestCase):
         output = json.loads(out.getvalue())
         self.assertEqual(output[0]["advisory"], "A")
         self.assertEqual(output[0]["cvss"], "(offline)")
+
+
+class TestAdrBackfill(unittest.TestCase):
+    """REQ-025: backfill de ADR desde historial Git, lecciones y pruebas."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.lessons = self.tmp / "lessons"
+        self.lessons.mkdir()
+        self.pruebas = self.tmp / "PRUEBAS.md"
+        self.adr = self.tmp / "decisions"
+        for attr, value in (
+            ("LESSONS_DIR", self.lessons),
+            ("PRUEBAS_FILE", self.pruebas),
+            ("ADR_DIR", self.adr),
+        ):
+            patcher = mock.patch.object(ab, attr, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _commit_decision(self):
+        return [{
+            "sha": "abc12345",
+            "date": "2026-09-01",
+            "subject": "adoptar sqlite como backend del indice",
+        }]
+
+    def _leccion(self, entry_id: str = "LSN-100") -> None:
+        (self.lessons / "2026.yaml").write_text(
+            f"- id: {entry_id}\n"
+            "  proyecto: demo\n  fase: Diseno\n  categoria: Riesgo_Tecnico\n"
+            "  problema: el cache crece sin limite\n"
+            "  recomendacion: usar un backend de cache con expiracion\n"
+            "  estado: Resuelta\n  fecha: 2026-09-01\n",
+            encoding="utf-8",
+        )
+
+    def test_commit_decision_es_candidato(self):
+        with mock.patch.object(ab, "run_git_log", self._commit_decision):
+            candidatos = ab.generate_candidates()
+        self.assertEqual(len(candidatos), 1)
+        self.assertEqual(candidatos[0]["source"], "Commit abc12345")
+        self.assertTrue(candidatos[0]["titulo"].startswith("Adopción de sqlite"))
+
+    def test_leccion_source_sin_doble_prefijo(self):
+        self._leccion("LSN-100")
+        with mock.patch.object(ab, "run_git_log", return_value=[]):
+            candidatos = ab.generate_candidates()
+        self.assertEqual([c["source"] for c in candidatos], ["LSN-100"])
+
+    def test_varias_lecciones_se_extraen_incluida_la_primera(self):
+        (self.lessons / "2026.yaml").write_text(
+            "- id: LSN-101\n  problema: el cache crece\n"
+            "  recomendacion: usar un backend de cache\n  categoria: C1\n  fecha: 2026-09-01\n"
+            "- id: LSN-102\n  problema: la cola se satura\n"
+            "  recomendacion: usar una cola con limite\n  categoria: C2\n  fecha: 2026-09-02\n",
+            encoding="utf-8",
+        )
+        with mock.patch.object(ab, "run_git_log", return_value=[]):
+            candidatos = ab.generate_candidates()
+        self.assertEqual([c["source"] for c in candidatos], ["LSN-101", "LSN-102"])
+
+    def test_ronda_con_correccion_es_candidata(self):
+        self.pruebas.write_text(
+            "## Ronda 7\n\nCorrección: migrar el indice a sqlite\n", encoding="utf-8"
+        )
+        with mock.patch.object(ab, "run_git_log", return_value=[]):
+            candidatos = ab.generate_candidates()
+        self.assertEqual([c["source"] for c in candidatos], ["Ronda 7"])
+
+    def test_list_no_escribe(self):
+        self._leccion()
+        with mock.patch.object(ab, "run_git_log", return_value=[]), \
+             mock.patch.object(sys, "stdout", io.StringIO()) as out:
+            self.assertEqual(ab.main(["--list"]), 0)
+        self.assertIn("Candidatos encontrados: 1", out.getvalue())
+        self.assertIn("[LSN-100]", out.getvalue())
+        self.assertFalse(self.adr.exists())
+
+    def test_dry_run_previsualiza_sin_escribir(self):
+        self._leccion()
+        with mock.patch.object(ab, "run_git_log", return_value=[]), \
+             mock.patch.object(sys, "stdout", io.StringIO()) as out:
+            self.assertEqual(ab.main(["--dry-run"]), 0)
+        self.assertIn("DRY RUN", out.getvalue())
+        self.assertIn("ADR-001", out.getvalue())
+        self.assertFalse(self.adr.exists())
+
+    def test_write_crea_borrador_con_todas_las_secciones(self):
+        self._leccion()
+        with mock.patch.object(ab, "run_git_log", return_value=[]), \
+             mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(ab.main(["--write"]), 0)
+        archivos = sorted(self.adr.glob("ADR-*.md"))
+        self.assertEqual(len(archivos), 1)
+        contenido = archivos[0].read_text(encoding="utf-8")
+        for seccion in ("## Contexto", "## Alternativas consideradas", "## Decision",
+                        "## Consecuencias", "## Supuestos", "## Metricas de exito",
+                        "## Pre-mortem", "## Referencias"):
+            self.assertIn(seccion, contenido)
+        self.assertIn("id: ADR-001", contenido)
+
+    def test_write_es_idempotente_por_titulo(self):
+        self._leccion()
+        with mock.patch.object(ab, "run_git_log", return_value=[]), \
+             mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(ab.main(["--write"]), 0)
+        with mock.patch.object(ab, "run_git_log", return_value=[]), \
+             mock.patch.object(sys, "stdout", io.StringIO()) as out:
+            self.assertEqual(ab.main(["--write"]), 0)
+        self.assertEqual(len(list(self.adr.glob("ADR-*.md"))), 1)
+        self.assertIn("[SKIP]", out.getvalue())
+
+    def test_sin_candidatos_retorna_cero(self):
+        with mock.patch.object(ab, "run_git_log", return_value=[]), \
+             mock.patch.object(sys, "stdout", io.StringIO()) as out:
+            self.assertEqual(ab.main([]), 0)
+        self.assertIn("No se encontraron candidatos", out.getvalue())
+
+    def test_get_next_adr_num_continua_serie(self):
+        self.adr.mkdir()
+        (self.adr / "ADR-012-existente.md").write_text(
+            "---\nid: ADR-012\ntitulo: existente\nestado: Aceptado\nfecha: 2026-09-01\n---\n",
+            encoding="utf-8",
+        )
+        self.assertEqual(ab.get_next_adr_num(), 13)
+
+
+class TestHealthDashboard(unittest.TestCase):
+    """REQ-024: dashboard de KPIs en docs/health.md."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        for attr, value in (
+            ("HISTORY", self.tmp / "health_runs.jsonl"),
+            ("HEALTH_MD", self.tmp / "health.md"),
+        ):
+            patcher = mock.patch.object(hd, attr, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _reporte(self, fecha="2026-09-01", onboarding=60.0, ci=300.0, mut=0.9):
+        return {
+            "fecha": fecha,
+            "onboarding_segundos": onboarding,
+            "reqs_trazados_pct": 95.0,
+            "reqs_implementados_con_refs": 19,
+            "reqs_no_deprecados": 20,
+            "mutation_score": mut,
+            "ci_segundos": ci,
+            "producto_pct": 12.5,
+            "sloc_producto": 25,
+            "sloc_tooling": 175,
+        }
+
+    def test_estado_segun_meta_y_direccion(self):
+        self.assertEqual(hd._estado(None, 1.0, True), "n/d")
+        self.assertEqual(hd._estado(0.9, 0.85, True), "OK")
+        self.assertEqual(hd._estado(0.8, 0.85, True), "FUERA")
+        self.assertEqual(hd._estado(500.0, 600.0, False), "OK")
+        self.assertEqual(hd._estado(700.0, 600.0, False), "FUERA")
+
+    def test_kpi_reqs_trazados_excluye_deprecados(self):
+        reqs = {
+            "REQ-1": {"meta": {"estado": "Implementado"}},
+            "REQ-2": {"meta": {"estado": "Implementado"}},
+            "REQ-3": {"meta": {"estado": "Aprobado"}},
+            "REQ-4": {"meta": {"estado": "Deprecado"}},
+        }
+        pct, con_refs, total = hd.kpi_reqs_trazados(reqs, {"REQ-1": ["scripts/x.py"]})
+        self.assertEqual((con_refs, total), (1, 3))
+        self.assertAlmostEqual(pct, 100.0 / 3, places=4)
+
+    def test_registrar_conserva_ultimos_diez(self):
+        for i in range(12):
+            hd.registrar(self._reporte(fecha=f"2026-09-{i + 1:02d}"))
+        historial = hd.cargar_historial()
+        self.assertEqual(len(historial), hd.MAX_RUNS)
+        self.assertEqual(historial[0]["fecha"], "2026-09-03")
+        self.assertEqual(historial[-1]["fecha"], "2026-09-12")
+
+    def test_render_md_incluye_cinco_kpis_meta_y_tendencia(self):
+        hd.registrar(self._reporte())
+        md = hd.render_md(hd.cargar_historial())
+        for etiqueta in ("Onboarding", "REQs trazados", "Mutation score",
+                         "Tiempo CI", "Coste mantenimiento"):
+            self.assertIn(etiqueta, md)
+        self.assertIn("Meta", md)
+        self.assertIn("Tendencia (ultimos 10 runs)", md)
+        self.assertIn("n/d", hd.render_md([{"fecha": "s/f"}]))
+
+    def test_main_escribe_dashboard_e_historial(self):
+        with mock.patch.object(hd, "kpi_mutation", return_value=0.9), \
+             mock.patch.object(sys, "stdout", io.StringIO()) as out:
+            self.assertEqual(
+                hd.main(["--onboarding-seconds", "60", "--ci-seconds", "300"]), 0
+            )
+        self.assertTrue(hd.HEALTH_MD.exists())
+        self.assertIn("REQs trazados", hd.HEALTH_MD.read_text(encoding="utf-8"))
+        self.assertEqual(len(hd.cargar_historial()), 1)
+        self.assertIn("Dashboard generado", out.getvalue())
+
+    def test_main_json(self):
+        with mock.patch.object(hd, "kpi_mutation", return_value=0.9), \
+             mock.patch.object(sys, "stdout", io.StringIO()) as out:
+            self.assertEqual(
+                hd.main(["--json", "--mutation-score", "0.95", "--fecha", "2026-09-02"]),
+                0,
+            )
+        reporte = json.loads(out.getvalue())
+        self.assertEqual(reporte["mutation_score"], 0.95)
+        self.assertEqual(reporte["fecha"], "2026-09-02")
+        self.assertIn("reqs_trazados_pct", reporte)
+
+    def test_main_usa_kpi_mutation_cuando_no_se_pasa(self):
+        with mock.patch.object(hd, "kpi_mutation", return_value=0.77) as km, \
+             mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(hd.main([]), 0)
+        km.assert_called_once()
+        self.assertEqual(hd.cargar_historial()[-1]["mutation_score"], 0.77)
+
+    def test_kpi_producto_con_sloc(self):
+        (self.tmp / "scripts").mkdir()
+        (self.tmp / "demo").mkdir()
+        (self.tmp / "scripts" / "tool.py").write_text(
+            "# comentario\nx = 1\n\n", encoding="utf-8"
+        )
+        (self.tmp / "demo" / "app.py").write_text(
+            "y = 2\n# nota\nz = 3\n", encoding="utf-8"
+        )
+        pct, prod, tool = hd.kpi_producto(self.tmp)
+        self.assertEqual((prod, tool), (2, 1))
+        self.assertAlmostEqual(pct, 200.0 / 3, places=4)
 
 
 if __name__ == "__main__":

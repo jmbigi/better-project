@@ -412,6 +412,7 @@ if recall < 0.7:
     sys.exit(1)
 "
 check "suite de tests del ecosistema (aislada por proceso)" bash -c "python3 scripts/run_tests_isolated.py"
+check "dashboard de salud con 5 KPIs y metas (REQ-024)" bash -c "test -f docs/health.md && grep -q 'Onboarding' docs/health.md && grep -q 'REQs trazados' docs/health.md && grep -q 'Mutation score' docs/health.md && grep -q 'Tiempo CI' docs/health.md && grep -q 'Coste mantenimiento' docs/health.md && grep -q 'Meta' docs/health.md"
 if [ "$LITE_MODE" = "false" ]; then
     check "demo valida con --root" bash -c "python3 scripts/doc_validator.py --root demo"
     check "ADRs validos + auditoria de sesgos (REQ-013)" bash -c "python3 scripts/adr_validator.py"

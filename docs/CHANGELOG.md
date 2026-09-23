@@ -51,10 +51,12 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
 - La suite de tests se ejecuta aislada por proceso por defecto (REQ-026) para
   evitar OOM con las dependencias opcionales; alternativa in-process con
   `python3 -m unittest discover -s tests -q`.
-- Gate de cobertura del CI ajustado a ≥ 85% (medido 89% con
-  `pytest --cov=scripts`, `.coveragerc` omite scripts manuales).
-- REQ-024 (dashboard de KPIs) y REQ-025 (backfill de ADR) permanecen en
-  estado **Draft**.
+- Gate de cobertura del CI ajustado a ≥ 85% (medido 88% el 23-09-2026 con
+  `pytest --cov=scripts`; `.coveragerc` omite los módulos que la suite solo
+  ejercita como subproceso).
+- Dashboard de KPIs (REQ-024) implementado: `docs/health.md` regenerado por
+  `scripts/ci.sh` con 5 KPIs, metas y tendencia; REQ-025 (backfill de ADR)
+  pasa a **Implementado** (borradores con idempotencia por titulo).
 
 ### Corregido
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """adr_backfill.py — Genera borradores de ADR retroactivos desde historial Git y lecciones.
 
+# REQ-025
 # Propuesta Fase 2 Pilar 4
 
 Analiza:
@@ -151,7 +152,12 @@ def extract_lessons_decisions() -> list[dict]:
         content = year_file.read_text(encoding="utf-8")
         # Parse simple de YAML (cada entrada empieza con "- id:")
         entries = re.split(r"\n- id:", content)
-        for entry in entries[1:]:  # skip first split
+        for entry in entries:
+            entry = entry.strip()
+            if not entry:
+                continue
+            if entry.startswith("- id:"):
+                entry = entry[len("- id:"):].strip()
             lines = entry.split("\n")
             entry_data = {"id": lines[0].strip()}
             for line in lines[1:]:
@@ -163,8 +169,11 @@ def extract_lessons_decisions() -> list[dict]:
             recomendacion = entry_data.get("recomendacion", "")
             categoria = entry_data.get("categoria", "")
             if any(kw in (problema + recomendacion).lower() for kw in ARCH_KEYWORDS):
+                lsn_id = entry_data["id"]
+                if not lsn_id.startswith("LSN-"):
+                    lsn_id = f"LSN-{lsn_id}"
                 decisions.append({
-                    "source": f"LSN-{entry_data['id']}",
+                    "source": lsn_id,
                     "date": entry_data.get("fecha", ""),
                     "titulo": f"Lección {categoria}: {problema[:60]}",
                     "contexto": f"Problema: {problema}\nRecomendación: {recomendacion}",
@@ -206,6 +215,16 @@ def get_next_adr_num() -> int:
         if match:
             nums.append(int(match.group(1)))
     return max(nums, default=0) + 1
+
+
+def titulos_existentes() -> set[str]:
+    """Titulos ya registrados en ADR: --write no duplica borradores (REQ-025)."""
+    titulos = set()
+    for f in ADR_DIR.glob("ADR-*.md"):
+        match = re.search(r"^titulo:\s*(.+)$", f.read_text(encoding="utf-8"), re.MULTILINE)
+        if match:
+            titulos.add(match.group(1).strip().lower())
+    return titulos
 
 
 def generate_candidates() -> list[dict]:
@@ -275,11 +294,16 @@ def main(argv: list[str] | None = None) -> int:
 
     # Escribir borradores
     ADR_DIR.mkdir(parents=True, exist_ok=True)
+    existentes = titulos_existentes()
     for i, c in enumerate(candidates):
         num = get_next_adr_num() + i
         safe_title = re.sub(r"[^\w\s-]", "", c["titulo"]).strip().replace(" ", "-").lower()[:50]
         fname = f"ADR-{num:03d}-{safe_title}.md"
         fpath = ADR_DIR / fname
+
+        if c["titulo"].strip().lower() in existentes:
+            print(f"[SKIP] ya existe un ADR con el titulo: {c['titulo']}")
+            continue
 
         if fpath.exists():
             print(f"[SKIP] {fname} ya existe")
@@ -317,6 +341,7 @@ def main(argv: list[str] | None = None) -> int:
             ref_2="ADR-XXX o documento relacionado.",
         )
         fpath.write_text(content, encoding="utf-8")
+        existentes.add(c["titulo"].strip().lower())
         print(f"[CREADO] {fname}")
 
     print(f"\n{len(candidates)} borradores creados en {ADR_DIR}")

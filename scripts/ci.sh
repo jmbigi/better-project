@@ -5,6 +5,7 @@
 set -u
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)" || exit 1
 cd "$REPO_ROOT" || exit 1
+CI_START_TS="$(date +%s)"  # KPI 1/4 (REQ-024): onboarding y tiempo CI
 
 fail() {
     echo "[CI ERROR] $1" >&2
@@ -55,13 +56,14 @@ BETTER_TEST_INTEGRACION=1 python3 scripts/run_tests_isolated.py || fail "suite d
 echo "== CI local: verificacion completa =="
 BETTER_TEST_INTEGRACION=1 bash scripts/verificar-proyecto.sh --pre-commit \
     || fail "verificar-proyecto.sh en rojo"
+ONBOARDING_SECONDS=$(( $(date +%s) - CI_START_TS ))  # KPI 1: clone -> verifier verde
 
 echo "== CI local: type checking (mypy strict on tests) =="
 mypy --config-file mypy.ini tests/ || fail "mypy --strict en tests en rojo"
 
-echo "== CI local: coverage gate 85% (objetivo >=85%, medido 89% el 21-09-2026) =="
-# .coveragerc omite scripts manuales/no cubiertos (adr_backfill, en Draft, y
-# runners). El umbral 90% previo era inalcanzable con la suite actual (P0.1).
+echo "== CI local: coverage gate 85% (objetivo >=85%, medido 88% el 23-09-2026) =="
+# .coveragerc omite los runners que invocan subprocesos (medirlos distorsiona
+# el KPI). El umbral 90% previo era inalcanzable con la suite actual (P0.1).
 python3 -m pytest --cov=scripts --cov-fail-under=85 -q || fail "coverage bajo 85%"
 
 echo "== CI local: verificacion hooks git (hash parity) =="
@@ -71,8 +73,11 @@ done
 echo "  [OK] hooks sincronizados"
 
 echo "== CI local: mutacion multi-modulo (REQ-015) =="
-python3 scripts/mutation_check.py --batch --strict --umbral 0.8 \
-    || fail "mutation_check --batch por debajo del umbral 0.8"
+MUT_JSON="$(python3 scripts/mutation_check.py --batch --strict --umbral 0.85 --json)" \
+    || fail "mutation_check --batch por debajo del umbral 0.85"
+MUT_SCORE="$(printf '%s' "$MUT_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin)["score"])')" \
+    || fail "no se pudo leer el mutation score"
+echo "  [OK] mutation score: $MUT_SCORE"
 
 if [ "${AUDIT:-0}" = "1" ]; then
     echo "== CI local: advisories con severidad (AUDIT=1, REQ-020) =="
@@ -80,6 +85,14 @@ if [ "${AUDIT:-0}" = "1" ]; then
         || echo "  [AVISO] auditoria no completada (pip-audit/red); no bloquea el CI"
 fi
 
+echo "== CI local: dashboard de salud (REQ-024) =="
+cd "$REPO_ROOT" || fail "no se pudo volver al repo"
+python3 scripts/health_dashboard.py \
+    --onboarding-seconds "$ONBOARDING_SECONDS" \
+    --ci-seconds "$(( $(date +%s) - CI_START_TS ))" \
+    --mutation-score "$MUT_SCORE" \
+    || fail "no se pudo generar docs/health.md"
+
 echo
 echo "CI local VERDE. Copia limpia conservada en: $EXPORT_DIR"
-echo "(borrala manualmente cuando quieras; no se auto-elimina, P0.3)"
+echo "(docs/health.md regenerado en el repo; la copia se borra manualmente, P0.3)"

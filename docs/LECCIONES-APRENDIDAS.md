@@ -437,3 +437,22 @@ fuera del repo replica el setUp del test y corre la suite in-process con cada in
 python3, 4 con python); `ruff check` verde. **Lección**: verificar la suite con todos los
 intérpretes que usan los hooks, no solo con el preferido; un skip explícito es mejor que un
 mock de la bandera interna cuando falta la dependencia opcional.
+
+## 2026-09-23 - El KPI de cobertura publicado (89%) no era reproducible: medir con el comando exacto del CI
+
+**Contexto**: GOVERNANCE.md y docs/CHANGELOG.md citaban 89% (2632/2945, 21-09-2026) como
+cobertura de `scripts/`; el verificador no medía esa cifra (su gate es 30%) y el CI local
+(gate 85%) la daba por buena sin re-medirla.
+**Problema**: al medir con `pytest --cov=scripts` la cobertura real era 75.82%: el
+`.coveragerc` omitía solo `adr_backfill.py` y dejaba dentro 5 módulos que la suite ejercita
+únicamente como subproceso (0% in-process), además de arrastrar artefactos de una
+configuración anterior. Una métrica publicada sin comando reproducible no es evidencia (P0.1).
+**Solución**: declarar omitidos en `.coveragerc` los módulos solo-subproceso (generate_sbom,
+run_tests_isolated, test_determinism, test_safe_wrappers, verificar_proyecto) con su
+justificación; `adr_backfill` ya no se omite (tiene 10 tests, 86%); re-medir con el comando
+exacto del CI y actualizar GOVERNANCE.md, ci.sh y CHANGELOG.
+**Evidencia**: `python -m pytest --cov=scripts --cov-fail-under=85 -q` → 382 passed,
+3 skipped en 95.36s; TOTAL 3281 stmts, 403 miss, **87.72%** ("Required test coverage of 85%
+reached"), 23-09-2026. **Lección**: una cifra de cobertura vale lo que vale su comando;
+declarar qué queda fuera del denominador es parte del KPI, y toda cifra publicada debe
+re-medirse antes de citarla.

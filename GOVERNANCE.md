@@ -120,10 +120,10 @@ Si el maintainer principal no está disponible:
 
 ## Métricas de salud del proyecto
 
-| Métrica | Objetivo | Actual (21-09-2026) | Herramienta / comando |
+| Métrica | Objetivo | Actual (23-09-2026) | Herramienta / comando |
 |---------|----------|---------------------|-----------------------|
-| Cobertura scripts | ≥ 85% | 89% (2632/2945) | `pytest --cov=scripts` (omite scripts manuales vía `.coveragerc`) |
-| Mutation score (batch) | ≥ 0.8 | 0.898 (168/187) | `python3 scripts/mutation_check.py --batch --strict` |
+| Cobertura scripts | ≥ 85% | 88% (2878/3281, 23-09-2026) | `pytest --cov=scripts` (omite módulos solo-subproceso vía `.coveragerc`) |
+| Mutation score (batch) | ≥ 0.85 | 0.872 (batch, 23-09-2026) | `python3 scripts/mutation_check.py --batch --strict` |
 | Recall@10 retrieval | ≥ 0.7 | check en verde | `verificar-proyecto.sh` (REQ-002) |
 | ADRs con alertas | 0 | 0 (8 ADR) | `python3 scripts/adr_validator.py` |
 | Lecciones abiertas > 180 días | 0 | 0 (2 abiertas, recientes) | `python3 scripts/auto_audit.py decisiones` |

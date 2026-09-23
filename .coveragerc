@@ -1,9 +1,12 @@
 [run]
-# Cobertura de los modulos con test acoplado. Se omiten las herramientas
-# manuales/no cubiertas por la suite: adr_backfill.py (REQ-025, Draft) y los
-# runners que invocan subprocesos. Medirlos distorsiona el KPI de cobertura.
+# Cobertura de los modulos con test acoplado. Se omiten los modulos que la
+# suite solo ejercita como subproceso (verificar_proyecto, generate_sbom y los
+# runners): su cobertura in-process es 0% por construccion y distorsionaria el
+# KPI. La funcionalidad de esos modulos se verifica con tests de subproceso
+# (p. ej. TestVerificador ejecuta verificar_proyecto.py de punta a punta).
 omit =
-    scripts/adr_backfill.py
+    scripts/generate_sbom.py
     scripts/run_tests_isolated.py
     scripts/test_determinism.py
     scripts/test_safe_wrappers.py
+    scripts/verificar_proyecto.py

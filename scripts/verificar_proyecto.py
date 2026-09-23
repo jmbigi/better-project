@@ -461,6 +461,25 @@ def _check_sbom() -> bool:
     return run_cmd([sys.executable, "scripts/generate_sbom.py", "--check"]).returncode == 0
 
 
+def _check_health_dashboard() -> bool:
+    """docs/health.md versionado con los 5 KPIs y sus metas (REQ-024)."""
+    ruta = ROOT / "docs" / "health.md"
+    if not ruta.exists():
+        print("  [FALLO] falta docs/health.md (genera con scripts/health_dashboard.py)")
+        return False
+    contenido = ruta.read_text(encoding="utf-8")
+    faltan = [
+        etiqueta
+        for etiqueta in ("Onboarding", "REQs trazados", "Mutation score",
+                         "Tiempo CI", "Coste mantenimiento", "Meta")
+        if etiqueta not in contenido
+    ]
+    if faltan:
+        print(f"  [FALLO] docs/health.md sin: {', '.join(faltan)}")
+        return False
+    return True
+
+
 def _check_coverage() -> bool:
     """Ejecuta tests con coverage y verifica umbral >= 30% en scripts/ (inicial, subir progresivamente)."""
     # Si el interprete actual no tiene coverage, se omite con mensaje explicito (P0.5: no instalar sin orden)
@@ -605,6 +624,7 @@ def main():
     check("retrieval quality recall@10 >= 0.7", _check_retrieval_quality)
     check("suite de tests del ecosistema (aislada por proceso)", _run_tests_isolated)
     check("SBOM regenerable (Syft CycloneDX/SPDX)", _check_sbom)
+    check("dashboard de salud con 5 KPIs y metas (REQ-024)", _check_health_dashboard)
     check("coverage >= 30% en scripts/ (gate inicial)", _check_coverage)
     if not args.lite:
         check("demo valida con --root", _run_doc_validator_demo)
