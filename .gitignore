@@ -28,3 +28,11 @@ venv/
 demo/src/notas.json
 .venv-audit/
 
+# Herramientas locales y artefactos generados (no versionar)
+/.local/
+/sbom/
+/release.json
+/commit_msg*.txt
+/find_syft_url.py
+/install_syft.ps1
+/test_*.py
