@@ -35,37 +35,37 @@ except ImportError:
         COLOR_WHITE = 7
         A_BOLD = 1
         A_DIM = 2
-        
+
         @staticmethod
         def has_colors():
             return True
-        
+
         @staticmethod
         def start_color():
             pass
-        
+
         @staticmethod
         def use_default_colors():
             pass
-        
+
         @staticmethod
         def init_pair(*args):
             pass
-        
+
         @staticmethod
         def color_pair(*args):
             return 0
-        
+
         @staticmethod
         def curs_set(*args):
             pass
-        
+
         @staticmethod
         def wrapper(func):
             # In real usage without curses, this would fail.
             # In tests, this is mocked to return 0.
             return func(None)
-    
+
     # Create module-like object for mock.patch.object to work
     import types
     curses = types.ModuleType("curses")

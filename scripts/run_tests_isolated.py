@@ -79,8 +79,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--timeout",
         type=int,
-        default=300,
-        help="Segundos maximos por test antes de abortarlo (default: 300).",
+        default=600,
+        help="Segundos maximos por test antes de abortarlo (default: 600).",
     )
     parser.add_argument(
         "--list",

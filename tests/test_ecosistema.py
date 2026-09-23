@@ -296,6 +296,8 @@ class TestLessonsExtractor(unittest.TestCase):
 
     def test_parse_yaml_con_yaml_disponible(self):
         # Verifica que _parse_yaml usa yaml.safe_load cuando esta disponible
+        if not le.HAS_YAML:
+            self.skipTest("PyYAML no instalado")
         with mock.patch.object(le, "HAS_YAML", True):
             data = le._parse_yaml("- id: LSN-001\n  estado: Resuelta\n")
             self.assertEqual(len(data), 1)
@@ -310,12 +312,16 @@ class TestLessonsExtractor(unittest.TestCase):
 
     def test_validate_yaml_parse_error(self):
         # YAML invalido genera problema
+        if not le.HAS_YAML:
+            self.skipTest("PyYAML no instalado")
         self._yaml("{invalid yaml: [}")
         _, problems = le.validate()
         self.assertTrue(any("no se puede parsear" in p for p in problems))
 
     def test_validate_entrada_no_mapa(self):
         # Entrada que no es un mapa genera problema
+        if not le.HAS_YAML:
+            self.skipTest("PyYAML no instalado")
         self._yaml("- 'no es un mapa'\n")
         _, problems = le.validate()
         self.assertTrue(any("no es un mapa" in p for p in problems))
@@ -1178,7 +1184,7 @@ class TestIntegracionHook(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.repo = self.tmp / "repo"
         ignore = shutil.ignore_patterns(
-            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", "venv"
+            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", ".venv-audit", "venv"
         )
         shutil.copytree(ROOT, self.repo, ignore=ignore)
 
@@ -1191,6 +1197,9 @@ class TestIntegracionHook(unittest.TestCase):
         # La guarda se exporta al entorno para que la suite que el verificador
         # ejecuta DENTRO de la copia omita este mismo test (sin recursion).
         os.environ["BETTER_TEST_INTEGRACION"] = "1"
+        # La mutacion ya corre en la verificacion externa: dentro de la copia
+        # se omite (guarda BETTER_MUTATION_ACTIVE) para no duplicarla.
+        os.environ["BETTER_MUTATION_ACTIVE"] = "1"
         try:
             self.assertEqual(self._git("init", "-q").returncode, 0)
             self._git("config", "user.email", "dummy@example.com")
@@ -1228,6 +1237,7 @@ class TestIntegracionHook(unittest.TestCase):
             self.assertEqual(len(log), 2)
         finally:
             os.environ.pop("BETTER_TEST_INTEGRACION", None)
+            os.environ.pop("BETTER_MUTATION_ACTIVE", None)
 
 
 class TestVerificador(unittest.TestCase):
@@ -1241,7 +1251,7 @@ class TestVerificador(unittest.TestCase):
         tmp = Path(tempfile.mkdtemp())
         repo = tmp / "repo"
         ignore = shutil.ignore_patterns(
-            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", "venv"
+            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", ".venv-audit", "venv"
         )
         shutil.copytree(ROOT, repo, ignore=ignore)
         subprocess.run(["git", "init", "-q"], cwd=repo, check=True)

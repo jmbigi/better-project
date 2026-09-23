@@ -328,3 +328,13 @@
   estado: Resuelta
   fecha: 2026-09-21
   fecha_resolucion: 2026-09-21
+- id: LSN-038
+  proyecto: "Ecosistema (verificacion Windows)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "En Windows conviven dos interpretes: `python` (3.14, con PyYAML) y `python3` (3.12, sin PyYAML); el hook pre-commit y los scripts de shell usan python3. Tres tests de TestLessonsExtractor asumian PyYAML disponible: uno hacia mock de HAS_YAML=True sin que `yaml` estuviera importado (NameError) y dos esperaban errores de parseo que solo produce el backend yaml. La verificacion con `python` daba verde y ocultaba que el hook anidado de TestIntegracionHook fallaba 'suite de tests del ecosistema' sin mostrar detalle."
+  recomendacion: "Los tests de funcionalidad condicionada a dependencias opcionales deben saltarse explicitamente cuando la dependencia falta (self.skipTest) en vez de forzar la bandera interna; verificar la suite con TODOS los interpretes que usan los hooks (python y python3) y, si el mensaje del hook no da detalle, reproducir el fallo con una copia limpia fuera del repo."
+  resolucion: "Anadido self.skipTest('PyYAML no instalado') en test_parse_yaml_con_yaml_disponible, test_validate_yaml_parse_error y test_validate_entrada_no_mapa. Evidencia: TestLessonsExtractor OK con ambos interpretes (python3: 3 skips), suite in-process en copia limpia OK (364 tests, 7 skips con python3; 4 con python), ruff verde."
+  estado: Resuelta
+  fecha: 2026-09-23
+  fecha_resolucion: 2026-09-23

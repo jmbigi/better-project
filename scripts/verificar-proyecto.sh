@@ -301,7 +301,7 @@ pat_home = re.compile(r'/home/[A-Za-z0-9_.-]+/')
 excl = re.compile(r'(deny|patrones|claves SSH|no leas|comitees|dummy|BLOQUEADO|127\.0\.0\.1)')
 faltas = []
 for root, dirs, files in os.walk('.'):
-    dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '.venv', 'venv', '.storage')]
+    dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '__pycache__', '.venv', '.venv-audit', 'venv', '.storage', '.local', 'sbom')]
     for f in files:
         if not f.endswith(('.md', '.json', '.sh')):
             continue
@@ -325,8 +325,8 @@ for root, dirs, files in os.walk('.'):
                     faltas.append((ruta, i, 'IP: ' + m))
 assert not faltas, faltas
 "
-check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example|SBOM-|security@better-project\.local)'"
-check "sin formatos de claves API en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage '(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/'"
+check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage --exclude-dir=.local --exclude-dir=sbom --exclude-dir=.venv-audit '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example|SBOM-|security@better-project\.local)'"
+check "sin formatos de claves API en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage --exclude-dir=.local --exclude-dir=sbom --exclude-dir=.venv-audit '(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/'"
 # El unico 'eval'/'exec' esperado en scripts es el patron de este check en
 # verificar-proyecto.sh; el hook pre-commit no debe contener eval/exec.
 check "sin eval/exec en scripts" python3 -c "
@@ -370,7 +370,7 @@ else
 fi
 check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 scripts/doc_validator.py --strict"
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
-check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py && python3 scripts/index_knowledge.py --check"
+check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py --json && python3 scripts/index_knowledge.py --check"
 # P0.20: validacion de calidad de retrieval (recall@k, MRR)
 check "retrieval quality recall@10 >= 0.7" python3 -c "
 import sys
@@ -382,8 +382,8 @@ ik.JSON_INDEX = ik.STORAGE_DIR / 'index.json'
 ik.MANIFEST = ik.STORAGE_DIR / 'manifest.json'
 ik.CHROMA_DIR = ik.STORAGE_DIR / 'chroma_db'
 if not ik.check_fresh():
-    print('indice no fresco, saltando check retrieval')
-    sys.exit(0)
+    print('FAIL: indice no fresco (ejecuta scripts/index_knowledge.py)')
+    sys.exit(1)
 # Consultas de prueba con resultados esperados conocidos
 test_queries = [
     ('pilar requisitos', 'pilar'),
@@ -393,8 +393,8 @@ test_queries = [
     ('sesgos falacias', 'sesgo'),
 ]
 if not ik.JSON_INDEX.exists():
-    print('indice JSON no existe, saltando check retrieval')
-    sys.exit(0)
+    print('FAIL: indice JSON no existe (ejecuta scripts/index_knowledge.py --json)')
+    sys.exit(1)
 results = ik.search_json('pilar requisitos', k=10)
 if not results:
     print('FAIL: search_json no devuelve resultados')

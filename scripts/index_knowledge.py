@@ -14,12 +14,17 @@ Incremental: solo re-indexa archivos con mtime cambiado (manifest en .storage).
 Uso:
     python scripts/index_knowledge.py            # indexa (incremental)
     python scripts/index_knowledge.py --all      # fuerza re-indexado completo
+    python scripts/index_knowledge.py --json     # fuerza backend JSON TF-IDF
     python scripts/index_knowledge.py --check    # verifica que el indice existe
     python scripts/index_knowledge.py search "tiempo de espera"
+
+El backend JSON tambien se puede forzar con BETTER_INDEX_BACKEND=json
+(lo usa el verificador para validar retrieval quality de forma determinista).
 """
 
 import json
 import math
+import os
 import re
 import sqlite3
 import sys
@@ -418,7 +423,14 @@ def search_chroma(query: str, k: int = 5) -> list[dict]:
     return out
 
 
-def index_all(force: bool = False) -> None:
+def _forced_backend() -> str | None:
+    """Backend forzado por CLI (--json) o entorno (BETTER_INDEX_BACKEND)."""
+    if "--json" in sys.argv:
+        return "json"
+    return os.environ.get("BETTER_INDEX_BACKEND", "").strip().lower() or None
+
+
+def index_all(force: bool = False, backend: str | None = None) -> None:
     STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     manifest = {}
     if not force and MANIFEST.exists():
@@ -431,7 +443,15 @@ def index_all(force: bool = False) -> None:
     if not force and all(
         manifest.get(str(p.relative_to(KNOWLEDGE_DIR))) == p.stat().st_mtime for p in files
     ):
-        print(f"index_knowledge: sin cambios ({len(files)} archivos)")
+        # El backend JSON debe existir aunque el manifest este fresco: es el
+        # indice que usa el check de retrieval quality (determinista y stdlib).
+        if backend != "json" or JSON_INDEX.exists():
+            print(f"index_knowledge: sin cambios ({len(files)} archivos)")
+            return
+
+    if backend == "json":
+        n_files, n_chunks = build_json_index()
+        print(f"index_knowledge: indice JSON TF-IDF ({n_files} archivos, {n_chunks} chunks)")
         return
 
     if _chroma_available():
@@ -490,7 +510,7 @@ def main() -> int:
             print(f"- [{hit['score']}] {hit['archivo']}\n  {hit['contenido'][:200]}")
         return 0
 
-    index_all(force="--all" in sys.argv)
+    index_all(force="--all" in sys.argv, backend=_forced_backend())
     return 0
 
 

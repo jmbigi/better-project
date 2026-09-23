@@ -419,3 +419,21 @@ de hallazgos en esta misma sección, CHECKLIST.md actualizada con items de verif
 de evaluación honesta. **Lección**: toda auto-evaluación debe tener baselines externas
 obligatorias y declaraciones de limitaciones; sino es auto-complacencia, no auditoría.
 **Estado**: cerrada. Lección registrada para futuras evaluaciones (REQ-020/P1.31).
+
+## 2026-09-23 - El hook usa `python3` y la verificación diaria usaba `python`: tres tests que asumían PyYAML
+
+**Contexto**: en este equipo conviven `python` (3.14, con PyYAML) y `python3` (3.12, sin
+PyYAML); el hook pre-commit y los scripts de shell invocan `python3`. La suite con `python`
+daba verde y ocultaba que el hook anidado de `TestIntegracionHook` abortaba el commit de
+prueba con `[FALLO] suite de tests del ecosistema`, sin indicar qué test fallaba.
+**Problema**: `TestLessonsExtractor` tenía tres tests acoplados al backend yaml: uno hacía
+mock de `HAS_YAML=True` sin que `yaml` estuviera importado (NameError) y dos esperaban
+errores de parseo ("no se puede parsear", "no es un mapa") que solo produce ese backend.
+**Solución**: `self.skipTest("PyYAML no instalado")` en los tres tests (la funcionalidad ya
+tiene fallback `_minimal_parser`). Para diagnosticar sin el hook, un script de copia limpia
+fuera del repo replica el setUp del test y corre la suite in-process con cada intérprete.
+**Evidencia**: `python3 -m unittest tests.test_ecosistema.TestLessonsExtractor` → 21 tests,
+3 skips; con `python` → 21 OK; suite in-process en copia limpia → 364 tests OK (7 skips con
+python3, 4 con python); `ruff check` verde. **Lección**: verificar la suite con todos los
+intérpretes que usan los hooks, no solo con el preferido; un skip explícito es mejor que un
+mock de la bandera interna cuando falta la dependencia opcional.

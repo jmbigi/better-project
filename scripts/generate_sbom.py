@@ -47,7 +47,6 @@ def generate_sbom(formats: list[str], output_dir: Path) -> bool:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for fmt in formats:
-        ext = "json"
         output_file = output_dir / f"sbom.{fmt.replace('-', '.')}"
         cmd = [syft_path, "dir:.", "-o", f"{fmt}={output_file}"]
         print(f"Generando {output_file}...")
