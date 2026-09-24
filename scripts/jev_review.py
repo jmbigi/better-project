@@ -40,6 +40,25 @@ import jev_pillars as jp
 import lessons_extractor as le
 from jev_llama import JevLlama
 
+
+def _curses_works() -> bool:
+    """Verifica si curses funciona realmente (no solo importable).
+    En Windows sin windows-curses, curses se importa pero falla al inicializar.
+    """
+    if not HAS_CURSES:
+        return False
+    try:
+        # Test rápido: curses.wrapper con función vacía
+        def _test(stdscr):
+            pass
+        curses.wrapper(_test)
+        return True
+    except Exception:
+        return False
+
+
+CURSES_AVAILABLE = _curses_works()
+
 ROOT = Path(__file__).resolve().parent.parent
 REQ_DIR = ROOT / ".docs" / "requirements"
 LESSONS_DIR = ROOT / ".docs" / "lessons"
@@ -260,10 +279,9 @@ def repl_curses(
     cache: dict | None = None, out: Path | None = None,
 ) -> list[dict[str, Any]]:
     """UI incremental: clasifica cada item y pregunta su confirmacion al momento."""
-    try:
-        import curses
-    except ImportError:
-        raise RuntimeError("curses no disponible (Windows sin windows-curses). Use --report.")
+    if not CURSES_AVAILABLE:
+        raise RuntimeError("curses no disponible (Windows sin windows-curses o error de inicialización). Use --report.")
+    import curses
     filas: list[dict[str, Any]] = []
 
     def _guardar():
@@ -335,9 +353,9 @@ def main(argv: list[str] | None = None) -> int:
     out = Path(args.out or os.getenv("JEV_REVIEW_REPORT", str(DEFAULT_REPORT)))
     cache = cargar_cache()
     filas: list[dict[str, Any]] = []
-    if args.report or not sys.stdout.isatty() or not HAS_CURSES:
-        if not HAS_CURSES and not args.report:
-            print("[WARN] curses no disponible (Windows sin windows-curses). Usando modo --report.", file=sys.stderr)
+    if args.report or not sys.stdout.isatty() or not CURSES_AVAILABLE:
+        if not CURSES_AVAILABLE and not args.report:
+            print("[WARN] curses no disponible (Windows sin windows-curses o error de inicialización). Usando modo --report.", file=sys.stderr)
         print(f"{'item':<14}{'pilar':<14}{'campo':<13}{'propuesta':<18}{'conf':>6}")
         for item in items:
             nuevas = filas_de_item(item, client, accuracy, cache)

@@ -300,21 +300,18 @@ def _check_no_personal_data() -> bool:
     pat_home = re.compile(r"/home/[A-Za-z0-9_.-]+/")
     excl = re.compile(r"(deny|patrones|claves SSH|no leas|comitees|dummy|BLOQUEADO|127\.0\.0\.1)")
     for ruta in _source_files():
-        try:
-            for linea in open(ruta, errors="ignore"):
-                if excl.search(linea):
+        for linea in open(ruta, errors="ignore"):
+            if excl.search(linea):
+                continue
+            if pat_home.search(linea):
+                return False
+            for m in pat.findall(linea):
+                try:
+                    ip = ipaddress.ip_address(m)
+                except ValueError:
                     continue
-                if pat_home.search(linea):
+                if not ip.is_loopback:
                     return False
-                for m in pat.findall(linea):
-                    try:
-                        ip = ipaddress.ip_address(m)
-                    except ValueError:
-                        continue
-                    if not ip.is_loopback:
-                        return False
-        except Exception as e:
-            print(f"  [WARN] Error leyendo {ruta}: {e}")
     return True
 
 
@@ -324,26 +321,20 @@ def _check_no_emails() -> bool:
     excl = re.compile(r"(youremail@example|creativecommons|dummy@example|security@better-project\.local)")
     email_pat = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
     for ruta in _source_files():
-        try:
-            for linea in open(ruta, errors="ignore"):
-                if excl.search(linea):
-                    continue
-                if email_pat.search(linea):
-                    return False
-        except Exception as e:
-            print(f"  [WARN] Error leyendo {ruta}: {e}")
+        for linea in open(ruta, errors="ignore"):
+            if excl.search(linea):
+                continue
+            if email_pat.search(linea):
+                return False
     return True
 
 
 def _check_no_api_keys() -> bool:
     api_pat = re.compile(r"(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)")
     for ruta in _source_files():
-        try:
-            for linea in open(ruta, errors="ignore"):
-                if api_pat.search(linea):
-                    return False
-        except Exception as e:
-            print(f"  [WARN] Error leyendo {ruta}: {e}")
+        for linea in open(ruta, errors="ignore"):
+            if api_pat.search(linea):
+                return False
     return True
 
 

@@ -1,19 +1,22 @@
 # Lista de Mejoras Priorizadas (basado en auditoría real)
 
-| # | Mejora | Prioridad | Valor (%) | Esfuerzo (h) | Evidencia |
-|---|--------|-----------|-----------|--------------|-----------|
-| 1 | **Corregir 3 violaciones P1.26 en `verificar_proyecto.py`** (`except: pass` líneas 291, 332, 363) | P0 | 95 | 1 | `auto_audit.py all` reporta 3 errores críticos |
-| 2 | **Hacer `curses` opcional en `jev_review.py`** (fallback a modo `--report` en Windows) | P0 | 90 | 2 | Suite rota en Windows por `ModuleNotFoundError: _curses` |
-| 3 | **Forzar índice JSON en `index_knowledge.py`** (flag `--json` o variable de entorno) para retrieval quality check | P1 | 85 | 2 | `diagnostico.py` da 60/100 en conocimiento; check retrieval salta silenciosamente |
-| 4 | **Instalar `pip-audit` en venv** y ejecutar `audit_advisories.py` en CI | P1 | 80 | 1 | P0.18 requiere SBOM + escaneo; actualmente falla |
-| 5 | **Corregir `verificar-proyecto.sh` para Windows** (PowerShell nativo o documentar WSL obligatorio) | P1 | 75 | 4 | Verificador principal no ejecuta en Windows nativo |
-| 6 | **Añadir mutation score gate en `verificar-proyecto.sh`** (umbral 0.85 ya configurado) | P1 | 70 | 1 | Ya pasa (0.995) pero no está en verificador principal |
-| 7 | **Documentar dependencia `curses` / `windows-curses`** en `docs/HERRAMIENTAS-Y-FUENTES.md` | P2 | 60 | 0.5 | Usuario Windows no sabe por qué falla |
-| 8 | **Añadir test de integración Windows** en `run_tests_isolated.py` (detectar curses faltante) | P2 | 55 | 2 | Prevenir regresión |
-| 9 | **Generar SBOM automático** (`syft`) en `verificar-proyecto.sh` | P2 | 50 | 3 | P0.18 obligatorio antes de usar deps |
-| 10 | **Migrar `verificar_proyecto.py` a Python** (eliminar bash, portable) | P3 | 40 | 16 | Eliminar dependencia WSL/bash |
-| 11 | **Añadir coverage real** (`coverage.py`) y gate mínimo en verificador | P3 | 35 | 3 | No hay métrica de coverage hoy |
-| 12 | **Benchmark retrieval quality** (recall@10, MRR, nDCG) automatizado | P3 | 30 | 4 | P0.20 requiere métricas cuantitativas |
+| # | Mejora | Prioridad | Valor (%) | Esfuerzo (h) | Evidencia | Estado |
+|---|--------|-----------|-----------|--------------|-----------|--------|
+| 1 | **Corregir 3 violaciones P1.26 en `verificar_proyecto.py`** (`except: pass` líneas 291, 332, 363) | P0 | 95 | 1 | `auto_audit.py all` reporta 3 errores críticos | Hecho (2026-09-24); verificado con `auto_audit.py tests` (0 errores) |
+| 2 | **Hacer `curses` opcional en `jev_review.py`** (fallback a modo `--report` en Windows) | P0 | 90 | 2 | Suite rota en Windows por `ModuleNotFoundError: _curses` | Hecho (2026-09-24); `TestJevReview` 12/12 en Python 3.14.3 |
+| 3 | **Forzar índice JSON en `index_knowledge.py`** (flag `--json` o variable de entorno) para retrieval quality check | P1 | 85 | 2 | `diagnostico.py` da 60/100 en conocimiento; check retrieval salta silenciosamente | Pendiente |
+| 4 | **Instalar `pip-audit` en venv** y ejecutar `audit_advisories.py` en CI | P1 | 80 | 1 | P0.18 requiere SBOM + escaneo; actualmente falla | Pendiente |
+| 5 | **Corregir `verificar-proyecto.sh` para Windows** (PowerShell nativo o documentar WSL obligatorio) | P1 | 75 | 4 | Verificador principal no ejecuta en Windows nativo | Pendiente (el hook corre anteponiendo `C:\Program Files\Git\bin` al PATH) |
+| 6 | **Añadir mutation score gate en `verificar-proyecto.sh`** (umbral 0.85 ya configurado) | P1 | 70 | 1 | Ya pasa (0.995) pero no está en verificador principal | Pendiente |
+| 7 | **Documentar dependencia `curses` / `windows-curses`** en `docs/HERRAMIENTAS-Y-FUENTES.md` | P2 | 60 | 0.5 | Usuario Windows no sabe por qué falla | Pendiente |
+| 8 | **Añadir test de integración Windows** en `run_tests_isolated.py` (detectar curses faltante) | P2 | 55 | 2 | Prevenir regresión | Pendiente |
+| 9 | **Generar SBOM automático** (`syft`) en `verificar-proyecto.sh` | P2 | 50 | 3 | P0.18 obligatorio antes de usar deps | Pendiente |
+| 10 | **Migrar `verificar_proyecto.py` a Python** (eliminar bash, portable) | P3 | 40 | 16 | Eliminar dependencia WSL/bash | Pendiente |
+| 11 | **Añadir coverage real** (`coverage.py`) y gate mínimo en verificador | P3 | 35 | 3 | No hay métrica de coverage hoy | Pendiente |
+| 12 | **Benchmark retrieval quality** (recall@10, MRR, nDCG) automatizado | P3 | 30 | 4 | P0.20 requiere métricas cuantitativas | Pendiente |
+| 13 | **Resolver árboles huérfanos que bloquean el gate `fsck`** (`1c62aa5f` raíz, `0fec6a9b` scripts; creados 2026-09-24 10:44:33) | P0 | 95 | 1-3 | `[FALLO] sin objetos huerfanos en git (fsck)` en `verificar-proyecto.sh --pre-commit`; un commit fallido NO los genera (verificado en repo temporal) | Pendiente: decidir `git prune/gc` (requiere confirmación) o hallar quién los escribe |
+| 14 | **Suite aislada falla solo dentro del hook (Git Bash)**: `python3` ahí es Python 3.12.4 de QGIS (`C:\Python314\python3.exe` no existe) | P0 | 90 | 2-4 | `[FALLO] suite de tests (aislada por proceso)` en el hook con 1 test fallido sin identificar; in-process pasa (382 OK, skipped=4) y aislada con Python 3.14.3 pasa (385 OK) | Pendiente: reproducir, identificar el test y corregir o forzar intérprete 3.14 en el hook |
+| 15 | **Temporales sin versionar en la raíz** (`run_test.py`, `simple_test.py`; a943243 solo ignoró `test_*.py`) | P2 | 40 | 0.2 | `git status` los muestra untracked | Pendiente: limpiar o añadir patrón al `.gitignore` |
 
 ## Resumen de impacto
 
