@@ -372,3 +372,13 @@
   estado: Resuelta
   fecha: 2026-09-25
   fecha_resolucion: 2026-09-25
+- id: LSN-042
+  proyecto: "Ecosistema (REQ-027)"
+  fase: "Implementacion"
+  categoria: "Proceso"
+  problema: "El analisis comparativo TDM exige competir en eficiencia y fiabilidad con seis sistemas (Jev, Laya, JevK5/cbjev, SemIf, Verdict, this-that-model) con 0 coste y equipo local normal. El baseline LLM local (Qwen3.5-4B) daba 0.646 de accuracy a ~8 s/item: por debajo de los competidores en latencia y en accuracy agregada."
+  recomendacion: "Antes de perseguir modelos mas grandes, explotar el activo propio: entrenar un clasificador ultraligero (TF palabras+bigramas+char n-grams, NB/kNN en stdlib) con el set validado por humanos; calibrar por temperatura y anadir abstencion conformal con cobertura garantizada. Probar variantes de features con A/B controlado antes de fijarlas."
+  resolucion: "tydm_fast.py (REQ-027): accuracy 0.802 en el set v18 (noul 0.902, choice 0.824, score 0.676); ECE 0.033-0.081; cobertura conformal >= 0.90; la abstencion eleva las emitidas a 0.934 (choice) y 0.969 (score); latencia p50 0.43 ms y entrenamiento 0.15 s en CPU, modelo 450 KB, 0 dependencias. Hallazgo A/B/C/D: incluir textos de criterios/niveles como features bajaba choice 0.824->0.750 y score 0.676->0.583 (ruido comun); solo estado+instrucciones es optimo. Documentado en docs/TDM-COMPETITIVO.md."
+  estado: Resuelta
+  fecha: 2026-09-25
+  fecha_resolucion: 2026-09-25

@@ -243,6 +243,10 @@ python3 scripts/tydm_review.py --calibracion
 # Fusionar candidatos aprobados en el set (dry-run por defecto; usar --aplicar)
 python3 scripts/tydm_calibration_merge.py
 
+# Motor MDT ultraligero local (REQ-027): 0.43 ms/item en CPU, 0.802 de accuracy
+python3 scripts/tydm_fast.py bench
+python3 scripts/tydm_fast.py predict --tipo noul --estado "..." --instrucciones "..."
+
 # Diagnosticar los 4 pilares en otro proyecto (REQ-017, solo lectura)
 python3 scripts/diagnostico.py --root <carpeta>
 

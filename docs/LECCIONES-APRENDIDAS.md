@@ -551,7 +551,29 @@ analyze_shell 39/40 (L130 equivalente verificado empíricamente), audit_advisori
 (7 tests nuevos), tydm_calibration_merge 23/23, download_tydm_model 12/12; tydm_llama 19/30
 y tydm_calibration 30/40 quedan como deuda explícita del cierre (17 mutantes pendientes,
 ya con números estables). **Lección**: un runner que reescribe módulos debe desactivar la
-caché de bytecode; una sola corrida de mutación no es evidencia (P0.1). **Lección**: una dependencia
+caché de bytecode; una sola corrida de mutación no es evidencia (P0.1).
+
+## 2026-09-25 (ronda 4) - Motor MDT `fast`: 0.802 de accuracy y 0.43 ms/item en CPU (REQ-027)
+
+**Contexto**: el programador fijó el requerimiento de superar a seis sistemas TDM
+(Jev/TypeSafe, Laya, JevK5/cbjev, SemIf, Verdict, this-that-model-1.0) con 0 coste y
+equipo local normal. El baseline propio (Qwen3.5-4B vía llama.cpp) rendía 0.646 de
+accuracy a ~8 s/item.
+**Solución**: backend `fast` (scripts/tydm_fast.py, stdlib puro): features TF
+(palabras + bigramas + char 4-grams hashed), Naive Bayes multinomial o kNN coseno
+elegido por validación cruzada, temperatura ajustada por NLL fuera de fold y
+abstención conformal (α=0.10). Entrenado con el set validado v18 (328 casos).
+**Hallazgo**: incluir los textos de criterios (choice) o los nombres de nivel (score)
+como features empeoraba el resultado (choice 0.824→0.750; score 0.676→0.583): actúan
+como ruido común entre clases. Solo estado+instrucciones es óptimo; verificado con
+A/B/C/D controlado.
+**Evidencia** (25-09-2026, CPU i7-8700B, `python3 scripts/tydm_fast.py bench`):
+accuracy global **0.802** (noul 0.902, choice 0.824, score 0.676), ECE 0.033-0.081,
+cobertura conformal 0.902-0.917, abstención con mejora de emitidas (choice 0.934,
+score 0.969), latencia p50 0.43 ms, entrenamiento 0.15 s, modelo 450 KB.
+Comparación y límites en `docs/TDM-COMPETITIVO.md`. Simetría a destacar: contra el
+propio baseline llama, el fast gana +15.6 puntos de accuracy con ~5.000× menos
+latencia. Lección LSN-042. **Lección**: una dependencia
 opcional nunca debe ser un gate duro de la suite; los dos verificadores (bash/Python) deben
 cubrir los mismos checks para no divergir; una rama no cubierta por tests es un mutante
 superviviente esperando (los equivalentes se documentan, los reales se cierran).

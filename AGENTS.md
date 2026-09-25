@@ -320,6 +320,10 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
   lectura.
 - `python scripts/tydm_calibration_merge.py [--aplicar]` — fusiona candidatos de
   calibracion aprobados en el set validado (REQ-018); dry-run por defecto.
+- `python scripts/tydm_fast.py train|predict|bench` — backend MDT ultraligero
+  (REQ-027): TF + NB/kNN en stdlib con calibracion por temperatura y
+  abstencion conformal; 0.802 de accuracy y 0.43 ms/item en CPU
+  (`docs/TDM-COMPETITIVO.md`).
 - `bash scripts/setup.sh [--yes]` — onboarding guiado: entorno, hook,
   dependencias opcionales (doble confirmación de riesgo, P0.18) y primera
   validación (REQ-008).

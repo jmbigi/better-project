@@ -40,6 +40,7 @@ import health_dashboard as hd  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import tydm_calibration as jc  # noqa: E402
 import tydm_calibration_merge as jcm  # noqa: E402
+import tydm_fast as tfa  # noqa: E402
 import tydm_pillars as jp  # noqa: E402
 import tydm_review as jr  # noqa: E402
 import lessons_extractor as le  # noqa: E402
@@ -3174,6 +3175,85 @@ class TestTyDMCalibrationMerge(unittest.TestCase):
             rc = jcm.main(["--set", str(self.set_path), "--candidatos", str(self.cand_path)])
         self.assertEqual(rc, 0)
         self.assertIn("dry-run", out.getvalue())
+
+
+class TestTyDMFast(unittest.TestCase):
+    """REQ-027: backend MDT local ultraligero (NB/kNN + temperatura + conformal)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.casos = tfa.tc.load_set(tfa.SET_PATH)
+        cls.modelo, cls.metricas = tfa.entrenar(cls.casos, folds=3)
+
+    def test_features_normaliza_y_hashea(self):
+        f1 = tfa.features("El Programador ORDENA rm -rf /")
+        f2 = tfa.features("el programador ordena rm -rf /")
+        self.assertEqual(f1, f2)
+        self.assertTrue(f1)
+        self.assertTrue(all(0 <= k < tfa.N_BUCKETS for k in f1))
+        self.assertAlmostEqual(sum(f1.values()), 1.0, places=6)
+
+    def test_predecir_probabilidades_y_restriccion(self):
+        r = tfa.predecir(
+            self.modelo, "choice",
+            "El hook pre-commit bloquea el commit por trazabilidad REQ rota.",
+            "Que pilar esta afectado?",
+            criterios={"requisitos": "x", "verificacion": "y"},
+        )
+        self.assertEqual(set(r["probabilidades"]), {"requisitos", "verificacion"})
+        self.assertAlmostEqual(sum(r["probabilidades"].values()), 1.0, places=6)
+        self.assertIn(r["decision"], {None, "requisitos", "verificacion"})
+        self.assertEqual(r["revision_humana"], r["decision"] is None)
+
+    def test_conformal_cobertura_y_abstencion(self):
+        for tipo, m in self.metricas.items():
+            self.assertGreaterEqual(m["cobertura_conformal"], 0.85, tipo)
+            self.assertGreaterEqual(m["tasa_abstencion"], 0.0, tipo)
+        # El tipo ordinal (score) debe abstenerse en una fraccion relevante.
+        self.assertGreater(self.metricas["score"]["tasa_abstencion"], 0.2)
+
+    def test_determinismo(self):
+        _, otras = tfa.entrenar(self.casos, folds=3)
+        for tipo in self.metricas:
+            self.assertAlmostEqual(self.metricas[tipo]["accuracy"], otras[tipo]["accuracy"])
+            self.assertEqual(self.metricas[tipo]["temperatura"], otras[tipo]["temperatura"])
+
+    def test_orden_de_opciones_no_afecta(self):
+        # Robustez de reordenamiento (0% por construccion): las probabilidades
+        # por clase no dependen del orden de las candidatas.
+        estado = "El hook bloquea el commit por trazabilidad REQ rota."
+        instr = "Que pilar esta afectado?"
+        r1 = tfa.predecir(self.modelo, "choice", estado, instr,
+                          criterios={"requisitos": "x", "verificacion": "y",
+                                     "documentacion": "z"})
+        r2 = tfa.predecir(self.modelo, "choice", estado, instr,
+                          criterios={"documentacion": "z", "verificacion": "y",
+                                     "requisitos": "x"})
+        self.assertEqual(r1["probabilidades"], r2["probabilidades"])
+        self.assertEqual(r1["decision"], r2["decision"])
+
+    def test_umbral_competitivo(self):
+        # Guardarrail de regresion del REQ-027: accuracy y latencia objetivo.
+        total = sum(m["n"] for m in self.metricas.values())
+        global_acc = sum(m["accuracy"] * m["n"] for m in self.metricas.values()) / total
+        self.assertGreaterEqual(global_acc, 0.75)
+        resultado = tfa.bench(folds=3, repeticiones=2)
+        self.assertLess(resultado["latencia_us_p50"], 3000)
+
+    def test_cli_train_predict_bench(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "model.json"
+            with mock.patch.object(sys, "stdout", io.StringIO()):
+                self.assertEqual(tfa.main(["train", "--out", str(out)]), 0)
+            self.assertTrue(out.exists())
+            buf = io.StringIO()
+            with mock.patch.object(sys, "stdout", buf):
+                rc = tfa.main(["predict", "--tipo", "noul", "--estado", "x",
+                               "--instrucciones", "y", "--model", str(out), "--json"])
+            self.assertEqual(rc, 0)
+            self.assertIn("decision", json.loads(buf.getvalue()))
+            with mock.patch.object(sys, "stdout", io.StringIO()):
+                self.assertEqual(tfa.main(["bench", "--folds", "3", "--json"]), 0)
 
 
 class TestAnalyzeShell(unittest.TestCase):
