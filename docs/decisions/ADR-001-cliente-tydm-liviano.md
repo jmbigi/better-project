@@ -1,11 +1,11 @@
 ---
 id: ADR-001
-titulo: Cliente Jev liviano con llama.cpp en lugar de OpenJev o API en la nube
+titulo: Cliente MDT liviano con llama.cpp en lugar de OpenJev o API en la nube
 estado: Aceptado
 fecha: 2026-09-19
 ---
 
-# ADR-001: Cliente Jev liviano con llama.cpp en lugar de OpenJev o API en la nube
+# ADR-001: Cliente MDT liviano con llama.cpp en lugar de OpenJev o API en la nube
 
 ## Contexto
 
@@ -32,7 +32,7 @@ riesgo de privacidad (P0.9). El presupuesto de inferencia por sesion es bajo
 
 ## Decision
 
-Se adopta la Alternativa C: un cliente propio (`scripts/jev_llama.py`) que
+Se adopta la Alternativa C: un cliente propio (`scripts/tydm_llama.py`) que
 carga un GGUF `Qwen_Qwen3.5-4B-Q4_K_M` (~3 GB) y lee logits sin samplear. La
 calidad se valida con un set etiquetado y calibracion por temperatura (REQ-011).
 
@@ -59,19 +59,19 @@ calidad se valida con un set etiquetado y calibracion por temperatura (REQ-011).
 
 ## Metricas de exito
 
-- `scripts/jev_llama.py --demo` responde los tres tipos sin error.
+- `scripts/tydm_llama.py --demo` responde los tres tipos sin error.
 - Accuracy global del set >= 0.5 y `choice` >= 0.8 (medidas: 0.65 y 0.917).
-- Calibracion: NLL y Brier disminuyen al aplicar `JEV_TEMPERATURE=2.0`.
+- Calibracion: NLL y Brier disminuyen al aplicar `TYDM_TEMPERATURE=2.0`.
 - Coste monetario por inferencia = 0.
 
 ## Pre-mortem (Análisis Prospectivo de Fallos)
 
 - **Escenario 1 — Precisión insuficiente de `score`**: el modelo de 4B no mejora la accuracy del tipo `score` (actual 0.417) tras recalibraciones. *Mitigación*: marcar `score` como `experimental` y no usarlo como guardarraíl; recalibrar solo `choice` y `noul`.
 - **Escenario 2 — Latencia de carga en CPU**: el tiempo de carga del modelo (~30-60 s) vuelve inviable el uso interactivo frecuente. *Mitigación*: cachear el modelo en memoria entre invocaciones; evaluar `llama.cpp` server mode.
-- **Escenario 3 — Modelo superior disponible**: aparece un GGUF mejor (p. ej. 7B Q4_K_M) con mismo coste de RAM. *Mitigación*: arquitectura desacoplada (`jev_llama.py` + modelo en cache) permite swap sin tocar REQ-012.
+- **Escenario 3 — Modelo superior disponible**: aparece un GGUF mejor (p. ej. 7B Q4_K_M) con mismo coste de RAM. *Mitigación*: arquitectura desacoplada (`tydm_llama.py` + modelo en cache) permite swap sin tocar REQ-012.
 
 ## Referencias
 
-- REQ-011 (cliente Jev liviano), REQ-012 (integracion con los tres pilares).
-- `docs/ESTADO-JEV-LLAMA.md`, `docs/REVISION-SET-CALIBRACION.md`.
+- REQ-011 (cliente MDT liviano), REQ-012 (integracion con los tres pilares).
+- `docs/ESTADO-TYDM-LLAMA.md`, `docs/REVISION-SET-CALIBRACION.md`.
 - Leccion LSN-009 (la temperatura no mejora la accuracy, solo la confianza).

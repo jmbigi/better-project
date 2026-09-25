@@ -67,7 +67,7 @@ Quedan **fuera** de alcance:
   advisories abiertos (chromadb, diskcache): ver `docs/ALCANCE.md` y
   `README.md`.
 - Riesgos derivados de instalar dependencias fuera del `.venv` del proyecto.
-- El motor Jev, que es **experimental** (accuracy 0.646) y no emite decisiones
+- El motor MDT, que es **experimental** (accuracy 0.646) y no emite decisiones
   autoritativas (P0.20/P1.31).
 
 ## Prácticas del proyecto

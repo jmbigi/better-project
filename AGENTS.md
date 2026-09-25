@@ -312,13 +312,13 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
   (fuerza de la suite) en copia temporal, sin dependencias (REQ-015); `--batch`
   corre en `ci.sh`, `--all` a demanda, `MUTATION_PRECHECK=1` lo activa en el
   verificador.
-- `python scripts/jev_review.py [--report]` — UI (curses) para revisar y
-  confirmar las clasificaciones de `jev_pillars.py` (REQ-016); no modifica los
+- `python scripts/tydm_review.py [--report]` — UI (curses) para revisar y
+  confirmar las clasificaciones de `tydm_pillars.py` (REQ-016); no modifica los
   documentos.
 - `python scripts/diagnostico.py --root <carpeta>` — diagnostico, evaluacion y
   sugerencias de los cuatro pilares en un proyecto externo (REQ-017); solo
   lectura.
-- `python scripts/jev_calibration_merge.py [--aplicar]` — fusiona candidatos de
+- `python scripts/tydm_calibration_merge.py [--aplicar]` — fusiona candidatos de
   calibracion aprobados en el set validado (REQ-018); dry-run por defecto.
 - `bash scripts/setup.sh [--yes]` — onboarding guiado: entorno, hook,
   dependencias opcionales (doble confirmación de riesgo, P0.18) y primera

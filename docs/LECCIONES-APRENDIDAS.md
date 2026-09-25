@@ -513,7 +513,45 @@ como script—, 2 de ADR —pre-mortem por estado—, 1 del mutador). **Lección
 para declarar que una suite pasó: un runner que muere sin resumen es un mutante detectado
 (P0.1, en la dirección contraria). Una herramienta opcional se integra sin romper clon
 limpio/CI solo si el check verifica la **capacidad de regenerar**, no la existencia de
-artefactos no versionados. **Lección**: una dependencia
+artefactos no versionados.
+
+## 2026-09-25 (ronda 3) - Renombrado Jev -> MDT/TyDM: los nombres de terceros se protegen, no se falsean
+
+**Contexto**: el programador ordenó renombrar el motor "Jev" del proyecto a
+"typed decision models" (TyDM; MDT en español). El término aparecía en 438 ocasiones
+en 42 archivos, incluidos nombres de archivo y variables de entorno.
+**Hallazgo clave**: "Jev" es también el nombre de un producto de un tercero (TypeSafe) y
+"OpenJev" (github.com/razorback16/openjev) un proyecto open source real citado en
+ADR-001 y en la documentación del motor. Un reemplazo ciego habría producido
+"OpenMDT" (un proyecto inexistente: P0.2) y roto la URL del tercero; "la API de Jev"
+(REQ-011) refería a un tercero, no al componente propio.
+**Solución**: (1) 13 `git mv` de archivos a `tydm_*`/(docs) y migración de contenidos con
+script determinista en /tmp (dry-run revisado + `--aplicar`): reglas ordenadas, con
+marcadores de protección para `OpenJev`/`openjev`; (2) ediciones manuales de calidad en
+REQ-011 ("conceptos Jev AI" → enfoque descriptivo; "compatible con la API de Jev" →
+esquema JSON propio) y en `.docs/knowledge/ai/tydm_llama.md` (concepto genérico + OpenJev
+"del mismo enfoque"); (3) convención fijada en ADR-010: identificadores `tydm`/`TYDM`/
+`TyDMLlama`, prosa española "MDT" con glosa "(TyDM en inglés)", nombres propios de
+terceros literales.
+**Evidencia**: suite completa 409/409 (25-09-2026); `git grep -i jev` devuelve solo
+OpenJev y ADR-010; `ruff` y `py_compile` verdes; `tydm_pillars.py --help` y el reindexado
+de conocimiento OK. Lección LSN-040 registrada.
+**Lección**: en un renombrado masivo, el primer paso es distinguir lo propio de lo ajeno;
+los nombres propios de terceros se conservan (renombrarlos es inventar), y el resto se
+migra con reglas deterministas validadas por dry-run y grep residual.
+
+**Hallazgo del instrumento de mutación (misma fecha)**: al cerrar los supervivientes de
+`mutation_check --all` (414/458, 0.904) apareció variabilidad entre corridas del MISMO
+estado (tydm_llama 18/30, 19/30 y 20/30; analyze_shell 11 vs 8 supervivientes). Causa raíz:
+los mutantes consecutivos del mismo tamaño se escriben en el mismo segundo y CPython
+reutiliza el `.pyc` cuando coinciden (mtime, size) — el mutante N+1 se ejecutaba con el
+bytecode del mutante N. Fix: `PYTHONDONTWRITEBYTECODE=1` en el entorno de los tests
+mutantes (mutation_check.py) + test que lo verifica (LSN-041). Recuento ya reproducible:
+analyze_shell 39/40 (L130 equivalente verificado empíricamente), audit_advisories 19/19
+(7 tests nuevos), tydm_calibration_merge 23/23, download_tydm_model 12/12; tydm_llama 19/30
+y tydm_calibration 30/40 quedan como deuda explícita del cierre (17 mutantes pendientes,
+ya con números estables). **Lección**: un runner que reescribe módulos debe desactivar la
+caché de bytecode; una sola corrida de mutación no es evidencia (P0.1). **Lección**: una dependencia
 opcional nunca debe ser un gate duro de la suite; los dos verificadores (bash/Python) deben
 cubrir los mismos checks para no divergir; una rama no cubierta por tests es un mutante
 superviviente esperando (los equivalentes se documentan, los reales se cierran).

@@ -348,7 +348,7 @@ propias, testeadas y verificadas en el hook de pre-commit (REQ-013).
 | Auditoría de sesgos en decisiones | `scripts/adr_validator.py` (alertas: falsa dicotomía, adjetivos ambiguos, supuestos ocultos, afirmaciones absolutas) | Implementado 2026-09-19 |
 | Pre-mortem | Sección obligatoria en la plantilla de ADR (guía §5.1) | Implementado (guía) |
 | Revisión cruzada / red team | Agentes de solo lectura `@code-reviewer`, `@security-auditor`, `@compliance-checker`, `@dependency-auditor` | Implementado |
-| Métricas cuantitativas | `scripts/verificar-proyecto.sh` (38 checks), `scripts/jev_calibration.py` (NLL/Brier/ECE) | Implementado |
+| Métricas cuantitativas | `scripts/verificar-proyecto.sh` (38 checks), `scripts/tydm_calibration.py` (NLL/Brier/ECE) | Implementado |
 | Listas de chequeo cognitivo | `CHECKLIST.md`, sección "Pilar 4" | Implementado |
 | Lógica formal (premisas/alternativas/refutación) | Estructura de ADR + validación de secciones obligatorias | Implementado |
 | Herramientas ML (Fairlearn, SHAP, Evidently) | No aplican: el repo no entrena ni sirve modelos predictivos propios | N/A |
@@ -376,7 +376,7 @@ contexto, alternativas, consecuencias y supuestos.
 1. **Fase 1 (hecha, 2026-09-19)**: documentación del Pilar 4, REQ-013, registro
    de ADR, validador con auditoría de sesgos e integración en verificación.
 2. **Fase 2 (propuesta)**: registrar ADR retroactivos de las decisiones clave ya
-   tomadas (cliente Jev liviano, derivación del ruleset de better-ai, cuatro
+   tomadas (cliente MDT liviano, derivación del ruleset de better-ai, cuatro
    pilares).
 3. **Fase 3 (propuesta)**: pre-mortem obligatorio para cambios de alto impacto
    (P1.23) y métrica de "decisiones refutadas" en la retrospectiva.

@@ -50,7 +50,7 @@ uso local embebido (LSN-007); CVSS/CVE via OSV en la salida de
 ## Qué NO cubre
 
 - Pruebas de seguridad externas ni pentest.
-- Ejecución del motor Jev (requiere el modelo GGUF y cómputo): no forma parte
+- Ejecución del motor MDT (requiere el modelo GGUF y cómputo): no forma parte
   de `ci.sh`.
 - Instalación de dependencias opcionales (chromadb, sentence-transformers,
   llama-cpp-python): `ci.sh` usa solo stdlib.

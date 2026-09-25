@@ -1,4 +1,4 @@
-# Revisión del set de calibración Jev (REQ-011)
+# Revisión del set de calibración MDT (REQ-011)
 
 > **Estado: APROBADO por el programador el 2026-09-19.**
 > Las 40 etiquetas de la columna `Esperado` fueron revisadas y aprobadas
@@ -11,9 +11,9 @@
 > Revisión técnica: 2026-09-19. Uso de IA declarado (P1.14): revisión asistida
 > por agente; la aprobación es humana.
 
-Fuente de datos: `.docs/knowledge/ai/jev_calibration_set.json` (v2, 40 casos:
+Fuente de datos: `.docs/knowledge/ai/tydm_calibration_set.json` (v2, 40 casos:
 16 `noul`, 12 `choice`, 12 `score`).
-Motor y calibración: `scripts/jev_llama.py`, `scripts/jev_calibration.py`.
+Motor y calibración: `scripts/tydm_llama.py`, `scripts/tydm_calibration.py`.
 
 ## 1. Protocolo de revisión (buenas prácticas)
 
@@ -168,15 +168,15 @@ recomienda un orden de magnitud más de casos por clase (cientos) [4][5].
 
 1. El programador revisó las 40 etiquetas el **2026-09-19** y las aprobó **sin
    correcciones** (40/40). La aprobación quedó registrada en
-   `.docs/knowledge/ai/jev_calibration_set.json`
+   `.docs/knowledge/ai/tydm_calibration_set.json`
    (`revision_humana.estado = "Aprobada"`, `version = 2`).
 2. Los cuatro casos `⚠` (S03, S06, S11, S12) se confirmaron con el criterio de
    adjudicación de la sección 3.
 3. Con las etiquetas validadas, la precisión por tarea del motor es evidencia
    válida (P1.15), sujeta a las cautelas estadísticas de la sección 4. La `T`
    recomendada sigue dependiendo del set/modelo: re-ejecutar
-   `python3 scripts/jev_calibration.py --write` al cambiar cualquiera de ellos.
-4. El set queda como base del requisito REQ-012 (integración de Jev con los
+   `python3 scripts/tydm_calibration.py --write` al cambiar cualquiera de ellos.
+4. El set queda como base del requisito REQ-012 (integración de MDT con los
    tres pilares).
 
 Total original: **40 casos** (16 `noul`, 12 `choice`, 12 `score`). Tras las
@@ -186,7 +186,7 @@ ampliaciones (sección 7): **328 casos** (112/108/108), set `version: 18`.
 
 - **Lote 2 (2026-09-19)**: 18 candidatos (N17-N22, C13-C18, S13-S18) revisados y
   aprobados por el programador sin correcciones y fusionados con el set mediante
-  `scripts/jev_calibration_merge.py` (REQ-018) → `version: 3`, 58 casos.
+  `scripts/tydm_calibration_merge.py` (REQ-018) → `version: 3`, 58 casos.
 - **Lote 3 (2026-09-19)**: 18 candidatos (N23-N28, C19-C24, S19-S24) aprobados y
   fusionados (REQ-018) → `version: 4`, 76 casos.
 - **Lote 4 (2026-09-19)**: 18 candidatos (N29-N34, C25-C30, S25-S30) aprobados y
@@ -206,43 +206,43 @@ ampliaciones (sección 7): **328 casos** (112/108/108), set `version: 18`.
   66 `score`).
 - **Lote 11 (2026-09-19)**: 18 candidatos (N71-N76, C67-C72, S67-S72)
   revisados y aprobados por el programador sin correcciones (18/18) y
-  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  fusionados con `scripts/tydm_calibration_merge.py --aplicar` (REQ-018)
   → `version: 12`, **220 casos** (76 `noul`, 72 `choice`, 72 `score`).
   13 alertas de escenario duplicado (candidatos reutilizan textos de
   N60-N64/C55-C60/S55-S60) son informativas, no errores.
 - **Lote 12 (2026-09-19)**: 18 candidatos (N77-N82, C73-C78, S73-S78)
   revisados y aprobados por el programador sin correcciones (18/18) y
-  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  fusionados con `scripts/tydm_calibration_merge.py --aplicar` (REQ-018)
   → `version: 13`, **238 casos** (82 `noul`, 78 `choice`, 78 `score`).
   Calibracion re-ejecutada: T=1.5; accuracy global 0.660 [0.597, 0.717]
   (choice 0.846, noul 0.622, score 0.513).
 - **Lote 13 (2026-09-20)**: 18 candidatos (N83-N88, C79-C84, S79-S84)
   revisados y aprobados por el programador sin correcciones (18/18) y
-  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  fusionados con `scripts/tydm_calibration_merge.py --aplicar` (REQ-018)
   → `version: 14`, **256 casos** (88 `noul`, 84 `choice`, 84 `score`).
   Calibracion re-ejecutada: T=1.6; accuracy global 0.664 [0.604, 0.719]
   (choice 0.833, noul 0.636, score 0.524).
 - **Lote 14 (2026-09-20)**: 18 candidatos (N89-N94, C85-C90, S85-S90)
   revisados y aprobados por el programador sin correcciones (18/18) y
-  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  fusionados con `scripts/tydm_calibration_merge.py --aplicar` (REQ-018)
   → `version: 15`, **274 casos** (94 `noul`, 90 `choice`, 90 `score`).
   Calibracion re-ejecutada: T=1.7; accuracy global 0.650 [0.591, 0.704]
   (choice 0.811, noul 0.628, score 0.511); ECE mejora a 0.095.
 - **Lote 15 (2026-09-20)**: 18 candidatos (N95-N100, C91-C96, S91-S96)
   revisados y aprobados por el programador sin correcciones (18/18) y
-  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  fusionados con `scripts/tydm_calibration_merge.py --aplicar` (REQ-018)
   → `version: 16`, **292 casos** (100 `noul`, 96 `choice`, 96 `score`).
   Calibracion re-ejecutada: T=1.9; accuracy global 0.644 [0.587, 0.697]
   (choice 0.792, noul 0.620, score 0.521); ECE 0.099.
 - **Lote 16 (2026-09-20)**: 18 candidatos (N101-N106, C97-C102, S97-S102)
   revisados y aprobados por el programador sin correcciones (18/18) y
-  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  fusionados con `scripts/tydm_calibration_merge.py --aplicar` (REQ-018)
   → `version: 17`, **310 casos** (106 `noul`, 102 `choice`, 102 `score`).
   Calibracion re-ejecutada: T=1.9; accuracy global 0.639 [0.584, 0.690]
   (choice 0.784, noul 0.613, score 0.520); ECE 0.106.
 - **Lote 17 (2026-09-20)**: 18 candidatos (N107-N112, C103-C108, S103-S108)
   revisados y aprobados por el programador sin correcciones (18/18) y
-  fusionados con `scripts/jev_calibration_merge.py --aplicar` (REQ-018)
+  fusionados con `scripts/tydm_calibration_merge.py --aplicar` (REQ-018)
   → `version: 18`, **328 casos** (112 `noul`, 108 `choice`, 108 `score`).
   Calibracion re-ejecutada: T=1.9; accuracy global 0.646 [0.593, 0.696]
   (choice 0.787, noul 0.616, score 0.537); ECE 0.108.

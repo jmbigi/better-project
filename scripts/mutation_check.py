@@ -55,12 +55,12 @@ DEFAULT_BATCH: list[tuple[str, str]] = [
 ALL_BATCH: list[tuple[str, str]] = DEFAULT_BATCH + [
     ("scripts/analyze_shell.py", "test_ecosistema.TestAnalyzeShell"),
     ("scripts/audit_advisories.py", "test_ecosistema.TestAuditAdvisories"),
-    ("scripts/download_jev_model.py", "test_ecosistema.TestDownloadJevModel"),
-    ("scripts/jev_calibration.py", "test_ecosistema.TestJevCalibration"),
-    ("scripts/jev_calibration_merge.py", "test_ecosistema.TestJevCalibrationMerge"),
-    ("scripts/jev_llama.py", "test_ecosistema.TestJevLlama"),
-    ("scripts/jev_pillars.py", "test_ecosistema.TestJevPillars"),
-    ("scripts/jev_review.py", "test_ecosistema.TestJevReview"),
+    ("scripts/download_tydm_model.py", "test_ecosistema.TestDownloadTyDMModel"),
+    ("scripts/tydm_calibration.py", "test_ecosistema.TestTyDMCalibration"),
+    ("scripts/tydm_calibration_merge.py", "test_ecosistema.TestTyDMCalibrationMerge"),
+    ("scripts/tydm_llama.py", "test_ecosistema.TestTyDMLlama"),
+    ("scripts/tydm_pillars.py", "test_ecosistema.TestTyDMPillars"),
+    ("scripts/tydm_review.py", "test_ecosistema.TestTyDMReview"),
     ("scripts/tui.py", "test_ecosistema.TestTUI"),
 ]
 
@@ -141,7 +141,16 @@ def _ejecutar_tests(root: Path, test_target: str, timeout: int) -> int:
     # volveria a mutar/verificar sin limite. BETTER_MUTATION_ACTIVE hace que el
     # verificador omita el chequeo de mutacion en la reentrada; ademas se aisman
     # los tests de integracion.
-    env = {**os.environ, "BETTER_MUTATION_ACTIVE": "1", "BETTER_TEST_INTEGRACION": "1"}
+    # PYTHONDONTWRITEBYTECODE evita el contagio de cache .pyc: mutantes
+    # consecutivos del mismo tamano (p.ej. varios 'is not' -> 'is') escritos
+    # en el mismo segundo reutilizarian el bytecode del mutante anterior y el
+    # veredicto dejaria de ser reproducible (observado 2026-09-25).
+    env = {
+        **os.environ,
+        "BETTER_MUTATION_ACTIVE": "1",
+        "BETTER_TEST_INTEGRACION": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
     proc = subprocess.run(
         [sys.executable, "-m", "unittest", test_target],
         cwd=str(root / "tests"), capture_output=True, text=True, timeout=timeout,

@@ -13,7 +13,7 @@ de red por defecto; el único canal con el agente es `scripts/mcp_server.py` por
 | Conocimiento y lecciones | `.docs/knowledge/`, `.docs/lessons/` | interna |
 | Código y configuración | `scripts/`, `opencode.json`/`kilo.json` | interna |
 | Claves/credenciales | **fuera del repo** (`.env`, `~/.ssh`) | crítica (P0.6) |
-| Modelo GGUF local | `~/.cache/better-project/jev/` | no sensible |
+| Modelo GGUF local | `~/.cache/better-project/tydm/` | no sensible |
 
 ## Fronteras de confianza
 
@@ -37,7 +37,7 @@ de red por defecto; el único canal con el agente es `scripts/mcp_server.py` por
 | Fuga de datos personales (LLM02) | commits con PII/IPs/claves | checks del verificador (P0.9/P0.10), hook `Assisted-by` (P1.14) |
 | Cadena de suministro (LLM03) | dependencias opcionales | SBOM + lock con hashes (REQ-020), `pip-audit`/OSV, backend stdlib por defecto |
 | Consumo no acotado (LLM10) | bucles de herramientas/prompts | límites de entrada MCP (REQ-007), timeouts, P0.19 |
-| Saturación/DoS local | ejecución repetida del modelo | `--max-mutantes`, timeouts; Jev fuera del pre-commit |
+| Saturación/DoS local | ejecución repetida del modelo | `--max-mutantes`, timeouts; MDT fuera del pre-commit |
 
 ## Riesgos residuales (declarados)
 
@@ -46,7 +46,7 @@ de red por defecto; el único canal con el agente es `scripts/mcp_server.py` por
   la defensa primaria sigue siendo la regla de texto (ver `docs/PRUEBAS.md`).
 - `ask` no es 100 % determinista en algunas versiones (issue upstream); la
   protección real son los `deny`.
-- El motor Jev es **experimental** (accuracy 0.646); no decide sin humano.
+- El motor MDT es **experimental** (accuracy 0.646); no decide sin humano.
 - Sin auditoría externa ni SLSA >= 2: ver `docs/ALCANCE.md`.
 
 ## Referencias

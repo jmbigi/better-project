@@ -22,7 +22,7 @@ Jira/Notion, sin dependencias obligatorias.
   (`scripts/ci.sh`), no una auditoría de terceros.
 - **Reproducibilidad bit a bit** de modelos: `seed` no está soportado por
   opencode (`docs/ARQUITECTURA-DETERMINISMO.md`).
-- **IA fiable para decidir**: Jev es experimental (accuracy 0.646); ningún tipo
+- **IA fiable para decidir**: MDT es experimental (accuracy 0.646); ningún tipo
   experimental emite decisión autoritativa (P0.20/P1.31).
 - **Cero riesgo de dependencias**: los extras opcionales tienen 5 advisories sin
   parche (chromadb/diskcache); el backend stdlib evita instalarlos.
@@ -32,10 +32,11 @@ Jira/Notion, sin dependencias obligatorias.
 - Sin releases firmadas ni SLSA >= 2: la procedencia verificable hoy es
   **commit Git + `requirements-optional.lock` (hashes) + SBOM CycloneDX**
   (generado con `syft` v1.52.0, binario verificado por checksum SHA256).
-- `syft` está instalado localmente (`.local/bin`, sin sudo) y el verificador
-  lo usa si está disponible (regenera el SBOM en temp si falta).
-  `grype`/`openssf scorecard` no están instalados; su adopción requiere
-  autorización explícita (P0.5) y no forma parte del CI por defecto.
+- `syft`, `grype` y `openssf scorecard` están instalados localmente
+  (`.local/bin`, sin sudo, checksums SHA256 verificados; autorizados por el
+  programador el 2026-09-25). `grype` sobre el SBOM del proyecto (sin tooling
+  ni venvs): 0 hallazgos. Scorecard sin token de GitHub no completa el
+  análisis (rate limit anónimo de la API).
 
 ## Camino a producción (si algún día aplica)
 

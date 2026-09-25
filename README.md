@@ -1,7 +1,7 @@
 # better-project
 
 **Meta-proyecto (framework metodologico)** para gobernar proyectos asistidos por IA.
-No es una aplicacion para usuarios finales; es un **framework de verificacion, trazabilidad y gobernanza** que garantiza:
+No es una aplicacion para usuarios finales; es un **framework de verificacion, trazabilidad y gobernanza** cuyos objetivos son:
 
 - Trazabilidad bidireccional REQ <-> codigo
 - Conocimiento versionado y consultable
@@ -173,13 +173,13 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │   ├── adr_validator.py    # valida ADRs y audita sesgos (REQ-013)
 │   ├── auto_audit.py       # auto-auditoria del proyecto (REQ-014)
 │   ├── mutation_check.py   # chequeo de mutaciones (REQ-015)
-│   ├── jev_review.py       # revision humana UI de clasificaciones (REQ-016)
+│   ├── tydm_review.py       # revision humana UI de clasificaciones (REQ-016)
 │   ├── diagnostico.py      # diagnostico de los 4 pilares en proyectos externos (REQ-017)
-│   ├── jev_llama.py        # motor Jev liviano con llama.cpp (REQ-011)
-│   ├── download_jev_model.py# descarga idempotente del modelo GGUF (REQ-011)
-│   ├── jev_pillars.py      # clasificacion asistida de los tres pilares (REQ-012)
-│   ├── jev_calibration.py  # calibracion por temperatura y metricas (REQ-011)
-│   ├── jev_calibration_merge.py # fusion de candidatos aprobados (REQ-018)
+│   ├── tydm_llama.py        # motor MDT liviano con llama.cpp (REQ-011)
+│   ├── download_tydm_model.py# descarga idempotente del modelo GGUF (REQ-011)
+│   ├── tydm_pillars.py      # clasificacion asistida de los tres pilares (REQ-012)
+│   ├── tydm_calibration.py  # calibracion por temperatura y metricas (REQ-011)
+│   ├── tydm_calibration_merge.py # fusion de candidatos aprobados (REQ-018)
 │   └── hooks/pre-commit     # hook git local
 ├── demo/                    # proyecto de ejemplo (gestor de notas CLI)
 │   ├── src/notas.py         # codigo con referencias REQ-XXX
@@ -234,14 +234,14 @@ python3 scripts/mutation_check.py --batch --strict --umbral 0.8
 # Mutacion de todos los modulos con test (mas lenta, a demanda)
 python3 scripts/mutation_check.py --all --max-mutantes 20
 
-# Revisar clasificaciones Jev con UI (REQ-016): OK / corregir / saltar
-python3 scripts/jev_review.py
+# Revisar clasificaciones MDT con UI (REQ-016): OK / corregir / saltar
+python3 scripts/tydm_review.py
 
 # Revisar etiquetas candidatas de calibracion (sin modelo)
-python3 scripts/jev_review.py --calibracion
+python3 scripts/tydm_review.py --calibracion
 
 # Fusionar candidatos aprobados en el set (dry-run por defecto; usar --aplicar)
-python3 scripts/jev_calibration_merge.py
+python3 scripts/tydm_calibration_merge.py
 
 # Diagnosticar los 4 pilares en otro proyecto (REQ-017, solo lectura)
 python3 scripts/diagnostico.py --root <carpeta>
@@ -274,7 +274,7 @@ REQ (`--strict`), lecciones, indice de conocimiento y la suite de tests.
 
 Sin dependencias, el ecosistema funciona con stdlib (indice JSON TF-IDF). Los
 extras estan aislados: `requirements-vector.txt` (busqueda vectorial, REQ-002) y
-`requirements-jev.txt` (motor Jev, REQ-011); `requirements-optional.txt` los
+`requirements-tydm.txt` (motor MDT, REQ-011); `requirements-optional.txt` los
 incluye. El contrato reproducible es `requirements-optional.lock` (117 paquetes
 con hashes transitivos, generado con `uv pip compile --generate-hashes`).
 
@@ -288,6 +288,9 @@ ABIERTOS sin version de parche: 4 en chromadb 1.5.9 y 1 en diskcache 5.6.3. La
 severidad real (CVSS/CVE) se obtiene con `python3 scripts/audit_advisories.py`;
 son de nivel alto en modo **servidor**, mitigados por el uso local embebido
 (PersistentClient sin red). El backend stdlib sigue siendo el recomendado.
+El escaneo con `grype` v0.119.0 (local, checksum verificado el 25-09-2026)
+sobre el SBOM regenerado del proyecto dio **0 hallazgos**; los advisories
+pertenecen a las dependencias opcionales del lock, no instaladas por defecto.
 
 ## Verificacion y seguridad
 

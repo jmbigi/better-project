@@ -93,7 +93,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: advisories-report
-          path: .docs/.storage/jev_review.json
+          path: .docs/.storage/tydm_review.json
           retention-days: 7
 
   docs:

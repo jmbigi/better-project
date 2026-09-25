@@ -1,25 +1,26 @@
-# Jev AI liviano con llama.cpp
+# MDT liviano con llama.cpp
 
 ## Concepto
 
-**Jev AI** es un modelo de la clase **System One**: en lugar de generar texto
-libre, responde decisiones tipadas (`noul`, `choice`, `score`) con
-probabilidades calibradas. Es util para clasificacion, enrutamiento y
+Los **modelos de decisión tipados** (MDT; en inglés *typed decision models*,
+TyDM) son modelos de la clase **System One**: en lugar de generar texto libre,
+responden decisiones tipadas (`noul`, `choice`, `score`) con probabilidades
+calibradas. Es util para clasificacion, enrutamiento y
 verificacion dentro de software, donde el resultado se consume como una
 estructura de datos, no como lenguaje natural.
 
 **OpenJev** ([razorback16/openjev](https://github.com/razorback16/openjev)) es
-una implementacion open source compatible con Jev basada en DiffusionGemma,
+una implementacion open source del mismo enfoque basada en DiffusionGemma,
 pero requiere ~24 GB de VRAM. Para correr en hardware mas modesto (~6 GB),
-better-project incluye `scripts/jev_llama.py`, un cliente nativo con
+better-project incluye `scripts/tydm_llama.py`, un cliente nativo con
 `llama-cpp-python` y un modelo GGUF cuantizado.
 
 ## Arquitectura local
 
 ```text
 .better-project/
-  scripts/jev_llama.py          # motor de decisiones tipadas
-  scripts/download_jev_model.py # helper de descarga
+  scripts/tydm_llama.py          # motor de decisiones tipadas
+  scripts/download_tydm_model.py # helper de descarga
   requirements-optional.txt     # llama-cpp-python
 ```
 
@@ -46,10 +47,10 @@ source .venv/bin/activate
 pip install -r requirements-optional.txt
 
 # 2. Descargar el modelo (~3.0 GB)
-python3 scripts/download_jev_model.py
+python3 scripts/download_tydm_model.py
 
 # 3. Probar con el demo
-python3 scripts/jev_llama.py --demo
+python3 scripts/tydm_llama.py --demo
 ```
 
 ## Configuracion
@@ -58,11 +59,11 @@ Variables de entorno:
 
 | Variable | Default | Descripcion |
 |---|---|---|
-| `JEV_MODEL_PATH` | `~/.cache/better-project/jev/Qwen_Qwen3.5-4B-Q4_K_M.gguf` | Ruta al modelo GGUF |
-| `JEV_N_CTX` | `4096` | Contexto maximo |
-| `JEV_N_THREADS` | auto | Hilos CPU |
-| `JEV_TIMEOUT` | `300` | Timeout de carga del modelo (s) |
-| `JEV_TEMPERATURE` | `1.0` | Temperatura de calibracion > 0 (ver seccion Calibracion) |
+| `TYDM_MODEL_PATH` | `~/.cache/better-project/tydm/Qwen_Qwen3.5-4B-Q4_K_M.gguf` | Ruta al modelo GGUF |
+| `TYDM_N_CTX` | `4096` | Contexto maximo |
+| `TYDM_N_THREADS` | auto | Hilos CPU |
+| `TYDM_TIMEOUT` | `300` | Timeout de carga del modelo (s) |
+| `TYDM_TEMPERATURE` | `1.0` | Temperatura de calibracion > 0 (ver seccion Calibracion) |
 
 ## Formato de entrada
 
@@ -95,7 +96,7 @@ Variables de entorno:
 Uso:
 
 ```bash
-python3 scripts/jev_llama.py --input decision.json
+python3 scripts/tydm_llama.py --input decision.json
 ```
 
 ## Tipos de decision
@@ -120,14 +121,14 @@ En todos los casos se devuelve `confidence = 1 - H(p)/ln(K)` (1 = certeza,
 
 Las probabilidades de un LLM suelen ser **overconfident** (Guo et al. 2017,
 "On Calibration of Modern Neural Networks", ICML, arXiv:1706.04599).
-`scripts/jev_calibration.py` ajusta una unica **temperatura** T (dividir los
+`scripts/tydm_calibration.py` ajusta una unica **temperatura** T (dividir los
 logits por T antes del softmax) que reduce esa overconfidence sin alterar la
-opcion elegida (argmax). Se aplica al motor con `JEV_TEMPERATURE`.
+opcion elegida (argmax). Se aplica al motor con `TYDM_TEMPERATURE`.
 
 Metodologia:
 
 - T se ajusta minimizando el **NLL** sobre un set etiquetado
-  (`.docs/knowledge/ai/jev_calibration_set.json`), con casos cuya respuesta
+  (`.docs/knowledge/ai/tydm_calibration_set.json`), con casos cuya respuesta
   correcta esta fijada por P0/P1, los estado de los REQ y las lecciones
   LSN-001..008.
 - Se reporta **NLL** y **Brier** (norma L2) como metricas primarias, y **ECE**
@@ -154,7 +155,7 @@ el proxy de primer token y no debe usarse como guardarrail sin calibracion
 propia.
 
 La T recomendada es especifica del modelo y del set: re-ejecutar
-`python3 scripts/jev_calibration.py` al cambiar de modelo o de dominio.
+`python3 scripts/tydm_calibration.py` al cambiar de modelo o de dominio.
 
 ## Licencias
 

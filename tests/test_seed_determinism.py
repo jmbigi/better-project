@@ -14,21 +14,21 @@ from typing import Any
 class TestSeedDeterminism(unittest.TestCase):
     """Test empírico de reproducibilidad determinista."""
 
-    jev_llama_path: Path
+    tydm_llama_path: Path
     model_path: str | None
 
     @classmethod
     def setUpClass(cls):
-        cls.jev_llama_path = Path(__file__).parent.parent / "scripts" / "jev_llama.py"
-        cls.model_path = os.environ.get("JEV_MODEL_PATH")
+        cls.tydm_llama_path = Path(__file__).parent.parent / "scripts" / "tydm_llama.py"
+        cls.model_path = os.environ.get("TYDM_MODEL_PATH")
         if not cls.model_path or not Path(cls.model_path).exists():
-            raise unittest.SkipTest("JEV_MODEL_PATH no configurado o modelo no existe")
+            raise unittest.SkipTest("TYDM_MODEL_PATH no configurado o modelo no existe")
 
-    def _run_jev_llama(self, prompt: str, seed: int | None = None) -> dict[str, Any]:
-        """Ejecuta jev_llama.py con un prompt y retorna la respuesta parseada."""
+    def _run_tydm_llama(self, prompt: str, seed: int | None = None) -> dict[str, Any]:
+        """Ejecuta tydm_llama.py con un prompt y retorna la respuesta parseada."""
         env = os.environ.copy()
         if seed is not None:
-            env["JEV_SEED"] = str(seed)
+            env["TYDM_SEED"] = str(seed)
         # Usar --input con JSON temporal
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
             input_data = {
@@ -41,7 +41,7 @@ class TestSeedDeterminism(unittest.TestCase):
             input_file = f.name
         try:
             result = subprocess.run(
-                [sys.executable, str(self.jev_llama_path), "--input", input_file],
+                [sys.executable, str(self.tydm_llama_path), "--input", input_file],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -59,7 +59,7 @@ class TestSeedDeterminism(unittest.TestCase):
 
         results = []
         for _ in range(n_runs):
-            res = self._run_jev_llama(prompt, seed)
+            res = self._run_tydm_llama(prompt, seed)
             if "q1" in res and "noul" in res["q1"]:
                 results.append(res["q1"]["noul"])
 
@@ -74,7 +74,7 @@ class TestSeedDeterminism(unittest.TestCase):
         prompt = "Estado de prueba para variabilidad"
         results = []
         for seed in [1, 2, 3, 4, 5]:
-            res = self._run_jev_llama(prompt, seed)
+            res = self._run_tydm_llama(prompt, seed)
             if "q1" in res and "noul" in res["q1"]:
                 results.append(res["q1"]["noul"])
 
@@ -87,7 +87,7 @@ class TestSeedDeterminism(unittest.TestCase):
         prompt = "Estado sin seed fijo"
         results = []
         for _ in range(3):
-            res = self._run_jev_llama(prompt, seed=None)
+            res = self._run_tydm_llama(prompt, seed=None)
             if "q1" in res and "noul" in res["q1"]:
                 results.append(res["q1"]["noul"])
 
@@ -102,7 +102,7 @@ class TestDeterminismWithoutModel(unittest.TestCase):
     def test_confidence_function_deterministic(self):
         """_confidence() es determinista para misma entrada."""
         sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-        from jev_llama import _confidence
+        from tydm_llama import _confidence
 
         # Distribución uniforme -> confidence = 0
         self.assertAlmostEqual(_confidence([0.5, 0.5]), 0.0, places=9)
@@ -120,18 +120,18 @@ class TestDeterminismWithoutModel(unittest.TestCase):
     def test_build_prompt_deterministic(self):
         """_build_prompt() produce salida idéntica para misma entrada."""
         sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-        import jev_llama as jl
+        import tydm_llama as jl
 
         state = "estado de prueba"
         question = {"type": "noul", "instructions": "¿Sí o no?"}
 
-        prompts = [jl.JevLlama._build_prompt(state, question) for _ in range(10)]
+        prompts = [jl.TyDMLlama._build_prompt(state, question) for _ in range(10)]
         self.assertEqual(len(set(prompts)), 1, "Prompt debe ser determinista")
 
     def test_calibration_math_deterministic(self):
         """Funciones matemáticas de calibración son deterministas."""
         sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-        import jev_calibration as jc
+        import tydm_calibration as jc
 
         probs = [0.7, 0.3]
         # softmax

@@ -1,13 +1,13 @@
-# Jev y los tres pilares (REQ-012)
+# MDT y los tres pilares (REQ-012)
 
 ## Concepto
 
-`scripts/jev_pillars.py` usa el motor Jev de REQ-011 para **proponer**
+`scripts/tydm_pillars.py` usa el motor MDT de REQ-011 para **proponer**
 etiquetas sobre los tres pilares del ecosistema. Es una capa de clasificación
 **asistida y no autoritativa**: el resultado se consume como propuesta y la
 aplicación a los documentos es siempre una acción humana (P1.17/P1.23).
 
-| Pilar | Comando | Propone | Tipo Jev |
+| Pilar | Comando | Propone | Tipo MDT |
 |---|---|---|---|
 | Requisitos | `requisitos --req REQ-XXX` | `prioridad` (Baja/Media/Alta) | `choice` |
 | Conocimiento | `conocimiento --file <fragmento>` | `relevancia` (0–3) | `score` |
@@ -16,9 +16,9 @@ aplicación a los documentos es siempre una acción humana (P1.17/P1.23).
 ## Uso
 
 ```bash
-python3 scripts/jev_pillars.py requisitos --req REQ-011
-python3 scripts/jev_pillars.py conocimiento --file docs/REGLAS-COMPLETAS.md --json
-python3 scripts/jev_pillars.py lecciones --id LSN-008 --json
+python3 scripts/tydm_pillars.py requisitos --req REQ-011
+python3 scripts/tydm_pillars.py conocimiento --file docs/REGLAS-COMPLETAS.md --json
+python3 scripts/tydm_pillars.py lecciones --id LSN-008 --json
 # también --text "..." para texto directo
 ```
 
@@ -74,10 +74,10 @@ supere el umbral.
 
 | Variable | Default | Descripción |
 |---|---|---|
-| `JEV_MODEL_PATH` | cache local | Modelo GGUF (ver REQ-011) |
-| `JEV_TEMPERATURE` | `1.0` | Temperatura de calibración (ver REQ-011) |
-| `JEV_MIN_CONFIDENCE` | `0.5` | Confianza mínima para emitir etiqueta definitiva |
-| `JEV_CALIBRATION_REPORT` | `.docs/.storage/jev_calibration.json` | Informe con la accuracy por tipo |
+| `TYDM_MODEL_PATH` | cache local | Modelo GGUF (ver REQ-011) |
+| `TYDM_TEMPERATURE` | `1.0` | Temperatura de calibración (ver REQ-011) |
+| `TYDM_MIN_CONFIDENCE` | `0.5` | Confianza mínima para emitir etiqueta definitiva |
+| `TYDM_CALIBRATION_REPORT` | `.docs/.storage/tydm_calibration.json` | Informe con la accuracy por tipo |
 
 Si el informe de calibración no existe, `accuracy_referencia` es `null` y el
 comando queda `experimental: true` (no se inventan valores; P1.19/P1.29).
@@ -96,7 +96,7 @@ El tipo `score` (relevancia de conocimiento) es poco fiable con el proxy de
 primer token y queda marcado `experimental` automáticamente (accuracy < 0.6).
 No debe usarse como guardarraíl sin recalibrar y ampliar el set.
 
-**No apto para producción**: con accuracy global 0.646 y `score` en 0.537, Jev
+**No apto para producción**: con accuracy global 0.646 y `score` en 0.537, MDT
 es una ayuda de clasificación **experimental**, no una IA fiable para
 decisiones automáticas. Su uso correcto es proponer etiquetas para revisión
 humana; nunca aplicar etiquetas sin confirmación (P1.17/P1.23).

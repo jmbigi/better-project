@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""download_jev_model.py — Descarga idempotente del modelo GGUF para jev_llama.py.
+"""download_tydm_model.py — Descarga idempotente del modelo GGUF para tydm_llama.py.
 
 Uso:
-    python3 scripts/download_jev_model.py [--yes]
+    python3 scripts/download_tydm_model.py [--yes]
 
 Descarga el modelo recomendado desde HuggingFace si no existe localmente.
 Sin --yes, pide confirmacion antes de descargar.
@@ -22,7 +22,7 @@ from pathlib import Path
 DEFAULT_REPO = "bartowski/Qwen_Qwen3.5-4B-GGUF"
 DEFAULT_FILE = "Qwen_Qwen3.5-4B-Q4_K_M.gguf"
 DEFAULT_URL = f"https://huggingface.co/{DEFAULT_REPO}/resolve/main/{DEFAULT_FILE}"
-DEFAULT_DEST = Path.home() / ".cache" / "better-project" / "jev" / DEFAULT_FILE
+DEFAULT_DEST = Path.home() / ".cache" / "better-project" / "tydm" / DEFAULT_FILE
 EXPECTED_BYTES = 2_900_000_000  # ~3.0 GB reales; minimo para detectar descargas truncadas
 CHUNK_SIZE = 8192
 
@@ -39,7 +39,7 @@ def _download(url: str, dest: Path, yes: bool) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     existing = dest.stat().st_size if dest.exists() else 0
 
-    headers = {"User-Agent": "better-project/jev-llama"}
+    headers = {"User-Agent": "better-project/tydm-llama"}
     if existing:
         headers["Range"] = f"bytes={existing}-"
     req = urllib.request.Request(url, headers=headers)
@@ -89,10 +89,10 @@ def _download(url: str, dest: Path, yes: bool) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Descarga el modelo GGUF para jev_llama.py")
+    parser = argparse.ArgumentParser(description="Descarga el modelo GGUF para tydm_llama.py")
     parser.add_argument("--yes", action="store_true", help="No pedir confirmacion")
-    parser.add_argument("--url", default=os.getenv("JEV_DOWNLOAD_URL", DEFAULT_URL), help="URL del modelo")
-    parser.add_argument("--dest", default=os.getenv("JEV_MODEL_PATH", str(DEFAULT_DEST)), help="Ruta de destino")
+    parser.add_argument("--url", default=os.getenv("TYDM_DOWNLOAD_URL", DEFAULT_URL), help="URL del modelo")
+    parser.add_argument("--dest", default=os.getenv("TYDM_MODEL_PATH", str(DEFAULT_DEST)), help="Ruta de destino")
     args = parser.parse_args()
 
     dest = Path(args.dest)

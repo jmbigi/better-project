@@ -116,9 +116,9 @@ como herramienta **opcional de desarrollo**; `mutmut` queda descartado (LSN-015)
 **Medición de calidad de la suite (2026-09-20)**: `coverage 7.10.6` sobre la
 suite (278 tests) da **89 %** de cobertura de líneas en `scripts/` (2824
 sentencias, 316 sin cubrir). `mcp_server.py` (99 %), `tui.py` (95 %),
-`jev_calibration.py` (97 %), `jev_pillars.py` (95 %) y `analyze_shell.py` (93 %)
-ya no son zonas bajas; quedan `jev_review.py` (71 %), `index_knowledge.py`
-(72 %), `jev_llama.py` (81 %), `auto_audit.py` (83 %) y `lessons_extractor.py`
+`tydm_calibration.py` (97 %), `tydm_pillars.py` (95 %) y `analyze_shell.py` (93 %)
+ya no son zonas bajas; quedan `tydm_review.py` (71 %), `index_knowledge.py`
+(72 %), `tydm_llama.py` (81 %), `auto_audit.py` (83 %) y `lessons_extractor.py`
 (84 %), por ramas opcionales (chromadb/CLI) y utilidades.
 
 `mutation_check.py` (REQ-015, heurística stdlib). El modo `--batch` mide varios
@@ -138,8 +138,8 @@ con `MUTATION_PRECHECK=1`:
 | index_knowledge | 29 | **0.97** |
 | **Batch (global ponderado)** | **173** | **0.98** |
 
-Otros módulos medidos a demanda alcanzan **1.00** (`mcp_server`, `jev_review`,
-`jev_pillars`) y `jev_calibration_merge` **0.91**. Los supervivientes restantes
+Otros módulos medidos a demanda alcanzan **1.00** (`mcp_server`, `tydm_review`,
+`tydm_pillars`) y `tydm_calibration_merge` **0.91**. Los supervivientes restantes
 son en su mayoría equivalentes (defaults de flags, guarda `__main__`, `parents`/
 `exist_ok` cuando el directorio ya existe) o rutas no ejercitables sin
 `chromadb` (dependencia opcional). La mutación no entra en el pre-commit

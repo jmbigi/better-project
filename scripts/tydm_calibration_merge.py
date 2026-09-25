@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""jev_calibration_merge.py — Fusiona candidatos aprobados en el set (REQ-018).
+"""tydm_calibration_merge.py — Fusiona candidatos aprobados en el set (REQ-018).
 
 # REQ-018
 
@@ -8,9 +8,9 @@ por el programador dentro del set validado (REQ-011). Por defecto es dry-run
 (no escribe); con --aplicar modifica el set.
 
 Uso:
-    python3 scripts/jev_calibration_merge.py                 # dry-run
-    python3 scripts/jev_calibration_merge.py --aplicar
-    python3 scripts/jev_calibration_merge.py --candidatos F --set S --aplicar
+    python3 scripts/tydm_calibration_merge.py                 # dry-run
+    python3 scripts/tydm_calibration_merge.py --aplicar
+    python3 scripts/tydm_calibration_merge.py --candidatos F --set S --aplicar
 """
 
 from __future__ import annotations
@@ -25,8 +25,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_SET = ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_set.json"
-DEFAULT_CANDIDATOS = ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_candidates.json"
+DEFAULT_SET = ROOT / ".docs" / "knowledge" / "ai" / "tydm_calibration_set.json"
+DEFAULT_CANDIDATOS = ROOT / ".docs" / "knowledge" / "ai" / "tydm_calibration_candidates.json"
 ESTADOS_APROBADOS = {"aprobado", "aprobado_por_programador"}
 TIPOS = {"noul", "choice", "score"}
 
@@ -79,7 +79,7 @@ def fusionar(
     if not forzar and cand_data.get("estado") not in ESTADOS_APROBADOS:
         errores.append(
             f"los candidatos no estan aprobados (estado='{cand_data.get('estado')}'); "
-            f"revisar con jev_review --calibracion o usar --forzar"
+            f"revisar con tydm_review --calibracion o usar --forzar"
         )
     ids_set = {str(c.get("id")) for c in set_data.get("casos", [])}
     escenarios = {_normalizar(c.get("estado")) for c in set_data.get("casos", [])}

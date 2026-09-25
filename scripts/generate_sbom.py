@@ -54,7 +54,18 @@ def generate_sbom(formats: list[str], output_dir: Path) -> bool:
 
     for fmt in formats:
         output_file = output_dir / f"sbom.{fmt.replace('-', '.')}"
-        cmd = [syft_path, "dir:.", "-o", f"{fmt}={output_file}"]
+        # Se excluyen artefactos locales (herramientas en .local/, SBOM previos,
+        # venvs): el SBOM describe las dependencias del proyecto, no el tooling
+        # de la maquina de desarrollo (evita ruido de vulnerabilidades del
+        # propio escaner).
+        cmd = [
+            syft_path, "dir:.",
+            "--exclude", "./sbom/**",
+            "--exclude", "./.local/**",
+            "--exclude", "./.venv/**",
+            "--exclude", "./.venv-audit/**",
+            "-o", f"{fmt}={output_file}",
+        ]
         print(f"Generando {output_file}...")
         result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)
         if result.returncode != 0:

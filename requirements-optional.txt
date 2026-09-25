@@ -1,4 +1,4 @@
-# Dependencias opcionales del ecosistema (busqueda vectorial, REQ-002; motor Jev, REQ-011).
+# Dependencias opcionales del ecosistema (busqueda vectorial, REQ-002; motor MDT, REQ-011).
 # Sin ellas todo funciona con stdlib (indice JSON TF-IDF).
 # Instalacion SOLO en .venv del proyecto y bajo confirmacion (P0.5):
 #   bash scripts/setup.sh
@@ -10,6 +10,6 @@
 # pero la instalacion implica aceptar el riesgo por escrito.
 #
 # Para instalar aceptando el riesgo:
-#   pip install -r requirements-vector.txt -r requirements-jev.txt
+#   pip install -r requirements-vector.txt -r requirements-tydm.txt
 # 
 # Lock con hashes (regenerar tras instalar): requirements-optional.lock

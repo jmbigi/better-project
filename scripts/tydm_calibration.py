@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""jev_calibration.py — Calibracion del motor Jev (REQ-011).
+"""tydm_calibration.py — Calibracion del motor MDT (REQ-011).
 
 Ejecuta el set etiquetado, mide la calibracion de las probabilidades del motor
-y ajusta una temperatura T (env JEV_TEMPERATURE) por minimizacion del NLL.
+y ajusta una temperatura T (env TYDM_TEMPERATURE) por minimizacion del NLL.
 
 Metodologia (fuentes):
 - Guo et al. 2017, "On Calibration of Modern Neural Networks" (ICML,
@@ -19,8 +19,8 @@ generalizacion se reporta validacion cruzada k-fold (T se ajusta en el train
 de cada fold y se evalua en el test held-out).
 
 Uso:
-    python3 scripts/jev_calibration.py
-    python3 scripts/jev_calibration.py --set <set.json> --folds 5 --json
+    python3 scripts/tydm_calibration.py
+    python3 scripts/tydm_calibration.py --set <set.json> --folds 5 --json
 """
 
 from __future__ import annotations
@@ -33,11 +33,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from jev_llama import JevLlama
+from tydm_llama import TyDMLlama
 
-DEFAULT_SET = Path(__file__).resolve().parent.parent / ".docs" / "knowledge" / "ai" / "jev_calibration_set.json"
-DEFAULT_REPORT = Path(__file__).resolve().parent.parent / ".docs" / ".storage" / "jev_calibration.json"
-DEFAULT_CACHE = Path(__file__).resolve().parent.parent / ".docs" / ".storage" / "jev_calibration_cache.json"
+DEFAULT_SET = Path(__file__).resolve().parent.parent / ".docs" / "knowledge" / "ai" / "tydm_calibration_set.json"
+DEFAULT_REPORT = Path(__file__).resolve().parent.parent / ".docs" / ".storage" / "tydm_calibration.json"
+DEFAULT_CACHE = Path(__file__).resolve().parent.parent / ".docs" / ".storage" / "tydm_calibration_cache.json"
 EPS = 1e-12
 # Grid de temperatura: suficiente para overconfidence tipica de LLM (T > 1).
 GRID = [round(0.1 * i, 1) for i in range(1, 51)]  # 0.1 .. 5.0
@@ -282,7 +282,7 @@ def sembrar_cache_desde_informe(cache: dict[str, Any], informe: Path | None = No
 
 
 def run_cases(
-    client: JevLlama, casos: list[dict[str, Any]], cache: dict[str, Any] | None = None,
+    client: TyDMLlama, casos: list[dict[str, Any]], cache: dict[str, Any] | None = None,
     modelo: str | None = None,
 ) -> list[dict[str, Any]]:
     """Ejecuta el motor sobre el set y devuelve records con probabilidades.
@@ -341,7 +341,7 @@ def bootstrap_ci(valores: list[float], n: int | None = None, seed: int = BOOTSTR
 
 
 def calibrate(
-    client: JevLlama, casos: list[dict[str, Any]], folds: int = 5,
+    client: TyDMLlama, casos: list[dict[str, Any]], folds: int = 5,
     cache: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     records = run_cases(client, casos, cache)
@@ -400,21 +400,21 @@ def _print_human(report: dict[str, Any]) -> None:
             f"ece_adapt={m.get('ece_adaptativo', 0.0):.3f} nll={m['nll']:.3f}"
         )
     print()
-    print(f"Para aplicar: export JEV_TEMPERATURE={report['T_recomendada']}")
+    print(f"Para aplicar: export TYDM_TEMPERATURE={report['T_recomendada']}")
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Calibra el motor Jev (REQ-011)")
+    parser = argparse.ArgumentParser(description="Calibra el motor MDT (REQ-011)")
     parser.add_argument("--set", default=str(DEFAULT_SET), help="Ruta del set etiquetado")
     parser.add_argument("--folds", type=int, default=5, help="Folds de validacion cruzada")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
     parser.add_argument("--write", action="store_true", help=f"Escribe informe en {DEFAULT_REPORT}")
-    parser.add_argument("--model", default=None, help="Ruta al GGUF (default: JEV_MODEL_PATH o cache)")
+    parser.add_argument("--model", default=None, help="Ruta al GGUF (default: TYDM_MODEL_PATH o cache)")
     parser.add_argument("--no-cache", action="store_true", help="Ignorar la cache de predicciones")
     args = parser.parse_args()
 
     casos = load_set(Path(args.set))
-    client = JevLlama(model_path=args.model)
+    client = TyDMLlama(model_path=args.model)
     cache: dict[str, Any] | None = None
     if not args.no_cache:
         cache = cargar_cache()

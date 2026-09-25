@@ -55,15 +55,15 @@
   estado: Resuelta
   fecha: 2026-09-04
 - id: LSN-008
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Proceso"
-  problema: "El motor Jev (REQ-011) pasaba los tests con mocks que simulaban scores como lista plana; el objeto real de llama-cpp-python expone scores 2D (n_ctx, vocab) y solo guarda logits si se pasa logits_all=True. La inferencia real fallaba con TypeError y ademas JEV_MODEL_PATH era ignorado."
+  problema: "El motor MDT (REQ-011) pasaba los tests con mocks que simulaban scores como lista plana; el objeto real de llama-cpp-python expone scores 2D (n_ctx, vocab) y solo guarda logits si se pasa logits_all=True. La inferencia real fallaba con TypeError y ademas TYDM_MODEL_PATH era ignorado."
   recomendacion: "Los mocks deben reproducir la forma y semantica reales de la dependencia (dimensionalidad, indices, flags de configuracion) y deben fallar con el codigo defectuoso. Validar siempre una inferencia end-to-end con un modelo real pequeno antes de declarar un REQ implementado (P1.1/P1.21)."
   estado: Resuelta
   fecha: 2026-09-19
 - id: LSN-009
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Proceso"
   problema: "La calibracion real de REQ-011 (Qwen3.5-4B Q4_K_M, 40 casos basados en lecciones/historial) mostro accuracy 0.65 global: choice 0.917, noul 0.625, score 0.417. El tipo score (escala ordinal) es poco fiable con el proxy de primer token. La temperatura T=2.0 reducirco NLL/Brier/ECE pero no la accuracy (correcto por diseno: temperature scaling preserva el argmax)."
@@ -145,15 +145,15 @@
   estado: Resuelta
   fecha: 2026-09-19
 - id: LSN-019
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Implementacion"
   categoria: "Proceso"
-  problema: "La revision con el modelo real tardo mas de 280s para 35 items (~8s/item) y, al agotarse el timeout, se perdio todo el progreso porque jev_review guardaba solo al final."
+  problema: "La revision con el modelo real tardo mas de 280s para 35 items (~8s/item) y, al agotarse el timeout, se perdio todo el progreso porque tydm_review guardaba solo al final."
   recomendacion: "Guardar la revision y la cache de clasificaciones de forma incremental por item; la cache (clave pilar|id|sha1(texto)) evita recalcular en reejecuciones. Para sets grandes, acotar con --pilar/--limit o revisar interactivamente y salir con q (guarda lo revisado)."
   estado: Resuelta
   fecha: 2026-09-19
 - id: LSN-020
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Proceso"
   problema: "Tras ampliar el set de calibracion de 40 a 58 casos (v3), la accuracy global se mantuvo en ~0.655 y por tipo: choice 0.889, noul 0.636, score 0.444; la T recomendada bajo de 2.0 a 1.8. El tipo score sigue poco fiable."
@@ -163,7 +163,7 @@
   fecha: 2026-09-19
   fecha_resolucion: 2026-09-19
 - id: LSN-021
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Proceso"
   problema: "El lote 3 (set v4, 76 casos) bajo la accuracy global de 0.655 a 0.632 y subio la T recomendada a 2.1; choice 0.833, noul 0.607, score 0.458. Ampliar el set con casos mas exigentes no mejora la exactitud."
@@ -183,62 +183,62 @@
   fecha: 2026-09-19
   fecha_resolucion: 2026-09-19
 - id: LSN-023
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Riesgo_Tecnico"
   problema: "El set de calibracion v13 (238 casos, lote 12) dio accuracy global 0.6597 [0.597,0.717] frente a 0.668 del v12 (220 casos); por tipo choice 0.846, noul 0.622, score 0.513; T recomendada 1.5 (antes 1.6). Ampliar el set con casos nuevos y exigentes no mejoro la exactitud."
   recomendacion: "No presentar la ampliacion del set como mejora de exactitud (no lo es); reportar accuracy e IC junto a NLL/Brier/ECE y mantener el tipo score como experimental hasta superar de forma estable ~0.6 con >=100 casos/tipo. Recalibrar la temperatura al cambiar el set o el modelo."
-  resolucion: "Set v13 (238 casos) calibrado con Qwen3.5-4B Q4_K_M: T=1.5, accuracy 0.660 [0.597,0.717]. Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md; no se presenta como mejora."
+  resolucion: "Set v13 (238 casos) calibrado con Qwen3.5-4B Q4_K_M: T=1.5, accuracy 0.660 [0.597,0.717]. Documentado en docs/ESTADO-TYDM-LLAMA.md y docs/REVISION-SET-CALIBRACION.md; no se presenta como mejora."
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
 - id: LSN-024
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Riesgo_Tecnico"
   problema: "El set v14 (256 casos, lote 13) dio accuracy global 0.6641 [0.604,0.719] frente a 0.6597 del v13 (238); por tipo choice 0.833, noul 0.636, score 0.524; T recomendada 1.6. La variacion es marginal y cae dentro del IC."
   recomendacion: "No interpretar diferencias dentro del IC como mejora o empeoramiento; reportar accuracy con IC junto a NLL/Brier/ECE y exigir >=100 casos/tipo antes de conclusiones estables. Mantener score como experimental."
-  resolucion: "Set v14 (256 casos) calibrado: T=1.6, accuracy 0.664 [0.604,0.719]. Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md sin presentarlo como mejora."
+  resolucion: "Set v14 (256 casos) calibrado: T=1.6, accuracy 0.664 [0.604,0.719]. Documentado en docs/ESTADO-TYDM-LLAMA.md y docs/REVISION-SET-CALIBRACION.md sin presentarlo como mejora."
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
 - id: LSN-025
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Riesgo_Tecnico"
   problema: "El set v15 (274 casos, lote 14) dio accuracy global 0.6496 [0.591,0.704] frente a 0.6641 del v14 (256); por tipo choice 0.811, noul 0.628, score 0.511; T recomendada 1.7. La exactitud baja (dentro del IC solapado) mientras el ECE mejora de 0.103 a 0.095."
   recomendacion: "Separar exactitud de calibracion: el ECE puede mejorar aunque la accuracy baje. No interpretar cambios dentro de IC solapados como mejora o deterioro concluyente; reportar ambos y seguir ampliando hacia >=100 casos/tipo antes de conclusiones."
-  resolucion: "Set v15 (274 casos) calibrado: T=1.7, accuracy 0.650 [0.591,0.704], ECE 0.095. Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
+  resolucion: "Set v15 (274 casos) calibrado: T=1.7, accuracy 0.650 [0.591,0.704], ECE 0.095. Documentado en docs/ESTADO-TYDM-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
 - id: LSN-026
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Riesgo_Tecnico"
   problema: "El set v16 (292 casos, lote 15) dio accuracy global 0.6438 [0.587,0.697] frente a 0.6496 del v15 (274); por tipo choice 0.792, noul 0.620, score 0.521; T recomendada 1.9. La exactitud baja dentro del IC solapado; el ECE se mantiene bajo (0.099)."
   recomendacion: "La ampliacion del set no mejora la exactitud de forma consistente; seguir reportando accuracy e IC junto a ECE y no concluir con intervalos solapados. Mantener score como experimental hasta >=100/tipo estable."
-  resolucion: "Set v16 (292 casos) calibrado: T=1.9, accuracy 0.644 [0.587,0.697], ECE 0.099. Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
+  resolucion: "Set v16 (292 casos) calibrado: T=1.9, accuracy 0.644 [0.587,0.697], ECE 0.099. Documentado en docs/ESTADO-TYDM-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
 - id: LSN-027
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Riesgo_Tecnico"
   problema: "El set v17 (310 casos, lote 16) dio accuracy global 0.6387 [0.584,0.690] frente a 0.6438 del v16 (292); por tipo choice 0.784, noul 0.613, score 0.520; T=1.9. Se alcanzo el objetivo >=100 casos/tipo (106/102/102), pero la exactitud baja de forma sostenida al anadir casos nuevos mas exigentes."
   recomendacion: "Con >=100 casos/tipo cumplido, justificar futuras ampliaciones por cobertura de escenarios, no por esperar mejoras de exactitud. Reportar la tendencia con IC y mantener score como experimental; no usar la calibracion como guardarrail."
-  resolucion: "Set v17 (310 casos) calibrado: T=1.9, accuracy 0.639 [0.584,0.690], ECE 0.106. Objetivo >=100/tipo alcanzado (106/102/102). Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
+  resolucion: "Set v17 (310 casos) calibrado: T=1.9, accuracy 0.639 [0.584,0.690], ECE 0.106. Objetivo >=100/tipo alcanzado (106/102/102). Documentado en docs/ESTADO-TYDM-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
 - id: LSN-028
-  proyecto: "Ecosistema / Jev (REQ-011)"
+  proyecto: "Ecosistema / MDT (REQ-011)"
   fase: "Testing"
   categoria: "Riesgo_Tecnico"
   problema: "El set v18 (328 casos, lote 17) dio accuracy global 0.6463 [0.593,0.696]; por tipo choice 0.787, noul 0.616, score 0.537; T=1.9; ECE 0.108. La exactitud se mantiene estable dentro del IC (v17 0.639 -> v18 0.646) y score sube ligeramente a 0.537."
   recomendacion: "Con el objetivo >=100 casos/tipo cumplido (112/108/108), no seguir ampliando por exactitud: hacerlo solo por cobertura de escenarios. No presentar cambios dentro del IC como mejora; mantener score como experimental hasta estabilizarse."
-  resolucion: "Set v18 (328 casos) calibrado: T=1.9, accuracy 0.646 [0.593,0.696], ECE 0.108. Objetivo >=100/tipo cumplido (112/108/108). Documentado en docs/ESTADO-JEV-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
+  resolucion: "Set v18 (328 casos) calibrado: T=1.9, accuracy 0.646 [0.593,0.696], ECE 0.108. Objetivo >=100/tipo cumplido (112/108/108). Documentado en docs/ESTADO-TYDM-LLAMA.md y docs/REVISION-SET-CALIBRACION.md."
   estado: Resuelta
   fecha: 2026-09-20
   fecha_resolucion: 2026-09-20
@@ -318,7 +318,7 @@
   categoria: "Proceso"
   problema: "REQ-024 (dashboard de KPIs en CI) estaba marcado 'Implementado' sin implementacion real: no existia docs/health.md ni generador de KPIs, y la unica referencia era un comentario '# REQ-024' en ci.sh. En paralelo, GOVERNANCE.md publicaba metricas no reproducibles (cobertura 89% y mutation 0.98) y el gate de cobertura del CI era 90%; medido, `pytest --cov=scripts` daba 82% porque incluia scripts manuales sin tests (adr_backfill REQ-025 Draft, runners). Ademas `pytest` sin config recolectaba scripts/test_determinism.py como test y lo ejecutaba (invoca opencode, gasta tokens, P0.19)."
   recomendacion: "Un requisito solo pasa a Implementado cuando sus criterios de aceptacion son verificables con evidencia (P0.1): un comentario en un script no es implementacion. Las metricas de gobernanza deben citar el comando exacto y la fecha de medicion. Todo `pytest` del repo debe fijar `testpaths` para no recolectar scripts manuales, y la cobertura debe omitir de forma explicita los modulos sin test acoplado para que el KPI sea comparable con su objetivo."
-  resolucion: "REQ-024 corregido a Draft y eliminado el comentario enganoso en ci.sh; anadidos pytest.ini (testpaths=tests) y .coveragerc (omite 4 scripts manuales); gate de ci.sh ajustado a 85% (objetivo documentado, medido 89% = 2632/2945); GOVERNANCE.md actualizado con valores medidos, comando y fecha. Pendiente (no en este cambio): implementar el dashboard de REQ-024 y subir la cobertura de scripts/index_knowledge (65%) y scripts/jev_review (71%)."
+  resolucion: "REQ-024 corregido a Draft y eliminado el comentario enganoso en ci.sh; anadidos pytest.ini (testpaths=tests) y .coveragerc (omite 4 scripts manuales); gate de ci.sh ajustado a 85% (objetivo documentado, medido 89% = 2632/2945); GOVERNANCE.md actualizado con valores medidos, comando y fecha. Pendiente (no en este cambio): implementar el dashboard de REQ-024 y subir la cobertura de scripts/index_knowledge (65%) y scripts/tydm_review (71%)."
   estado: Resuelta
   fecha: 2026-09-21
   fecha_resolucion: 2026-09-21
@@ -352,3 +352,23 @@
   estado: Resuelta
   fecha: 2026-09-23
   fecha_resolucion: 2026-09-23
+- id: LSN-040
+  proyecto: "Ecosistema (renombrado)"
+  fase: "Documentacion"
+  categoria: "Proceso"
+  problema: "El proyecto usaba 'Jev' como nombre de su motor local, pero 'Jev' es tambien el nombre de un producto de un tercero (TypeSafe) y de su ecosistema open source (OpenJev, razorback16/openjev). Un renombrado ciego de 'Jev' habria producido falsedades: 'OpenJev' -> 'OpenMDT' (proyecto inexistente) y habria roto su URL; ademas 'la API de Jev' (REQ-011) referia a un tercero, no al componente propio."
+  recomendacion: "Antes de un renombrado masivo: mapear variantes (mayusculas/minusculas), identificar nombres propios de terceros y protegerlos con marcadores en la migracion; validar con dry-run revisado y verificar con grep residual que solo quedan las excepciones declaradas. Fijar la convencion por idioma (identificadores tydm/TYDM, prosa espanola MDT, glosa TyDM) en un ADR."
+  resolucion: "Renombrado aplicado (13 git mv + 42 archivos de contenido) con dry-run revisado: marcadores de proteccion para OpenJev/openjev; ediciones manuales de calidad en REQ-011 y tydm_llama.md; convencion documentada en ADR-010. Evidencia: suite 409/409 (25-09-2026); git grep -i jev solo con OpenJev y ADR-010; ruff y py_compile verdes."
+  estado: Resuelta
+  fecha: 2026-09-25
+  fecha_resolucion: 2026-09-25
+- id: LSN-041
+  proyecto: "Ecosistema (REQ-015)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "mutation_check escribia cada mutante y ejecutaba los tests con la cache de bytecode activa. Mutantes consecutivos del mismo tamano (p.ej. varios 'is not'->'is') se escriben en el mismo segundo; CPython reutiliza el .pyc si coinciden (mtime, size), asi que el mutante N+1 podia ejecutarse con el bytecode del mutante N. Veredictos no reproducibles: tydm_llama oscilo entre 18/30, 19/30 y 20/30 sin cambios en el codigo, y analyze_shell vario entre 11 y 8 supervivientes entre corridas."
+  recomendacion: "Todo runner que reescriba modulos y los importe debe desactivar la escritura de bytecode (PYTHONDONTWRITEBYTECODE=1) o invalidar la cache (borrar __pycache__) entre iteraciones; no confiar en una sola corrida cuando el instrumento reescribe archivos (re-medir y comparar)."
+  resolucion: "Anadido PYTHONDONTWRITEBYTECODE=1 al env de _ejecutar_tests (mutation_check.py) y un test que verifica el env capturado del subprocess. Recuento 25-09-2026 con numeros reproducibles en corridas consecutivas: analyze_shell 39/40, audit_advisories 19/19, tydm_calibration_merge 23/23, download_tydm_model 12/12; tydm_llama 19/30 y tydm_calibration 30/40 quedan como deuda explicita del cierre de mutantes (los supervivientes restantes se cerraran con el instrumento ya estable)."
+  estado: Resuelta
+  fecha: 2026-09-25
+  fecha_resolucion: 2026-09-25

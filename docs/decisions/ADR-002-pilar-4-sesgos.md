@@ -64,4 +64,4 @@ ejecuta en cada pre-commit.
 ## Referencias
 
 - `docs/SESGOS-Y-FALACIAS.md` (Pilar 4), REQ-013.
-- ADR-001 (cliente Jev liviano), `CHECKLIST.md` (seccion Pilar 4).
+- ADR-001 (cliente MDT liviano), `CHECKLIST.md` (seccion Pilar 4).

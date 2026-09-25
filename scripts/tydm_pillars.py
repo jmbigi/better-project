@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""jev_pillars.py — Integracion de Jev con los tres pilares del ecosistema (REQ-012).
+"""tydm_pillars.py — Integracion de MDT con los tres pilares del ecosistema (REQ-012).
 
 # REQ-012
 
@@ -8,17 +8,17 @@ tres pilares: requisitos, conocimiento y lecciones. Propone etiquetas; nunca
 escribe en los documentos (la aplicacion es una accion humana).
 
 Uso:
-    python3 scripts/jev_pillars.py requisitos --req REQ-011 [--json]
-    python3 scripts/jev_pillars.py conocimiento --file docs/REGLAS-COMPLETAS.md [--json]
-    python3 scripts/jev_pillars.py lecciones --id LSN-008 [--json]
+    python3 scripts/tydm_pillars.py requisitos --req REQ-011 [--json]
+    python3 scripts/tydm_pillars.py conocimiento --file docs/REGLAS-COMPLETAS.md [--json]
+    python3 scripts/tydm_pillars.py lecciones --id LSN-008 [--json]
 
 Configuracion por entorno:
-    JEV_MODEL_PATH        ruta al GGUF (ver jev_llama.py)
-    JEV_TEMPERATURE       temperatura de calibracion (ver jev_calibration.py)
-    JEV_MIN_CONFIDENCE    umbral de confianza (default 0.5)
-    JEV_CALIBRATION_REPORT  informe de calibracion (default .docs/.storage/jev_calibration.json)
+    TYDM_MODEL_PATH        ruta al GGUF (ver tydm_llama.py)
+    TYDM_TEMPERATURE       temperatura de calibracion (ver tydm_calibration.py)
+    TYDM_MIN_CONFIDENCE    umbral de confianza (default 0.5)
+    TYDM_CALIBRATION_REPORT  informe de calibracion (default .docs/.storage/tydm_calibration.json)
 
-Dependencia opcional: llama-cpp-python (via jev_llama).
+Dependencia opcional: llama-cpp-python (via tydm_llama).
 """
 
 from __future__ import annotations
@@ -31,17 +31,17 @@ from pathlib import Path
 from typing import Any
 
 import lessons_extractor as le
-from jev_llama import JevLlama
+from tydm_llama import TyDMLlama
 
 ROOT = Path(__file__).resolve().parent.parent
 REQ_DIR = ROOT / ".docs" / "requirements"
 LESSONS_DIR = ROOT / ".docs" / "lessons"
-DEFAULT_CALIBRATION_REPORT = ROOT / ".docs" / ".storage" / "jev_calibration.json"
+DEFAULT_CALIBRATION_REPORT = ROOT / ".docs" / ".storage" / "tydm_calibration.json"
 DEFAULT_MIN_CONFIDENCE = 0.6
 # Umbral de accuracy por tarea (REQ-012, criterio 6).
 ACCURACY_MINIMA = 0.6
 
-# Cada pilar declara sus preguntas (campo -> pregunta tipada de jev_llama).
+# Cada pilar declara sus preguntas (campo -> pregunta tipada de tydm_llama).
 PREGUNTAS: dict[str, list[tuple[str, dict[str, Any]]]] = {
     "requisitos": [
         (
@@ -92,7 +92,7 @@ PREGUNTAS: dict[str, list[tuple[str, dict[str, Any]]]] = {
     ],
 }
 
-# Tipo de pregunta Jev asociado a cada pilar (para la accuracy de referencia).
+# Tipo de pregunta MDT asociado a cada pilar (para la accuracy de referencia).
 TIPO_POR_PILAR = {"requisitos": "choice", "conocimiento": "score", "lecciones": "choice"}
 
 
@@ -171,7 +171,7 @@ def resolver_entrada(pilar: str, args: argparse.Namespace) -> tuple[str, str]:
 def accuracy_por_tipo(report_path: Path) -> dict[str, float]:
     """Accuracy por tipo medida en el set de calibracion (REQ-011).
 
-    Reutiliza el informe generado por jev_calibration.py. Si el informe no
+    Reutiliza el informe generado por tydm_calibration.py. Si el informe no
     existe o no trae la seccion por tipo, devuelve {} (el consumidor debe
     marcarlo como experimental; no se inventan valores, P1.19/P1.29).
     """
@@ -261,14 +261,14 @@ def _print_human(salida: dict[str, Any]) -> None:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Clasifica los tres pilares con Jev (REQ-012)")
+    parser = argparse.ArgumentParser(description="Clasifica los tres pilares con MDT (REQ-012)")
     parser.add_argument("pilar", choices=sorted(PREGUNTAS))
     parser.add_argument("--req", help="ID de requisito, p.ej. REQ-011")
     parser.add_argument("--id", help="ID de leccion, p.ej. LSN-008")
     parser.add_argument("--file", help="Ruta de un archivo de entrada")
     parser.add_argument("--text", help="Texto de entrada directo")
     parser.add_argument("--json", action="store_true", help="Salida JSON")
-    parser.add_argument("--model", default=None, help="Ruta al GGUF (default: JEV_MODEL_PATH)")
+    parser.add_argument("--model", default=None, help="Ruta al GGUF (default: TYDM_MODEL_PATH)")
     return parser
 
 
@@ -276,10 +276,10 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     try:
         entry_id, texto = resolver_entrada(args.pilar, args)
-        umbral = float(os.getenv("JEV_MIN_CONFIDENCE", str(DEFAULT_MIN_CONFIDENCE)))
-        report_path = Path(os.getenv("JEV_CALIBRATION_REPORT", str(DEFAULT_CALIBRATION_REPORT)))
+        umbral = float(os.getenv("TYDM_MIN_CONFIDENCE", str(DEFAULT_MIN_CONFIDENCE)))
+        report_path = Path(os.getenv("TYDM_CALIBRATION_REPORT", str(DEFAULT_CALIBRATION_REPORT)))
         accuracy = accuracy_por_tipo(report_path)
-        client = JevLlama(model_path=args.model)
+        client = TyDMLlama(model_path=args.model)
         salida = ejecutar(args.pilar, entry_id, texto, client, umbral, accuracy)
     except (ValueError, FileNotFoundError, ImportError) as exc:
         print(f"Error: {exc}", file=sys.stderr)

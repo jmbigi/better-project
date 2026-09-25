@@ -3,7 +3,7 @@
 | # | Mejora | Prioridad | Valor (%) | Esfuerzo (h) | Evidencia | Estado |
 |---|--------|-----------|-----------|--------------|-----------|--------|
 | 1 | **Corregir 3 violaciones P1.26 en `verificar_proyecto.py`** (`except: pass` líneas 291, 332, 363) | P0 | 95 | 1 | `auto_audit.py all` reporta 3 errores críticos | Hecho (2026-09-24); verificado con `auto_audit.py tests` (0 errores) |
-| 2 | **Hacer `curses` opcional en `jev_review.py`** (fallback a modo `--report` en Windows) | P0 | 90 | 2 | Suite rota en Windows por `ModuleNotFoundError: _curses` | Hecho (2026-09-24); `TestJevReview` 12/12 en Python 3.14.3 |
+| 2 | **Hacer `curses` opcional en `tydm_review.py`** (fallback a modo `--report` en Windows) | P0 | 90 | 2 | Suite rota en Windows por `ModuleNotFoundError: _curses` | Hecho (2026-09-24); `TestTyDMReview` 12/12 en Python 3.14.3 |
 | 3 | **Forzar índice JSON en `index_knowledge.py`** (flag `--json` o variable de entorno) para retrieval quality check | P1 | 85 | 2 | `diagnostico.py` da 60/100 en conocimiento; check retrieval salta silenciosamente | Pendiente |
 | 4 | **Instalar `pip-audit` en venv** y ejecutar `audit_advisories.py` en CI | P1 | 80 | 1 | P0.18 requiere SBOM + escaneo; actualmente falla | Pendiente |
 | 5 | **Corregir `verificar-proyecto.sh` para Windows** (PowerShell nativo o documentar WSL obligatorio) | P1 | 75 | 4 | Verificador principal no ejecuta en Windows nativo | Pendiente (el hook corre anteponiendo `C:\Program Files\Git\bin` al PATH) |

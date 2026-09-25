@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""jev_review.py — Revision humana asistida de clasificaciones Jev (REQ-016).
+"""tydm_review.py — Revision humana asistida de clasificaciones MDT (REQ-016).
 
 # REQ-016
 
-Muestra las clasificaciones propuestas por `scripts/jev_pillars.py` (REQ-012)
+Muestra las clasificaciones propuestas por `scripts/tydm_pillars.py` (REQ-012)
 en una interfaz de terminal (curses) y pide confirmacion al programador
 (P1.15/P1.22). NO aplica cambios a los documentos: guarda la revision en un
-JSON generado (`.docs/.storage/jev_review.json`).
+JSON generado (`.docs/.storage/tydm_review.json`).
 
 Uso:
-    python3 scripts/jev_review.py                 # UI curses (modelo real)
-    python3 scripts/jev_review.py --report        # tabla por consola + JSON
-    python3 scripts/jev_review.py --fake --limit 5  # sin modelo (demo/tests)
+    python3 scripts/tydm_review.py                 # UI curses (modelo real)
+    python3 scripts/tydm_review.py --report        # tabla por consola + JSON
+    python3 scripts/tydm_review.py --fake --limit 5  # sin modelo (demo/tests)
 
 En Windows sin `windows-curses` instalado, la UI curses no esta disponible
 y el script cae automaticamente a modo `--report` con una advertencia.
@@ -36,9 +36,9 @@ try:
 except ImportError:
     HAS_CURSES = False
 
-import jev_pillars as jp
+import tydm_pillars as jp
 import lessons_extractor as le
-from jev_llama import JevLlama
+from tydm_llama import TyDMLlama
 
 
 def _curses_works() -> bool:
@@ -62,9 +62,9 @@ CURSES_AVAILABLE = _curses_works()
 ROOT = Path(__file__).resolve().parent.parent
 REQ_DIR = ROOT / ".docs" / "requirements"
 LESSONS_DIR = ROOT / ".docs" / "lessons"
-DEFAULT_REPORT = ROOT / ".docs" / ".storage" / "jev_review.json"
-DEFAULT_CACHE = ROOT / ".docs" / ".storage" / "jev_review_cache.json"
-CANDIDATES = ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_candidates.json"
+DEFAULT_REPORT = ROOT / ".docs" / ".storage" / "tydm_review.json"
+DEFAULT_CACHE = ROOT / ".docs" / ".storage" / "tydm_review_cache.json"
+CANDIDATES = ROOT / ".docs" / "knowledge" / "ai" / "tydm_calibration_candidates.json"
 UMBRAL = 0.5
 
 
@@ -148,7 +148,7 @@ def _clave(item: dict[str, Any]) -> str:
 
 
 def _ruta_cache(path: str | None = None) -> Path:
-    return Path(path or os.getenv("JEV_REVIEW_CACHE", str(DEFAULT_CACHE)))
+    return Path(path or os.getenv("TYDM_REVIEW_CACHE", str(DEFAULT_CACHE)))
 
 
 def cargar_cache(path: str | None = None) -> dict[str, Any]:
@@ -262,7 +262,7 @@ def imprimir_tabla(filas: list[dict[str, Any]]) -> None:
 def _dibujar(stdscr, fila: dict[str, Any], cabecera: str, mensaje: str) -> None:
     stdscr.clear()
     alto, ancho = stdscr.getmaxyx()
-    stdscr.addnstr(0, 0, f"REVISION JEV (REQ-016)  {cabecera}", ancho - 1, curses.A_BOLD)
+    stdscr.addnstr(0, 0, f"REVISION MDT (REQ-016)  {cabecera}", ancho - 1, curses.A_BOLD)
     stdscr.addnstr(1, 0, f"{fila['item']}  [{fila['pilar']}/{fila['campo']}]  tipo={fila['tipo']}", ancho - 1)
     texto = f"Propuesta: {fila['propuesta']}   confianza={_conf_txt(fila['confianza']).strip()}"
     stdscr.addnstr(2, 0, texto, ancho - 1)
@@ -321,7 +321,7 @@ def repl_curses(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Revision humana de clasificaciones Jev (REQ-016)")
+    parser = argparse.ArgumentParser(description="Revision humana de clasificaciones MDT (REQ-016)")
     parser.add_argument("--pilar", action="append", choices=["requisitos", "lecciones", "conocimiento"],
                         help="Pilar a revisar (repetible; default: requisitos y lecciones)")
     parser.add_argument("--limit", type=int, default=None, help="Maximo de items")
@@ -343,14 +343,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.fake:
             client = _ClienteFalso()
         else:
-            client = JevLlama(model_path=args.model)
+            client = TyDMLlama(model_path=args.model)
         accuracy = jp.accuracy_por_tipo(
-            Path(os.getenv("JEV_CALIBRATION_REPORT", str(jp.DEFAULT_CALIBRATION_REPORT)))
+            Path(os.getenv("TYDM_CALIBRATION_REPORT", str(jp.DEFAULT_CALIBRATION_REPORT)))
         )
     if not items:
         print("No hay items para revisar.", file=sys.stderr)
         return 1
-    out = Path(args.out or os.getenv("JEV_REVIEW_REPORT", str(DEFAULT_REPORT)))
+    out = Path(args.out or os.getenv("TYDM_REVIEW_REPORT", str(DEFAULT_REPORT)))
     cache = cargar_cache()
     filas: list[dict[str, Any]] = []
     if args.report or not sys.stdout.isatty() or not CURSES_AVAILABLE:

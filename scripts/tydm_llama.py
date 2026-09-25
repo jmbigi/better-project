@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-"""jev_llama.py — Cliente Jev AI liviano con llama.cpp (REQ-011).
+"""tydm_llama.py — Cliente MDT liviano con llama.cpp (REQ-011).
 
 Carga un modelo GGUF pequeño (~3–6 GB) y responde preguntas tipadas
 (`noul`, `choice`, `score`) leyendo logits del modelo, sin samplear tokens.
 
 Uso:
-    JEV_MODEL_PATH=/ruta/al/modelo.gguf python3 scripts/jev_llama.py --demo
-    python3 scripts/jev_llama.py --input decisions.json
+    TYDM_MODEL_PATH=/ruta/al/modelo.gguf python3 scripts/tydm_llama.py --demo
+    python3 scripts/tydm_llama.py --input decisions.json
 
 Configuracion por entorno:
-    JEV_MODEL_PATH    ruta al modelo GGUF (default: ~/.cache/better-project/jev/Qwen_Qwen3.5-4B-Q4_K_M.gguf)
-    JEV_N_CTX         contexto maximo (default: 4096)
-    JEV_N_THREADS     hilos CPU (default: None -> auto)
-    JEV_TIMEOUT       timeout de carga en segundos (default: 300)
-    JEV_TEMPERATURE   temperatura de calibracion > 0 (default: 1.0; ver jev_calibration.py)
+    TYDM_MODEL_PATH    ruta al modelo GGUF (default: ~/.cache/better-project/tydm/Qwen_Qwen3.5-4B-Q4_K_M.gguf)
+    TYDM_N_CTX         contexto maximo (default: 4096)
+    TYDM_N_THREADS     hilos CPU (default: None -> auto)
+    TYDM_TIMEOUT       timeout de carga en segundos (default: 300)
+    TYDM_TEMPERATURE   temperatura de calibracion > 0 (default: 1.0; ver tydm_calibration.py)
 
 Dependencia opcional:
     pip install -r requirements-optional.txt
@@ -35,11 +35,11 @@ DEFAULT_TEMPERATURE = 1.0
 
 
 def _default_model_path() -> Path:
-    """Ruta del modelo: JEV_MODEL_PATH si esta definida, si no la cache local."""
-    env = os.getenv("JEV_MODEL_PATH")
+    """Ruta del modelo: TYDM_MODEL_PATH si esta definida, si no la cache local."""
+    env = os.getenv("TYDM_MODEL_PATH")
     if env:
         return Path(env).expanduser()
-    return Path.home() / ".cache" / "better-project" / "jev" / DEFAULT_MODEL
+    return Path.home() / ".cache" / "better-project" / "tydm" / DEFAULT_MODEL
 
 
 def _env_int(name: str, default: int) -> int:
@@ -75,7 +75,7 @@ def _confidence(probs: list[float]) -> float:
     return max(0.0, min(1.0, 1.0 - h / math.log(k)))
 
 
-class JevLlama:
+class TyDMLlama:
     """Motor de decisiones tipadas con un modelo GGUF local."""
 
     def __init__(
@@ -87,19 +87,19 @@ class JevLlama:
         temperature: float | None = None,
     ) -> None:
         self.model_path = Path(model_path) if model_path else _default_model_path()
-        self.n_ctx = n_ctx if n_ctx is not None else _env_int("JEV_N_CTX", DEFAULT_N_CTX)
-        self.n_threads = n_threads if n_threads is not None else os.getenv("JEV_N_THREADS")
-        self.timeout = timeout if timeout is not None else _env_float("JEV_TIMEOUT", DEFAULT_TIMEOUT)
+        self.n_ctx = n_ctx if n_ctx is not None else _env_int("TYDM_N_CTX", DEFAULT_N_CTX)
+        self.n_threads = n_threads if n_threads is not None else os.getenv("TYDM_N_THREADS")
+        self.timeout = timeout if timeout is not None else _env_float("TYDM_TIMEOUT", DEFAULT_TIMEOUT)
         self.temperature = (
-            temperature if temperature is not None else _env_float("JEV_TEMPERATURE", DEFAULT_TEMPERATURE)
+            temperature if temperature is not None else _env_float("TYDM_TEMPERATURE", DEFAULT_TEMPERATURE)
         )
         if self.temperature <= 0:
-            raise ValueError(f"JEV_TEMPERATURE debe ser > 0, se recibio {self.temperature}")
+            raise ValueError(f"TYDM_TEMPERATURE debe ser > 0, se recibio {self.temperature}")
 
         if not self.model_path.exists():
             raise FileNotFoundError(
                 f"No se encontro el modelo GGUF: {self.model_path}. "
-                f"Descargalo con: python3 scripts/download_jev_model.py"
+                f"Descargalo con: python3 scripts/download_tydm_model.py"
             )
 
         try:
@@ -145,7 +145,7 @@ class JevLlama:
         """Probabilidades del PRIMER token de cada opcion dado un prompt.
 
         Limitacion documentada: para opciones multi-token solo se considera el
-        primer token. Esto es suficiente para la mayoria de las decisiones Jev
+        primer token. Esto es suficiente para la mayoria de las decisiones MDT
         donde las opciones comienzan con tokens distintivos.
         """
         tokens = self._tokenize(prompt, add_bos=True)
@@ -238,7 +238,7 @@ class JevLlama:
 
 
 def _demo() -> None:
-    client = JevLlama()
+    client = TyDMLlama()
     state = (
         "El pipeline de CI fallo en el ultimo commit porque un test nuevo "
         "referencia un REQ que no existe en .docs/requirements/."
@@ -275,16 +275,16 @@ def _main() -> int:
     if "--input" in sys.argv:
         idx = sys.argv.index("--input")
         if idx + 1 >= len(sys.argv):
-            print("Uso: python3 scripts/jev_llama.py --input <archivo.json>", file=sys.stderr)
+            print("Uso: python3 scripts/tydm_llama.py --input <archivo.json>", file=sys.stderr)
             return 1
         path = Path(sys.argv[idx + 1])
         data = json.loads(path.read_text(encoding="utf-8"))
-        client = JevLlama()
+        client = TyDMLlama()
         result = client.decide(data["state"], data["questions"])
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
 
-    print("Uso: python3 scripts/jev_llama.py --demo | --input <archivo.json>", file=sys.stderr)
+    print("Uso: python3 scripts/tydm_llama.py --demo | --input <archivo.json>", file=sys.stderr)
     return 1
 
 

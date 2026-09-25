@@ -33,15 +33,15 @@ import analyze_shell as ash  # noqa: E402
 import audit_advisories as aadm  # noqa: E402
 import auto_audit as aa  # noqa: E402
 import diagnostico as diag  # noqa: E402
-import download_jev_model as djm  # noqa: E402
+import download_tydm_model as djm  # noqa: E402
 import doc_validator as dv  # noqa: E402
 import generate_sbom as gsb  # noqa: E402
 import health_dashboard as hd  # noqa: E402
 import index_knowledge as ik  # noqa: E402
-import jev_calibration as jc  # noqa: E402
-import jev_calibration_merge as jcm  # noqa: E402
-import jev_pillars as jp  # noqa: E402
-import jev_review as jr  # noqa: E402
+import tydm_calibration as jc  # noqa: E402
+import tydm_calibration_merge as jcm  # noqa: E402
+import tydm_pillars as jp  # noqa: E402
+import tydm_review as jr  # noqa: E402
 import lessons_extractor as le  # noqa: E402
 import mcp_server as mcp  # noqa: E402
 import mutation_check as mc  # noqa: E402
@@ -1502,8 +1502,8 @@ class TestVerificador(unittest.TestCase):
         self.assertIn("[FALLO] 20 reglas P0 definidas en AGENTS.md", proc.stdout)
 
 
-class TestJevLlama(unittest.TestCase):
-    """REQ-011: cliente Jev AI liviano con llama.cpp."""
+class TestTyDMLlama(unittest.TestCase):
+    """REQ-011: cliente MDT liviano con llama.cpp."""
 
     _VOCAB = 1000
     _N_ROWS = 256
@@ -1513,16 +1513,16 @@ class TestJevLlama(unittest.TestCase):
         self.model_path = self.tmp / "fake.gguf"
         self.model_path.write_bytes(b"fake-model")
 
-        # Importamos jev_llama sin dependencias (los imports son diferidos),
+        # Importamos tydm_llama sin dependencias (los imports son diferidos),
         # luego mockeamos llama_cpp y numpy solo para estas pruebas.
-        import jev_llama as jl
+        import tydm_llama as jl
 
         self.jl = jl
 
         self._real_llama = sys.modules.get("llama_cpp")
         self._real_numpy = sys.modules.get("numpy")
-        self._real_model_env = os.environ.pop("JEV_MODEL_PATH", None)
-        self._real_temp_env = os.environ.pop("JEV_TEMPERATURE", None)
+        self._real_model_env = os.environ.pop("TYDM_MODEL_PATH", None)
+        self._real_temp_env = os.environ.pop("TYDM_TEMPERATURE", None)
 
         vocab = self._VOCAB
         rows = self._N_ROWS
@@ -1570,13 +1570,13 @@ class TestJevLlama(unittest.TestCase):
         else:
             sys.modules.pop("numpy", None)
         if self._real_model_env is not None:
-            os.environ["JEV_MODEL_PATH"] = self._real_model_env
+            os.environ["TYDM_MODEL_PATH"] = self._real_model_env
         if self._real_temp_env is not None:
-            os.environ["JEV_TEMPERATURE"] = self._real_temp_env
+            os.environ["TYDM_TEMPERATURE"] = self._real_temp_env
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def _client(self):
-        return self.jl.JevLlama(model_path=str(self.model_path), n_ctx=128)
+        return self.jl.TyDMLlama(model_path=str(self.model_path), n_ctx=128)
 
     @staticmethod
     def _set_logit(client, token: str, value: float) -> None:
@@ -1587,13 +1587,13 @@ class TestJevLlama(unittest.TestCase):
         client = self._client()
         self.assertIs(client.model._kwargs.get("logits_all"), True)
 
-    def test_jev_model_path_se_usa_por_defecto(self):
-        os.environ["JEV_MODEL_PATH"] = str(self.model_path)
-        client = self.jl.JevLlama()
+    def test_tydm_model_path_se_usa_por_defecto(self):
+        os.environ["TYDM_MODEL_PATH"] = str(self.model_path)
+        client = self.jl.TyDMLlama()
         self.assertEqual(client.model_path, self.model_path)
 
-    def test_jev_temperature_desde_entorno(self):
-        os.environ["JEV_TEMPERATURE"] = "2.5"
+    def test_tydm_temperature_desde_entorno(self):
+        os.environ["TYDM_TEMPERATURE"] = "2.5"
         client = self._client()
         self.assertAlmostEqual(client.temperature, 2.5)
 
@@ -1606,10 +1606,10 @@ class TestJevLlama(unittest.TestCase):
             self.jl._softmax([0.0, 1.0], 0.0)
 
     def test_temperature_en_rango_desde_constructor(self):
-        client = self.jl.JevLlama(model_path=str(self.model_path), temperature=3.0)
+        client = self.jl.TyDMLlama(model_path=str(self.model_path), temperature=3.0)
         self.assertAlmostEqual(client.temperature, 3.0)
         with self.assertRaises(ValueError):
-            self.jl.JevLlama(model_path=str(self.model_path), temperature=-1.0)
+            self.jl.TyDMLlama(model_path=str(self.model_path), temperature=-1.0)
 
     def test_noul_preferencia_yes(self):
         client = self._client()
@@ -1670,29 +1670,29 @@ class TestJevLlama(unittest.TestCase):
     def test_modelo_inexistente_lanza_filenotfound(self):
         missing = self.tmp / "no_existe.gguf"
         with self.assertRaises(FileNotFoundError):
-            self.jl.JevLlama(model_path=str(missing))
+            self.jl.TyDMLlama(model_path=str(missing))
 
     def test_default_model_path_sin_env(self):
-        # _default_model_path usa Path.home() / ".cache" / "better-project" / "jev" / DEFAULT_MODEL
+        # _default_model_path usa Path.home() / ".cache" / "better-project" / "tydm" / DEFAULT_MODEL
         # No podemos testear Path.home() facilmente, pero podemos verificar la logica
         with mock.patch.object(Path, "home", return_value=self.tmp):
             path = self.jl._default_model_path()
-            expected = self.tmp / ".cache" / "better-project" / "jev" / self.jl.DEFAULT_MODEL
+            expected = self.tmp / ".cache" / "better-project" / "tydm" / self.jl.DEFAULT_MODEL
             self.assertEqual(path, expected)
 
     def test_env_int_y_float_con_none(self):
         # _env_int y _env_float devuelven default cuando la variable no existe
-        self.assertEqual(self.jl._env_int("JEV_NO_EXISTE", 42), 42)
-        self.assertEqual(self.jl._env_float("JEV_NO_EXISTE", 3.14), 3.14)
+        self.assertEqual(self.jl._env_int("TYDM_NO_EXISTE", 42), 42)
+        self.assertEqual(self.jl._env_float("TYDM_NO_EXISTE", 3.14), 3.14)
         # Y parsean correctamente cuando existe
-        os.environ["JEV_TEST_INT"] = "123"
-        os.environ["JEV_TEST_FLOAT"] = "2.5"
+        os.environ["TYDM_TEST_INT"] = "123"
+        os.environ["TYDM_TEST_FLOAT"] = "2.5"
         try:
-            self.assertEqual(self.jl._env_int("JEV_TEST_INT", 0), 123)
-            self.assertEqual(self.jl._env_float("JEV_TEST_FLOAT", 0.0), 2.5)
+            self.assertEqual(self.jl._env_int("TYDM_TEST_INT", 0), 123)
+            self.assertEqual(self.jl._env_float("TYDM_TEST_FLOAT", 0.0), 2.5)
         finally:
-            os.environ.pop("JEV_TEST_INT", None)
-            os.environ.pop("JEV_TEST_FLOAT", None)
+            os.environ.pop("TYDM_TEST_INT", None)
+            os.environ.pop("TYDM_TEST_FLOAT", None)
 
     def test_confidence_funcion(self):
         # confidence = 1 - H(p)/ln(K)
@@ -1705,14 +1705,14 @@ class TestJevLlama(unittest.TestCase):
         self.assertAlmostEqual(self.jl._confidence([1.0, 0.0, 0.0]), 1.0, places=9)
 
     def test_build_prompt_noul(self):
-        prompt = self.jl.JevLlama._build_prompt("estado", {"type": "noul", "instructions": "¿Sí o no?"})
+        prompt = self.jl.TyDMLlama._build_prompt("estado", {"type": "noul", "instructions": "¿Sí o no?"})
         self.assertIn("State: estado", prompt)
         self.assertIn("Question: ¿Sí o no?", prompt)
         self.assertIn('Answer only "yes" or "no"', prompt)
         self.assertIn("Answer: ", prompt)
 
     def test_build_prompt_choice(self):
-        prompt = self.jl.JevLlama._build_prompt("estado", {
+        prompt = self.jl.TyDMLlama._build_prompt("estado", {
             "type": "choice",
             "instructions": "Elige",
             "criteria": {"a": "opcion A", "b": "opcion B"}
@@ -1723,7 +1723,7 @@ class TestJevLlama(unittest.TestCase):
         self.assertIn("Answer with the exact option id", prompt)
 
     def test_build_prompt_score(self):
-        prompt = self.jl.JevLlama._build_prompt("estado", {
+        prompt = self.jl.TyDMLlama._build_prompt("estado", {
             "type": "score",
             "instructions": "Puntua",
             "criteria": ["bajo", "alto"]
@@ -1791,7 +1791,7 @@ class TestJevLlama(unittest.TestCase):
         sys.modules["llama_cpp"] = None
         try:
             with self.assertRaises(ImportError) as cm:
-                self.jl.JevLlama(model_path=str(self.model_path))
+                self.jl.TyDMLlama(model_path=str(self.model_path))
             self.assertIn("llama-cpp-python no esta instalado", str(cm.exception))
         finally:
             if real_llama:
@@ -1805,7 +1805,7 @@ class TestJevLlama(unittest.TestCase):
         sys.modules["numpy"] = None
         try:
             with self.assertRaises(ImportError) as cm:
-                self.jl.JevLlama(model_path=str(self.model_path))
+                self.jl.TyDMLlama(model_path=str(self.model_path))
             self.assertIn("llama-cpp-python no esta instalado", str(cm.exception))
         finally:
             if real_numpy:
@@ -1829,10 +1829,10 @@ class TestJevLlama(unittest.TestCase):
         self.assertEqual(result["q"]["type"], "noul")
 
     def test_main_demo(self):
-        with mock.patch.object(sys, "argv", ["jev_llama.py", "--demo"]), \
-             mock.patch.object(self.jl, "JevLlama", return_value=self._client()), \
+        with mock.patch.object(sys, "argv", ["tydm_llama.py", "--demo"]), \
+             mock.patch.object(self.jl, "TyDMLlama", return_value=self._client()), \
              mock.patch.object(sys, "stdout", io.StringIO()):
-            # _demo() llama a JevLlama() y decide()
+            # _demo() llama a TyDMLlama() y decide()
             result = self.jl._main()
             self.assertEqual(result, 0)
 
@@ -1840,26 +1840,26 @@ class TestJevLlama(unittest.TestCase):
         data = {"state": "test", "questions": {"q": {"type": "noul", "instructions": "?"}}}
         input_file = self.tmp / "input.json"
         input_file.write_text(json.dumps(data))
-        with mock.patch.object(sys, "argv", ["jev_llama.py", "--input", str(input_file)]), \
-             mock.patch.object(self.jl, "JevLlama", return_value=self._client()), \
+        with mock.patch.object(sys, "argv", ["tydm_llama.py", "--input", str(input_file)]), \
+             mock.patch.object(self.jl, "TyDMLlama", return_value=self._client()), \
              mock.patch.object(sys, "stdout", io.StringIO()):
             result = self.jl._main()
             self.assertEqual(result, 0)
 
     def test_main_uso_incorrecto(self):
-        with mock.patch.object(sys, "argv", ["jev_llama.py"]), \
+        with mock.patch.object(sys, "argv", ["tydm_llama.py"]), \
              mock.patch.object(sys, "stderr", io.StringIO()):
             result = self.jl._main()
             self.assertEqual(result, 1)
 
     def test_main_input_falta_archivo(self):
-        with mock.patch.object(sys, "argv", ["jev_llama.py", "--input"]), \
+        with mock.patch.object(sys, "argv", ["tydm_llama.py", "--input"]), \
              mock.patch.object(sys, "stderr", io.StringIO()):
             result = self.jl._main()
             self.assertEqual(result, 1)
 
 
-class TestJevCalibration(unittest.TestCase):
+class TestTyDMCalibration(unittest.TestCase):
     """REQ-011: matematicas de calibracion (NLL/Brier/ECE/temperatura)."""
 
     def test_softmax_normaliza_y_temperatura(self):
@@ -2059,9 +2059,9 @@ class TestJevCalibration(unittest.TestCase):
         try:
             set_path = tmp / "set.json"
             set_path.write_text(json.dumps({"casos": _casos_calibracion()}), encoding="utf-8")
-            argv = ["jev_calibration.py", "--set", str(set_path), "--folds", "2",
+            argv = ["tydm_calibration.py", "--set", str(set_path), "--folds", "2",
                     "--no-cache", "--json", "--write"]
-            with mock.patch.object(jc, "JevLlama", lambda model_path=None: _FakeCalibClient()), \
+            with mock.patch.object(jc, "TyDMLlama", lambda model_path=None: _FakeCalibClient()), \
                     mock.patch.object(jc, "DEFAULT_REPORT", tmp / "r.json"), \
                     mock.patch.object(sys, "argv", argv), \
                     mock.patch.object(sys, "stdout", io.StringIO()), \
@@ -2145,8 +2145,8 @@ class TestJevCalibration(unittest.TestCase):
         try:
             set_path = tmp / "set.json"
             set_path.write_text(json.dumps({"casos": _casos_calibracion()}), encoding="utf-8")
-            argv = ["jev_calibration.py", "--set", str(set_path), "--folds", "2", "--no-cache"]
-            with mock.patch.object(jc, "JevLlama", lambda model_path=None: _FakeCalibClient()), \
+            argv = ["tydm_calibration.py", "--set", str(set_path), "--folds", "2", "--no-cache"]
+            with mock.patch.object(jc, "TyDMLlama", lambda model_path=None: _FakeCalibClient()), \
                     mock.patch.object(sys, "argv", argv), \
                     mock.patch.object(sys, "stdout", io.StringIO()), \
                     mock.patch.object(sys, "stderr", io.StringIO()):
@@ -2159,8 +2159,8 @@ class TestJevCalibration(unittest.TestCase):
         try:
             set_path = tmp / "set.json"
             set_path.write_text(json.dumps({"casos": _casos_calibracion()}), encoding="utf-8")
-            argv = ["jev_calibration.py", "--set", str(set_path), "--folds", "2", "--no-cache", "--model", "/custom/model.gguf"]
-            with mock.patch.object(jc, "JevLlama") as mock_llama, \
+            argv = ["tydm_calibration.py", "--set", str(set_path), "--folds", "2", "--no-cache", "--model", "/custom/model.gguf"]
+            with mock.patch.object(jc, "TyDMLlama") as mock_llama, \
                     mock.patch.object(sys, "argv", argv), \
                     mock.patch.object(sys, "stdout", io.StringIO()), \
                     mock.patch.object(sys, "stderr", io.StringIO()):
@@ -2175,8 +2175,8 @@ class TestJevCalibration(unittest.TestCase):
         try:
             set_path = tmp / "set.json"
             set_path.write_text(json.dumps({"casos": _casos_calibracion()}), encoding="utf-8")
-            argv = ["jev_calibration.py", "--set", str(set_path), "--folds", "2", "--no-cache"]
-            with mock.patch.object(jc, "JevLlama", lambda model_path=None: _FakeCalibClient()), \
+            argv = ["tydm_calibration.py", "--set", str(set_path), "--folds", "2", "--no-cache"]
+            with mock.patch.object(jc, "TyDMLlama", lambda model_path=None: _FakeCalibClient()), \
                     mock.patch.object(jc, "cargar_cache") as mock_cache, \
                     mock.patch.object(sys, "argv", argv), \
                     mock.patch.object(sys, "stdout", io.StringIO()), \
@@ -2218,8 +2218,8 @@ def _casos_calibracion():
     ]
 
 
-class _FakeJevClient:
-    """Cliente Jev simulado para REQ-012: probabilidades fijas, sin modelo."""
+class _FakeTyDMClient:
+    """Cliente MDT simulado para REQ-012: probabilidades fijas, sin modelo."""
 
     def __init__(self, confianza: float = 0.6):
         self.confianza = confianza
@@ -2250,8 +2250,8 @@ class _FakeJevClient:
         return respuestas
 
 
-class TestJevPillars(unittest.TestCase):
-    """REQ-012: integracion de Jev con los tres pilares (sin modelo)."""
+class TestTyDMPillars(unittest.TestCase):
+    """REQ-012: integracion de MDT con los tres pilares (sin modelo)."""
 
     ACC = {"choice": 0.9167, "score": 0.4167}
 
@@ -2260,7 +2260,7 @@ class TestJevPillars(unittest.TestCase):
         return argparse.Namespace(req=req, id=lesson_id, file=file, text=text)
 
     def test_requisitos_esquema_y_decision(self):
-        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(), 0.5, self.ACC)
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeTyDMClient(), 0.5, self.ACC)
         self.assertEqual(salida["tipo"], "choice")
         self.assertFalse(salida["experimental"])
         decision = salida["decisiones"][0]
@@ -2284,7 +2284,7 @@ class TestJevPillars(unittest.TestCase):
         self.assertAlmostEqual(sum(decision["probabilities"].values()), 1.0, places=6)
 
     def test_conocimiento_score_marca_experimental(self):
-        salida = jp.ejecutar("conocimiento", "frag", "texto", _FakeJevClient(), 0.5, self.ACC)
+        salida = jp.ejecutar("conocimiento", "frag", "texto", _FakeTyDMClient(), 0.5, self.ACC)
         self.assertEqual(salida["tipo"], "score")
         # accuracy score 0.417 < 0.6 => experimental (criterio 6).
         self.assertTrue(salida["experimental"])
@@ -2295,26 +2295,26 @@ class TestJevPillars(unittest.TestCase):
         self.assertTrue(decision["revision_humana"])
 
     def test_lecciones_dos_decisiones(self):
-        salida = jp.ejecutar("lecciones", "LSN-008", "texto", _FakeJevClient(), 0.5, self.ACC)
+        salida = jp.ejecutar("lecciones", "LSN-008", "texto", _FakeTyDMClient(), 0.5, self.ACC)
         campos = [d["campo"] for d in salida["decisiones"]]
         self.assertEqual(campos, ["fase", "categoria"])
         self.assertFalse(salida["experimental"])
 
     def test_umbral_marca_revision_humana_y_decision_nula(self):
-        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(0.4), 0.5, self.ACC)
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeTyDMClient(0.4), 0.5, self.ACC)
         decision = salida["decisiones"][0]
         self.assertIsNone(decision["decision"])
         self.assertEqual(decision["propuesta"], "Alta")
         self.assertTrue(decision["revision_humana"])
 
     def test_umbral_limite_es_definitivo(self):
-        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(0.5), 0.5, self.ACC)
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeTyDMClient(0.5), 0.5, self.ACC)
         decision = salida["decisiones"][0]
         self.assertFalse(decision["revision_humana"])
         self.assertEqual(decision["decision"], "Alta")
 
     def test_accuracy_desconocida_es_experimental(self):
-        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(), 0.5, {})
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeTyDMClient(), 0.5, {})
         self.assertIsNone(salida["accuracy_referencia"])
         self.assertTrue(salida["experimental"])
         # sin accuracy de referencia, tampoco decide: solo propone (P1.19).
@@ -2323,7 +2323,7 @@ class TestJevPillars(unittest.TestCase):
 
     def test_pilar_desconocido_lanza(self):
         with self.assertRaises(ValueError):
-            jp.ejecutar("otro", "X", "texto", _FakeJevClient(), 0.5, self.ACC)
+            jp.ejecutar("otro", "X", "texto", _FakeTyDMClient(), 0.5, self.ACC)
 
     def test_accuracy_por_tipo_lee_informe(self):
         tmp = Path(tempfile.mkdtemp())
@@ -2443,7 +2443,7 @@ class TestJevPillars(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
     def test_print_human(self):
-        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeJevClient(), 0.5, self.ACC)
+        salida = jp.ejecutar("requisitos", "REQ-011", "texto", _FakeTyDMClient(), 0.5, self.ACC)
         buf = io.StringIO()
         with mock.patch.object(sys, "stdout", buf):
             jp._print_human(salida)
@@ -2451,7 +2451,7 @@ class TestJevPillars(unittest.TestCase):
 
     def test_main_json_y_error(self):
         buf = io.StringIO()
-        with mock.patch.object(jp, "JevLlama", lambda model_path=None: _FakeJevClient()), \
+        with mock.patch.object(jp, "TyDMLlama", lambda model_path=None: _FakeTyDMClient()), \
                 mock.patch.object(jp, "accuracy_por_tipo", return_value=self.ACC), \
                 mock.patch.object(sys, "stdout", buf):
             self.assertEqual(jp.main(["conocimiento", "--text", "x", "--json"]), 0)
@@ -2850,6 +2850,13 @@ class TestMutationCheck(unittest.TestCase):
         with mock.patch.object(mc.subprocess, "run", return_value=rojo):
             self.assertEqual(mc._ejecutar_tests(self.tmp, "test_x", 60), 1)
 
+    def test_ejecutar_tests_sin_cache_pyc(self):
+        # PYTHONDONTWRITEBYTECODE evita el contagio de bytecode entre mutantes.
+        verde = subprocess.CompletedProcess([], 0, "", "\nRan 1 test in 0.001s\n\nOK")
+        with mock.patch.object(mc.subprocess, "run", return_value=verde) as run:
+            mc._ejecutar_tests(self.tmp, "test_x", 60)
+        self.assertEqual(run.call_args.kwargs["env"].get("PYTHONDONTWRITEBYTECODE"), "1")
+
     def test_main_batch_imprime_tabla(self):
         res = {
             "batch": [{"modulo": "scripts/x.py", "test": "t", "total": 2,
@@ -2884,8 +2891,8 @@ class TestMutationCheck(unittest.TestCase):
         self.assertEqual(mb.call_args.args[1], mc.ALL_BATCH)
 
 
-class TestJevReview(unittest.TestCase):
-    """REQ-016: revision humana asistida de clasificaciones Jev (UI/report)."""
+class TestTyDMReview(unittest.TestCase):
+    """REQ-016: revision humana asistida de clasificaciones MDT (UI/report)."""
 
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
@@ -2938,14 +2945,14 @@ class TestJevReview(unittest.TestCase):
 
     def test_main_report_fake(self):
         out = self.tmp / "rev.json"
-        os.environ["JEV_REVIEW_REPORT"] = str(out)
-        os.environ["JEV_REVIEW_CACHE"] = str(self.tmp / "cache.json")
+        os.environ["TYDM_REVIEW_REPORT"] = str(out)
+        os.environ["TYDM_REVIEW_CACHE"] = str(self.tmp / "cache.json")
         try:
             self.assertEqual(jr.main(["--report", "--fake", "--limit", "2"]), 0)
             self.assertTrue(out.exists())
         finally:
-            os.environ.pop("JEV_REVIEW_REPORT", None)
-            os.environ.pop("JEV_REVIEW_CACHE", None)
+            os.environ.pop("TYDM_REVIEW_REPORT", None)
+            os.environ.pop("TYDM_REVIEW_CACHE", None)
         self.assertNotIn(".docs/requirements", str(out))  # no escribe en los documentos
 
     def test_cache_evita_recalcular(self):
@@ -2988,14 +2995,14 @@ class TestJevReview(unittest.TestCase):
 
     def test_main_calibracion_report(self):
         out = self.tmp / "cal.json"
-        os.environ["JEV_REVIEW_REPORT"] = str(out)
-        os.environ["JEV_REVIEW_CACHE"] = str(self.tmp / "cache.json")
+        os.environ["TYDM_REVIEW_REPORT"] = str(out)
+        os.environ["TYDM_REVIEW_CACHE"] = str(self.tmp / "cache.json")
         try:
             self.assertEqual(jr.main(["--calibracion", "--report", "--limit", "3"]), 0)
             self.assertTrue(out.exists())
         finally:
-            os.environ.pop("JEV_REVIEW_REPORT", None)
-            os.environ.pop("JEV_REVIEW_CACHE", None)
+            os.environ.pop("TYDM_REVIEW_REPORT", None)
+            os.environ.pop("TYDM_REVIEW_CACHE", None)
 
 
 class TestDiagnostico(unittest.TestCase):
@@ -3033,7 +3040,7 @@ class TestDiagnostico(unittest.TestCase):
         self.assertEqual(diag.main(["--root", str(self.tmp / "no_existe")]), 1)
 
 
-class TestJevCalibrationMerge(unittest.TestCase):
+class TestTyDMCalibrationMerge(unittest.TestCase):
     """REQ-018: fusion idempotente de candidatos aprobados en el set."""
 
     def setUp(self):
@@ -3148,6 +3155,25 @@ class TestJevCalibrationMerge(unittest.TestCase):
                            "--aplicar", "--json"])
         self.assertEqual(rc, 0)
         self.assertIn("situación", self.set_path.read_text(encoding="utf-8"))
+
+    def test_main_json_no_escapa_no_ascii(self):
+        # ensure_ascii=False: un id con no-ASCII debe salir literal en stdout.
+        self._cand(casos=[{"id": "NÑ90", "tipo": "noul", "estado": "a",
+                            "instrucciones": "i", "esperado": "yes"}])
+        out = io.StringIO()
+        with mock.patch.object(sys, "stdout", out):
+            jcm.main(["--set", str(self.set_path), "--candidatos", str(self.cand_path), "--json"])
+        self.assertIn("NÑ90", out.getvalue())
+
+    def test_main_dry_run_no_dice_aplicar(self):
+        # Sin --aplicar la salida debe decir dry-run aunque no haya errores.
+        self._cand(casos=[{"id": "N90", "tipo": "noul", "estado": "a",
+                            "instrucciones": "i", "esperado": "yes"}])
+        out = io.StringIO()
+        with mock.patch.object(sys, "stdout", out):
+            rc = jcm.main(["--set", str(self.set_path), "--candidatos", str(self.cand_path)])
+        self.assertEqual(rc, 0)
+        self.assertIn("dry-run", out.getvalue())
 
 
 class TestAnalyzeShell(unittest.TestCase):
@@ -3357,6 +3383,29 @@ class TestAnalyzeShell(unittest.TestCase):
         # zsh -c
         self.assertEqual(ash._extract_bash_c_content(["zsh", "-c", "pwd"]), ["pwd"])
 
+    def test_tokenize_respeta_comillas_posix(self):
+        # posix=True: las comillas agrupan y no quedan en el token.
+        self.assertEqual(ash.tokenize('cat "a b"'), ["cat", "a b"])
+
+    def test_split_into_commands_pipe_final(self):
+        # Un pipe final deja una etapa vacia y el comando sigue contando.
+        self.assertEqual(len(ash.split_into_commands(ash.tokenize("ls |"))), 1)
+
+    def test_is_shell_y_eval_index_fuera_de_rango(self):
+        self.assertFalse(ash.is_shell(["bash"], index=9))
+        self.assertFalse(ash.is_eval_like(["eval"], index=9))
+
+    def test_is_shell_no_confunde_escaneo_ajeno(self):
+        # Un token distinto de sudo no debe activar el salto de opciones.
+        self.assertFalse(ash.is_shell(["env", "bash"]))
+
+    def test_extract_substitution_sin_cierre(self):
+        self.assertEqual(ash._extract_substitution("$(ls"), [])
+        self.assertEqual(ash._extract_substitution("`ls"), [])
+
+    def test_extract_command_substitutions_token_incompleto(self):
+        self.assertEqual(ash._extract_command_substitutions(["$(ls"]), [])
+
     def test_check_dangerous_subcommand_variants(self):
         # Verifica que los patrones detectan variantes
         findings = ash.check_dangerous_subcommand("rm -rf /tmp/x")
@@ -3386,7 +3435,7 @@ class TestAnalyzeShell(unittest.TestCase):
         self.assertTrue(any("rm-rf" in f for f in findings))
 
 
-class TestDownloadJevModel(unittest.TestCase):
+class TestDownloadTyDMModel(unittest.TestCase):
     """Cubre el helper de descarga idempotente del modelo GGUF (REQ-011)."""
 
     def setUp(self):
@@ -3418,10 +3467,39 @@ class TestDownloadJevModel(unittest.TestCase):
         self.assertEqual(djm._human(2048), "2.0 KB")
         self.assertEqual(djm._human(5 * 1024 ** 3), "5.0 GB")
 
+    def test_download_reanuda_con_respuesta_206(self):
+        # Con status 206 el servidor respeta el Range: se conserva lo ya descargado.
+        dest = self.tmp / "m.gguf"
+        dest.write_bytes(b"x" * 100)
+
+        class _Resp206:
+            status = 206
+            headers = {"Content-Length": "50"}
+
+            def __init__(self):
+                self._it = iter([b"y" * 50])
+
+            def read(self, n=-1):
+                return next(self._it, b"")
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        with mock.patch("urllib.request.urlopen", return_value=_Resp206()), \
+                mock.patch.object(djm, "EXPECTED_BYTES", 150), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            djm._download("http://x/m.gguf", dest, yes=True)
+        datos = dest.read_bytes()
+        self.assertEqual(len(datos), 150)
+        self.assertTrue(datos.startswith(b"x" * 100))
+
     def test_main_modelo_existente_no_descarga(self):
         dest = self.tmp / "m.gguf"
         dest.write_bytes(b"x")
-        argv = ["download_jev_model.py", "--dest", str(dest), "--yes"]
+        argv = ["download_tydm_model.py", "--dest", str(dest), "--yes"]
         with mock.patch.object(sys, "argv", argv), mock.patch.object(djm, "EXPECTED_BYTES", 1), \
                 mock.patch.object(djm, "_download") as dl, mock.patch.object(sys, "stdout", io.StringIO()):
             self.assertEqual(djm.main(), 0)
@@ -3429,7 +3507,7 @@ class TestDownloadJevModel(unittest.TestCase):
 
     def test_main_descarga_cuando_falta(self):
         dest = self.tmp / "m.gguf"
-        argv = ["download_jev_model.py", "--dest", str(dest), "--yes"]
+        argv = ["download_tydm_model.py", "--dest", str(dest), "--yes"]
         with mock.patch.object(sys, "argv", argv), mock.patch.object(djm, "_download") as dl, \
                 mock.patch.object(sys, "stdout", io.StringIO()):
             self.assertEqual(djm.main(), 0)
@@ -3437,7 +3515,7 @@ class TestDownloadJevModel(unittest.TestCase):
 
     def test_main_error_de_descarga_devuelve_1(self):
         dest = self.tmp / "m.gguf"
-        argv = ["download_jev_model.py", "--dest", str(dest), "--yes"]
+        argv = ["download_tydm_model.py", "--dest", str(dest), "--yes"]
         with mock.patch.object(sys, "argv", argv), \
                 mock.patch.object(djm, "_download", side_effect=RuntimeError("boom")), \
                 mock.patch.object(sys, "stdout", io.StringIO()), mock.patch.object(sys, "stderr", io.StringIO()):
@@ -3528,7 +3606,7 @@ class TestDownloadJevModel(unittest.TestCase):
     def test_main_descarga_incompleta_reanuda(self):
         dest = self.tmp / "m.gguf"
         dest.write_bytes(b"x" * 100)  # Menos que EXPECTED_BYTES
-        argv = ["download_jev_model.py", "--dest", str(dest), "--yes"]
+        argv = ["download_tydm_model.py", "--dest", str(dest), "--yes"]
         with mock.patch.object(sys, "argv", argv), mock.patch.object(djm, "EXPECTED_BYTES", 1000), \
                 mock.patch.object(djm, "_download") as dl, mock.patch.object(sys, "stdout", io.StringIO()):
             self.assertEqual(djm.main(), 0)
@@ -3537,7 +3615,7 @@ class TestDownloadJevModel(unittest.TestCase):
     def test_main_archivo_pequeno_falla(self):
         dest = self.tmp / "m.gguf"
         dest.write_bytes(b"x")
-        argv = ["download_jev_model.py", "--dest", str(dest), "--yes"]
+        argv = ["download_tydm_model.py", "--dest", str(dest), "--yes"]
         with mock.patch.object(sys, "argv", argv), mock.patch.object(djm, "EXPECTED_BYTES", 1000), \
                 mock.patch("urllib.request.urlopen", return_value=self._fake_response([b"x"])), \
                 mock.patch.object(sys, "stdout", io.StringIO()), mock.patch.object(sys, "stderr", io.StringIO()):
@@ -3545,8 +3623,8 @@ class TestDownloadJevModel(unittest.TestCase):
 
     def test_main_url_desde_env(self):
         dest = self.tmp / "m.gguf"
-        os.environ["JEV_DOWNLOAD_URL"] = "http://custom/model.gguf"
-        argv = ["download_jev_model.py", "--dest", str(dest), "--yes"]
+        os.environ["TYDM_DOWNLOAD_URL"] = "http://custom/model.gguf"
+        argv = ["download_tydm_model.py", "--dest", str(dest), "--yes"]
         try:
             with mock.patch.object(sys, "argv", argv), mock.patch.object(djm, "EXPECTED_BYTES", 1), \
                     mock.patch.object(djm, "_download") as dl, mock.patch.object(sys, "stdout", io.StringIO()):
@@ -3554,11 +3632,11 @@ class TestDownloadJevModel(unittest.TestCase):
                 dl.assert_called_once()
                 self.assertEqual(dl.call_args[0][0], "http://custom/model.gguf")
         finally:
-            os.environ.pop("JEV_DOWNLOAD_URL", None)
+            os.environ.pop("TYDM_DOWNLOAD_URL", None)
 
     def test_main_dest_desde_env(self):
-        os.environ["JEV_MODEL_PATH"] = str(self.tmp / "custom.gguf")
-        argv = ["download_jev_model.py", "--yes"]
+        os.environ["TYDM_MODEL_PATH"] = str(self.tmp / "custom.gguf")
+        argv = ["download_tydm_model.py", "--yes"]
         try:
             with mock.patch.object(sys, "argv", argv), mock.patch.object(djm, "EXPECTED_BYTES", 1), \
                     mock.patch.object(djm, "_download") as dl, mock.patch.object(sys, "stdout", io.StringIO()):
@@ -3566,7 +3644,7 @@ class TestDownloadJevModel(unittest.TestCase):
                 dl.assert_called_once()
                 self.assertEqual(dl.call_args[0][1], self.tmp / "custom.gguf")
         finally:
-            os.environ.pop("JEV_MODEL_PATH", None)
+            os.environ.pop("TYDM_MODEL_PATH", None)
 
 
 class TestAuditAdvisories(unittest.TestCase):
@@ -3706,6 +3784,65 @@ class TestAuditAdvisories(unittest.TestCase):
         output = json.loads(out.getvalue())
         self.assertEqual(output[0]["advisory"], "A")
         self.assertEqual(output[0]["cvss"], "(offline)")
+
+    def test_run_pip_audit_busca_en_path(self):
+        # Con pip_audit_path=None debe resolver la herramienta con shutil.which.
+        falso = mock.MagicMock(returncode=0, stdout='{"dependencies": []}', stderr="")
+        with mock.patch.object(aadm.shutil, "which", return_value="/fake/pip-audit"), \
+                mock.patch.object(aadm.subprocess, "run", return_value=falso) as run:
+            filas = aadm.run_pip_audit(Path("r.lock"))
+        self.assertEqual(filas, [])
+        self.assertEqual(run.call_args.args[0][0], "/fake/pip-audit")
+
+    def test_run_pip_audit_sin_herramienta_falla(self):
+        with mock.patch.object(aadm.shutil, "which", return_value=None):
+            with self.assertRaises(RuntimeError):
+                aadm.run_pip_audit(Path("r.lock"))
+
+    def test_runner_usa_check_false_y_captura(self):
+        capturas = {}
+
+        def fake_run(cmd, **kwargs):
+            capturas.update(kwargs)
+            return mock.MagicMock(returncode=0, stdout="{}", stderr="")
+
+        with mock.patch.object(aadm.shutil, "which", return_value="/fake"), \
+                mock.patch.object(aadm.subprocess, "run", fake_run):
+            aadm.run_pip_audit(Path("r.lock"))
+        self.assertEqual(capturas.get("check"), False)
+        self.assertEqual(capturas.get("capture_output"), True)
+        self.assertEqual(capturas.get("text"), True)
+
+    def test_run_pip_audit_incluye_stderr_en_error(self):
+        fallo = mock.MagicMock(returncode=2, stdout="", stderr="detalle del error")
+        with self.assertRaises(RuntimeError) as ctx:
+            aadm.run_pip_audit(Path("r.lock"), runner=lambda: fallo)
+        self.assertIn("detalle del error", str(ctx.exception))
+
+    def test_run_pip_audit_parsea_stdout(self):
+        payload = json.dumps({"dependencies": [
+            {"name": "p", "version": "1",
+             "vulns": [{"id": "X", "fix_versions": [], "aliases": ["A"]}]},
+        ]})
+        falso = mock.MagicMock(returncode=1, stdout=payload, stderr="")
+        filas = aadm.run_pip_audit(Path("r.lock"), runner=lambda: falso)
+        self.assertEqual(filas[0]["advisory"], "X")
+        self.assertEqual(filas[0]["fix"], "sin parche")
+
+    def test_enriquecer_por_defecto_online(self):
+        filas = [{"advisory": "PYSEC-1", "paquete": "p", "version": "1", "fix": "sin parche",
+                  "aliases": [], "resumen": "r"}]
+        payload = {"severity": [{"score": "CVSS:X"}], "aliases": [], "summary": "s"}
+        aadm.enriquecer(filas, opener=lambda url, timeout=0: self._resp(payload))
+        self.assertEqual(filas[0]["cvss"], "CVSS:X")
+
+    def test_main_json_conserva_acentos(self):
+        filas = [{"advisory": "A", "paquete": "p", "version": "1", "fix": "sin parche",
+                  "aliases": [], "resumen": "decisión crítica"}]
+        with mock.patch.object(aadm, "run_pip_audit", return_value=filas), \
+                mock.patch.object(sys, "stdout", io.StringIO()) as out:
+            self.assertEqual(aadm.main(["--json", "--offline"]), 0)
+        self.assertIn("decisión", out.getvalue())
 
 
 class TestAdrBackfill(unittest.TestCase):

@@ -1,4 +1,4 @@
-# Estado: Jev AI liviano con llama.cpp (REQ-011)
+# Estado: MDT liviano con llama.cpp (REQ-011)
 
 Fecha: 2026-09-19 (revision y correccion)
 
@@ -13,13 +13,13 @@ Fecha: 2026-09-19 (revision y correccion)
 ### Requisito y codigo
 
 - `REQ-011` creado en `.docs/requirements/REQ-011.md` con criterios de aceptacion.
-- `scripts/jev_llama.py`: motor de decisiones tipadas (`noul`, `choice`, `score`)
+- `scripts/tydm_llama.py`: motor de decisiones tipadas (`noul`, `choice`, `score`)
   que carga un modelo GGUF con `llama-cpp-python` y lee logits sin samplear.
-- `scripts/download_jev_model.py`: descarga idempotente del modelo recomendado
+- `scripts/download_tydm_model.py`: descarga idempotente del modelo recomendado
   (`bartowski/Qwen_Qwen3.5-4B-GGUF`, Q4_K_M, ~3.0 GB reales) desde HuggingFace.
-- `.docs/knowledge/ai/jev_llama.md`: conceptos, uso, hardware y licencias.
+- `.docs/knowledge/ai/tydm_llama.md`: conceptos, uso, hardware y licencias.
 - `requirements-optional.txt`: anade `llama-cpp-python`.
-- `tests/test_ecosistema.py`: tests unitarios con mocks (`TestJevLlama`).
+- `tests/test_ecosistema.py`: tests unitarios con mocks (`TestTyDMLlama`).
 
 ### Revision y correcciones (2026-09-19)
 
@@ -28,7 +28,7 @@ figurar como implementado. Bugs corregidos:
 
 | Bug | Causa | Correccion |
 |---|---|---|
-| `JEV_MODEL_PATH` ignorado | `_default_model_path()` no leia el entorno | lee `JEV_MODEL_PATH` (con `expanduser`) |
+| `TYDM_MODEL_PATH` ignorado | `_default_model_path()` no leia el entorno | lee `TYDM_MODEL_PATH` (con `expanduser`) |
 | Nombre por defecto distinto al descargado | `Qwen3.5-...` vs `Qwen_Qwen3.5-...` | `DEFAULT_MODEL` alineado al helper |
 | `eval` no guardaba logits | llama-cpp-python solo guarda `scores` si `logits_all=True` | se pasa `logits_all=True` al constructor |
 | Crash en `_softmax` | `scores` es 2D `(n_ctx, vocab)`; se pasaba completo | se lee la fila del ultimo token (`scores[n_tokens-1]`) |
@@ -40,13 +40,13 @@ figurar como implementado. Bugs corregidos:
 
 | Verificacion | Resultado |
 |---|---|
-| `python3 -m py_compile scripts/jev_llama.py scripts/download_jev_model.py` | OK |
+| `python3 -m py_compile scripts/tydm_llama.py scripts/download_tydm_model.py` | OK |
 | `python3 -m unittest discover -s tests -q` | 49 tests OK |
 | `bash scripts/verificar-proyecto.sh` | 40 OK, 1 fallo (arbol de trabajo con cambios, esperado) |
-| Inferencia real, `JEV_MODEL_PATH` a Llama-3.2-1B Q4 local | OK |
+| Inferencia real, `TYDM_MODEL_PATH` a Llama-3.2-1B Q4 local | OK |
 | Descarga completa del modelo recomendado | OK (2.8 GB, `Qwen_Qwen3.5-4B-Q4_K_M.gguf`) |
 | Demo con el modelo recomendado | OK (ver abajo) |
-| `python3 -m py_compile` de `jev_calibration.py` | OK |
+| `python3 -m py_compile` de `tydm_calibration.py` | OK |
 | `python3 -m unittest` (10 tests nuevos de calibracion) | 59 tests OK |
 | Calibracion real (Qwen3.5-4B, 40 casos, k-fold) | OK (ver abajo) |
 
@@ -54,7 +54,7 @@ Antes de la correccion, la ejecucion fallaba con
 `TypeError: only 0-dimensional arrays can be converted to Python scalars`.
 
 Salida real con el modelo recomendado
-(`.venv/bin/python scripts/jev_llama.py --demo`, Qwen3.5-4B Q4_K_M, CPU):
+(`.venv/bin/python scripts/tydm_llama.py --demo`, Qwen3.5-4B Q4_K_M, CPU):
 
 ```json
 {
@@ -65,7 +65,7 @@ Salida real con el modelo recomendado
 ```
 
 Salida previa con un modelo local alternativo
-(`JEV_MODEL_PATH=<ruta-a-un-modelo-gguf-local>`, Llama-3.2-1B-Instruct Q4_K_M):
+(`TYDM_MODEL_PATH=<ruta-a-un-modelo-gguf-local>`, Llama-3.2-1B-Instruct Q4_K_M):
 
 ```json
 {
@@ -77,15 +77,15 @@ Salida previa con un modelo local alternativo
 
 ### Commit
 
-- `648f95f` — feat(jev): cliente Jev AI liviano con llama.cpp (REQ-011).
-- `b289293` — fix(jev): corrige inferencia real del motor REQ-011.
-- `1f62e37` — feat(jev): calibracion por temperatura con NLL/Brier/ECE.
+- `648f95f` — feat(tydm): cliente MDT liviano con llama.cpp (REQ-011).
+- `b289293` — fix(tydm): corrige inferencia real del motor REQ-011.
+- `1f62e37` — feat(tydm): calibracion por temperatura con NLL/Brier/ECE.
 - Push a `origin/main`: sincronizado.
 
 ## Calibracion (2026-09-20, set v18 de 328 casos)
 
-Se anadio `scripts/jev_calibration.py` y `JEV_TEMPERATURE` al motor. El set
-`.docs/knowledge/ai/jev_calibration_set.json` (v18, 328 casos: 112 noul, 108
+Se anadio `scripts/tydm_calibration.py` y `TYDM_TEMPERATURE` al motor. El set
+`.docs/knowledge/ai/tydm_calibration_set.json` (v18, 328 casos: 112 noul, 108
 choice, 108 score) se basa en P0/P1, el estado de los REQ y las lecciones LSN;
 sus etiquetas fueron **revisadas y aprobadas** por el programador (lotes 2-17;
 P1.15). La integridad del set se audita con `auto_audit calibracion`.
@@ -110,8 +110,8 @@ Accuracy por tipo (T=1.9): choice 0.787 [0.701, 0.854] (n=108), noul 0.616
 [0.593, 0.696]. Objetivo ≥100 casos/tipo cumplido (112/108/108). La exactitud
 se mantiene estable dentro del IC entre ampliaciones (v17 0.639 -> v18 0.646);
 no se presenta como mejora concluyente (LSN-020/021/023/024/025/026/027/028).
-Informe JSON (generado, no versionado) en `.docs/.storage/jev_calibration.json`.
-Aplicar con `JEV_TEMPERATURE=1.9`.
+Informe JSON (generado, no versionado) en `.docs/.storage/tydm_calibration.json`.
+Aplicar con `TYDM_TEMPERATURE=1.9`.
 
 ## Etiquetas aprobadas (2026-09-19)
 
@@ -123,24 +123,24 @@ cautelas estadisticas del artefacto de revision.
 
 ## Integracion con los tres pilares (REQ-012, 2026-09-19)
 
-- `scripts/jev_pillars.py`: clasificacion asistida de los tres pilares
+- `scripts/tydm_pillars.py`: clasificacion asistida de los tres pilares
   (`requisitos` -> `prioridad`; `conocimiento` -> `relevancia` 0-3; `lecciones`
   -> `fase` y `categoria`). Solo lee; nunca escribe en los documentos.
-- Umbral `JEV_MIN_CONFIDENCE` (default 0.5) y marca `experimental` automatica
+- Umbral `TYDM_MIN_CONFIDENCE` (default 0.5) y marca `experimental` automatica
   cuando la accuracy de referencia < 0.6 (el tipo `score` queda experimental).
   Un tipo `experimental` **nunca** emite `decision` autoritativa: devuelve
   `decision: null` y `revision_humana: true` (guardarrail P0.20/P1.31).
 - `tests/test_ecosistema.py`: tests de REQ-012 con cliente simulado (sin modelo).
-- Documentacion en `.docs/knowledge/ai/jev_pillars.md`.
+- Documentacion en `.docs/knowledge/ai/tydm_pillars.md`.
 
 | Verificacion | Resultado |
 |---|---|
-| `python3 -m py_compile scripts/jev_pillars.py` | OK |
+| `python3 -m py_compile scripts/tydm_pillars.py` | OK |
 | `python3 -m unittest discover -s tests -q` | 73 tests OK |
 | `bash scripts/verificar-proyecto.sh --pre-commit` | 38 OK, 0 fallos |
 | `bash scripts/verificar-proyecto.sh` (completo) | 40 OK, 1 fallo esperado (arbol de trabajo con cambios) |
-| Inferencia real `.venv/bin/python scripts/jev_llama.py --demo` (Qwen3.5-4B Q4_K_M) | OK |
-| Inferencia real `scripts/jev_pillars.py lecciones --id LSN-008 --json` | OK (fase `Testing` correcta; categoria propuesta `Proceso` frente a la real `Riesgo_Tecnico`) |
+| Inferencia real `.venv/bin/python scripts/tydm_llama.py --demo` (Qwen3.5-4B Q4_K_M) | OK |
+| Inferencia real `scripts/tydm_pillars.py lecciones --id LSN-008 --json` | OK (fase `Testing` correcta; categoria propuesta `Proceso` frente a la real `Riesgo_Tecnico`) |
 
 ## Auto-auditoria y gobernanza (REQ-013/REQ-014, 2026-09-19)
 
@@ -160,9 +160,9 @@ cautelas estadisticas del artefacto de revision.
 | `python3 scripts/auto_audit.py vulns` (pip-audit) | 0 errores, 5 advisories (chromadb 1.5.9 y diskcache 5.6.3, sin parche) |
 | `python3 scripts/mutation_check.py` (adr_validator) | 16 mutantes, 16 muertos, score 1.000 |
 | `cosmic-ray` 8.7.0 (adr_validator, copia aislada) | 160 mutantes, 124 muertos (77.5 %) |
-| `python3 scripts/jev_review.py --report --fake` (REQ-016) | OK (revision en JSON; no escribe en docs) |
-| `python3 scripts/jev_calibration_merge.py --aplicar` (REQ-018) | set v12, 220 casos (76 noul / 72 choice / 72 score); Lote 11 fusionado |
-| `.venv/bin/python scripts/jev_calibration.py --write` (v12, 220 casos) | T=1.6; acc 0.668 [0.601,0.730]; choice 0.864, noul 0.629, score 0.515; NLL IC95 [0.671,0.833] |
+| `python3 scripts/tydm_review.py --report --fake` (REQ-016) | OK (revision en JSON; no escribe en docs) |
+| `python3 scripts/tydm_calibration_merge.py --aplicar` (REQ-018) | set v12, 220 casos (76 noul / 72 choice / 72 score); Lote 11 fusionado |
+| `.venv/bin/python scripts/tydm_calibration.py --write` (v12, 220 casos) | T=1.6; acc 0.668 [0.601,0.730]; choice 0.864, noul 0.629, score 0.515; NLL IC95 [0.671,0.833] |
 | `python3 scripts/auto_audit.py calibracion` | 0 errores, 13 alertas (escenarios duplicados informativos) |
 | `python3 scripts/diagnostico.py --root .` (REQ-017) | 100/100 (solido); dir vacio 0/100 sin escribir |
 | `pip-audit -f cyclonedx-json -r requirements-optional.txt` | `docs/SBOM-2026-09-19.cdx.json` (119 componentes, 5 advisories) |
@@ -171,9 +171,9 @@ cautelas estadisticas del artefacto de revision.
 
 ## Revision de clasificaciones (REQ-016) y SBOM (2026-09-19)
 
-- `scripts/jev_review.py` (REQ-016): UI curses + `--report` que muestra las
+- `scripts/tydm_review.py` (REQ-016): UI curses + `--report` que muestra las
   clasificaciones de REQ-012 y recoge la confirmacion del programador; guarda en
-  `.docs/.storage/jev_review.json` (generado) sin tocar los documentos.
+  `.docs/.storage/tydm_review.json` (generado) sin tocar los documentos.
 - SBOM actual: `docs/SBOM-2026-09-19.cdx.json` (CycloneDX, 119 componentes, 5
   advisories) generado con `pip-audit -f cyclonedx-json -r
   requirements-optional.txt`; el `.venv` ahora contiene chromadb y
@@ -185,7 +185,7 @@ cautelas estadisticas del artefacto de revision.
   aplicaron **33 diferencias** a los documentos: 9 prioridades en
   `.docs/requirements/` y 24 campos (`fase`/`categoria`) en `.docs/lessons/`.
   Es una accion humana explicita (P1.17/P1.25); el registro generado
-  (`.docs/.storage/jev_review.json`, `ok=60`, `pendiente=0`) no se versiona.
+  (`.docs/.storage/tydm_review.json`, `ok=60`, `pendiente=0`) no se versiona.
 - Indice Chroma (REQ-002): al instalar chromadb se detecto y corrigio un bug de
   IDs duplicados entre archivos homonimos (LSN-022); indice reconstruido con
   `.venv/bin/python scripts/index_knowledge.py --all` (6 archivos, 41 chunks) y
@@ -201,7 +201,7 @@ cautelas estadisticas del artefacto de revision.
 
 Los 18 candidatos (N71-N76, C67-C72, S67-S72) fueron revisados y aprobados
 por el programador (18/18 aprobados, 0 correcciones) y fusionados con
-`scripts/jev_calibration_merge.py --aplicar`. El set pasa a `version: 12`
+`scripts/tydm_calibration_merge.py --aplicar`. El set pasa a `version: 12`
 con **220 casos** (76 `noul`, 72 `choice`, 72 `score`).
 
 13 alertas de escenario duplicado (los candidatos reutilizan textos de
@@ -218,4 +218,4 @@ calibracion se re-ejecuto con el set v12: T recomendada `1.6`, accuracy global
 
 - El motor usa el primer token de cada opcion como proxy (documentado).
 - No reemplaza los guardarrailes deterministas existentes.
-- `.venv/` y el modelo en `~/.cache/better-project/jev/` no se versionan.
+- `.venv/` y el modelo en `~/.cache/better-project/tydm/` no se versionan.

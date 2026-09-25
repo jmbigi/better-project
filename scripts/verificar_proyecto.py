@@ -502,7 +502,7 @@ def _check_coverage() -> bool:
         "tests.test_ecosistema.TestIndexKnowledge",
         "tests.test_ecosistema.TestMCPServer",
         "tests.test_ecosistema.TestLessonsExtractor",
-        "tests.test_ecosistema.TestJevLlama",
+        "tests.test_ecosistema.TestTyDMLlama",
         "-q"
     ])
     if result.returncode != 0:

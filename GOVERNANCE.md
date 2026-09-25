@@ -63,7 +63,7 @@ Jerarquía de prioridades:
 ### Riesgo actual
 
 - **Bus factor: 1** (maintainer único con conocimiento completo)
-- Conocimiento crítico en: reglas P0/P1, patrones deny, arquitectura MCP, calibración Jev
+- Conocimiento crítico en: reglas P0/P1, patrones deny, arquitectura MCP, calibración MDT
 
 ### Plan de mitigación
 

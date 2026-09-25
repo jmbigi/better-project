@@ -1,4 +1,4 @@
-# Extra: motor Jev local con llama.cpp (REQ-011). Opcional.
+# Extra: motor MDT local con llama.cpp (REQ-011). Opcional.
 # ADVERTENCIA: llama-cpp-python 0.3.35 trae diskcache 5.6.3 con advisory ABIERTO sin parche (CVE-2025-69872).
 # Solo instalar si se acepta el riesgo.
 # llama-cpp-python==0.3.35

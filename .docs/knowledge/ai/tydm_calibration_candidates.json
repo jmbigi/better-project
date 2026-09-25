@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "descripcion": "Lote 17 de candidatos de calibracion (REQ-011) propuestos por la IA. Revisados y aprobados por el programador el 2026-09-20 (18/18 aprobados, 0 correcciones). Fusionados con scripts/jev_calibration_merge.py --aplicar (REQ-018).",
+  "descripcion": "Lote 17 de candidatos de calibracion (REQ-011) propuestos por la IA. Revisados y aprobados por el programador el 2026-09-20 (18/18 aprobados, 0 correcciones). Fusionados con scripts/tydm_calibration_merge.py --aplicar (REQ-018).",
   "estado": "aprobado",
   "origen": [
     "AGENTS.md (P0/P1)",

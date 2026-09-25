@@ -39,7 +39,7 @@ TEST_FILE = ROOT / "tests" / "test_ecosistema.py"
 DOCS_SESGOS = (
     ROOT / "README.md",
     DOCS_DIR / "AGENT-ARCHITECTURE.md",
-    DOCS_DIR / "ESTADO-JEV-LLAMA.md",
+    DOCS_DIR / "ESTADO-TYDM-LLAMA.md",
     DOCS_DIR / "REVISION-SET-CALIBRACION.md",
     DOCS_DIR / "SESGOS-Y-FALACIAS.md",
 )
@@ -278,10 +278,10 @@ def auditar_tests(test_file: Path = TEST_FILE, scripts_dir: Path = SCRIPTS_DIR) 
 
 def auditar_calibracion(set_path=None, cand_path=None) -> tuple[list[str], list[str]]:
     """Valida la integridad del set de calibracion y de los candidatos (REQ-011)."""
-    import jev_calibration_merge as jcm
+    import tydm_calibration_merge as jcm
 
-    set_path = Path(set_path or (ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_set.json"))
-    cand_path = Path(cand_path or (ROOT / ".docs" / "knowledge" / "ai" / "jev_calibration_candidates.json"))
+    set_path = Path(set_path or (ROOT / ".docs" / "knowledge" / "ai" / "tydm_calibration_set.json"))
+    cand_path = Path(cand_path or (ROOT / ".docs" / "knowledge" / "ai" / "tydm_calibration_candidates.json"))
     errors: list[str] = []
     warnings: list[str] = []
     for path, etiqueta in ((set_path, "set"), (cand_path, "candidatos")):

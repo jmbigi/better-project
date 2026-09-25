@@ -26,10 +26,10 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
   `lessons_extractor.py` (REQ-003), `tui.py` (REQ-006), `setup.sh` (REQ-008),
   `ci.sh` (REQ-009), `verificar-proyecto.sh` (REQ-010),
   `adr_validator.py` (REQ-013), `auto_audit.py` (REQ-014),
-  `mutation_check.py` (REQ-015), `jev_review.py` (REQ-016),
-  `diagnostico.py` (REQ-017), `jev_calibration_merge.py` (REQ-018),
+  `mutation_check.py` (REQ-015), `tydm_review.py` (REQ-016),
+  `diagnostico.py` (REQ-017), `tydm_calibration_merge.py` (REQ-018),
   `run_tests_isolated.py` (REQ-026).
-- Motor Jev liviano con llama.cpp (`scripts/jev_llama.py`, REQ-011) y su
+- Motor MDT liviano con llama.cpp (`scripts/tydm_llama.py`, REQ-011) y su
   integración con los tres pilares (REQ-012). Experimental: accuracy 0.646.
 - Verificador determinista (REQ-022) y ADRs obligatorios con pre-mortem,
   alternativas reales y métricas (REQ-023).
@@ -57,9 +57,18 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
 - Dashboard de KPIs (REQ-024) implementado: `docs/health.md` regenerado por
   `scripts/ci.sh` con 5 KPIs, metas y tendencia; REQ-025 (backfill de ADR)
   pasa a **Implementado** (borradores con idempotencia por titulo).
+- Renombrado el motor "Jev" a **MDT** (modelos de decisión tipados; TyDM en
+  inglés): módulos `scripts/tydm_*.py`, variables de entorno `TYDM_*` y
+  artefactos `tydm_*.json` (ADR-010). Los nombres propios de terceros
+  (OpenJev, https://github.com/razorback16/openjev) se conservan.
 
 ### Corregido
 
+- Verificador: el check de SBOM con syft se omite cuando la herramienta no
+  está disponible (REQ-020) y verifica regeneración real en directorio
+  temporal cuando lo está; `mutation_check` exige el resumen del runner
+  ("Ran ") con rc==0 para no confundir un runner interrumpido con un
+  superviviente (batch 187/187, 25-09-2026).
 - Referencias rotas de `GOVERNANCE.md`: se crean `SECURITY.md` y este
   CHANGELOG, antes citados sin existir.
 - Trazabilidad IA y deriva documental (REQ-019); hook `commit-msg` con
