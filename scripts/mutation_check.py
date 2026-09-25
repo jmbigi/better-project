@@ -147,7 +147,14 @@ def _ejecutar_tests(root: Path, test_target: str, timeout: int) -> int:
         cwd=str(root / "tests"), capture_output=True, text=True, timeout=timeout,
         env=env,
     )
-    return proc.returncode
+    if proc.returncode != 0:
+        return proc.returncode
+    # El resumen del runner ("Ran N tests") va a stderr. Si falta con rc==0,
+    # el mutante interrumpio la suite (p.ej. SystemExit(0) durante el import
+    # al mutar la guarda __main__): cuenta como detectado, no como superviviente.
+    if "Ran " not in proc.stderr:
+        return 1
+    return 0
 
 
 def medir(

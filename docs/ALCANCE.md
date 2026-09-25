@@ -30,8 +30,11 @@ Jira/Notion, sin dependencias obligatorias.
 ## Procedencia (estado actual)
 
 - Sin releases firmadas ni SLSA >= 2: la procedencia verificable hoy es
-  **commit Git + `requirements-optional.lock` (hashes) + SBOM CycloneDX**.
-- `syft`/`grype`/`openssf scorecard` no están instalados; su adopción requiere
+  **commit Git + `requirements-optional.lock` (hashes) + SBOM CycloneDX**
+  (generado con `syft` v1.52.0, binario verificado por checksum SHA256).
+- `syft` está instalado localmente (`.local/bin`, sin sudo) y el verificador
+  lo usa si está disponible (regenera el SBOM en temp si falta).
+  `grype`/`openssf scorecard` no están instalados; su adopción requiere
   autorización explícita (P0.5) y no forma parte del CI por defecto.
 
 ## Camino a producción (si algún día aplica)

@@ -486,7 +486,34 @@ tests de mutación y **399 OK, 0 FALLOS** después (25-09-2026);
 `python3 scripts/mutation_check.py --module scripts/index_knowledge.py` → 40/40, score 1.000;
 `python3 scripts/mutation_check.py --batch` → 183/187, score **0.979** (antes 162/187, 0.866);
 `bash scripts/verificar-proyecto.sh` → 53 OK, 1 FALLO (solo "árbol de trabajo limpio", por los
-cambios sin commitear de la revisión); `ruff check scripts tests` en verde; `py_compile` OK. **Lección**: una dependencia
+cambios sin commitear de la revisión); `ruff check scripts tests` en verde; `py_compile` OK.
+
+## 2026-09-25 (ronda 2) - syft instalado local con checksum; el mutador ya no confunde runners interrumpidos con supervivientes
+
+**Contexto**: tras el arreglo del check SBOM, se instaló syft para validar el camino real
+(P0.18) y se cerraron los supervivientes de mutación restantes.
+**Qué se hizo**:
+1. syft v1.52.0 descargado del release oficial, **SHA256 verificado** contra `checksums.txt`
+   (`caeedb81…d6133d`) y colocado en `.local/bin/syft` (sin sudo; los verificadores lo
+   detectan aunque `command -v syft` no lo vea). `sbom/` regenerado en CycloneDX + SPDX
+   (directorio no versionado, `.gitignore`).
+2. `generate_sbom.py --check` ahora es coherente con su nombre: valida `sbom/` si existe y,
+   si falta, **regenera en un directorio temporal** con syft (caso clon limpio/CI); el
+   mensaje de instalación ya no propone un pipe a `sh`/`/usr/local/bin` (P0.8/P0.5) sino la
+   descarga oficial con checksum a `.local/bin`.
+3. `mutation_check._ejecutar_tests` exige el resumen del runner ("Ran " en stderr) cuando
+   rc==0: un mutante que interrumpe la suite durante el import (SystemExit(0) al mutar la
+   guarda `if __name__ == "__main__"` de lessons_extractor) ya no se cuenta como
+   superviviente.
+**Evidencia**: `python3 scripts/mutation_check.py --batch` → **187/187, score 1.000** (los 7
+módulos del batch a 1.000; antes 162/187, 0.866); `python3 scripts/run_tests_isolated.py` →
+**409 OK, 0 FALLOS** (25-09-2026); `python3 scripts/generate_sbom.py --check` verde con syft
+real; 10 tests nuevos (5 de generate_sbom, 2 de lessons —importabilidad de yaml y ejecución
+como script—, 2 de ADR —pre-mortem por estado—, 1 del mutador). **Lección**: rc==0 no basta
+para declarar que una suite pasó: un runner que muere sin resumen es un mutante detectado
+(P0.1, en la dirección contraria). Una herramienta opcional se integra sin romper clon
+limpio/CI solo si el check verifica la **capacidad de regenerar**, no la existencia de
+artefactos no versionados. **Lección**: una dependencia
 opcional nunca debe ser un gate duro de la suite; los dos verificadores (bash/Python) deben
 cubrir los mismos checks para no divergir; una rama no cubierta por tests es un mutante
 superviviente esperando (los equivalentes se documentan, los reales se cierran).

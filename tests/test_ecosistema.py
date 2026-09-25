@@ -35,6 +35,7 @@ import auto_audit as aa  # noqa: E402
 import diagnostico as diag  # noqa: E402
 import download_jev_model as djm  # noqa: E402
 import doc_validator as dv  # noqa: E402
+import generate_sbom as gsb  # noqa: E402
 import health_dashboard as hd  # noqa: E402
 import index_knowledge as ik  # noqa: E402
 import jev_calibration as jc  # noqa: E402
@@ -399,6 +400,27 @@ class TestLessonsExtractor(unittest.TestCase):
         self.assertEqual(datos[0]["problema"], "linea 1")
         self.assertEqual(datos[0]["recomendacion"], "linea 2")
 
+    def test_has_yaml_refleja_importabilidad(self):
+        # HAS_YAML debe seguir la importabilidad real de yaml: mata los
+        # mutantes de asignacion del try/except del import.
+        import importlib
+        import types as _types
+        fake = _types.ModuleType("yaml")
+        with mock.patch.dict(sys.modules, {"yaml": fake}):
+            self.assertTrue(importlib.reload(le).HAS_YAML)
+        with mock.patch.dict(sys.modules, {"yaml": None}):
+            self.assertFalse(importlib.reload(le).HAS_YAML)
+        importlib.reload(le)  # restaurar el estado real del modulo
+
+    def test_script_como_main_ejecuta_main(self):
+        # Ejecutado como script, el bloque __main__ debe delegar en main().
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPTS / "lessons_extractor.py"), "--json"],
+            capture_output=True, text=True,
+        )
+        self.assertEqual(proc.returncode, 0)
+        self.assertGreater(len(proc.stdout.strip()), 0)
+
 
 class TestIndexKnowledge(unittest.TestCase):
     def setUp(self):
@@ -744,6 +766,41 @@ class TestIndexKnowledge(unittest.TestCase):
         conn.close()
         resultados = ik.search_sqlite("alpha")
         self.assertGreaterEqual(len(resultados), 1)
+
+
+class TestGenerateSbom(unittest.TestCase):
+    """REQ-020: check_sbom valida sbom/ o verifica regeneracion real con syft."""
+
+    def test_check_valida_json(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "sbom.cyclonedx.json").write_text('{"a": 1}', encoding="utf-8")
+            self.assertTrue(gsb.check_sbom(d))
+
+    def test_check_json_invalido_falla(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            (d / "sbom.cyclonedx.json").write_text("no-json", encoding="utf-8")
+            self.assertFalse(gsb.check_sbom(d))
+
+    def test_check_sin_sbom_sin_syft_falla(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(gsb, "check_syft", return_value=None):
+                self.assertFalse(gsb.check_sbom(Path(tmp) / "no_existe"))
+
+    def test_check_sin_sbom_regenera_con_syft(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(gsb, "check_syft", return_value="/fake/syft"), \
+                    mock.patch.object(gsb, "generate_sbom", return_value=True) as gen:
+                self.assertTrue(gsb.check_sbom(Path(tmp) / "no_existe"))
+                gen.assert_called_once()
+
+    def test_check_dir_vacio_con_syft_regenera(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with mock.patch.object(gsb, "check_syft", return_value="/fake/syft"), \
+                    mock.patch.object(gsb, "generate_sbom", return_value=False) as gen:
+                self.assertFalse(gsb.check_sbom(Path(tmp)))
+                gen.assert_called_once()
 
 
 class TestMCPServer(unittest.TestCase):
@@ -2502,6 +2559,26 @@ class TestADRValidator(unittest.TestCase):
     def test_dir_inexistente_falla(self):
         self.assertEqual(av.main(["--dir", str(self.tmp / "no_existe")]), 1)
 
+    def test_propuesto_exige_premortem(self):
+        sin_premortem = self.ADR_VALIDO.replace(
+            "## Pre-mortem (Analisis Prospectivo de Fallos)\n\n"
+            "- Escenario 1: fallo X, mitigacion Y.\n- Escenario 2: fallo Z, mitigacion W.\n",
+            "",
+        )
+        self._adr(sin_premortem.replace("estado: Aceptado", "estado: Propuesto"))
+        errors, _ = av.validate(self.tmp)
+        self.assertTrue(any("pre-mortem" in e.lower() for e in errors))
+
+    def test_reemplazado_no_exige_premortem(self):
+        sin_premortem = self.ADR_VALIDO.replace(
+            "## Pre-mortem (Analisis Prospectivo de Fallos)\n\n"
+            "- Escenario 1: fallo X, mitigacion Y.\n- Escenario 2: fallo Z, mitigacion W.\n",
+            "",
+        )
+        self._adr(sin_premortem.replace("estado: Aceptado", "estado: Reemplazado"))
+        errors, _ = av.validate(self.tmp)
+        self.assertEqual(errors, [])
+
 
 class TestAutoAudit(unittest.TestCase):
     """REQ-014: auto-auditoria (sesgos, evidencias, decisiones, tests, IA)."""
@@ -2759,6 +2836,19 @@ class TestMutationCheck(unittest.TestCase):
         resultado = mc.medir_batch(self.tmp, pares=[("scripts/vacio.py", "test_x")])
         self.assertEqual(resultado["total"], 0)
         self.assertEqual(resultado["score"], 1.0)
+
+    def test_ejecutar_tests_exige_resumen_del_runner(self):
+        # rc==0 sin "Ran " en stderr => la suite se interrumpio (SystemExit
+        # durante el import): mutante detectado, no superviviente.
+        interrumpido = subprocess.CompletedProcess([], 0, "salida", "sin resumen")
+        with mock.patch.object(mc.subprocess, "run", return_value=interrumpido):
+            self.assertEqual(mc._ejecutar_tests(self.tmp, "test_x", 60), 1)
+        verde = subprocess.CompletedProcess([], 0, "", "\nRan 1 test in 0.001s\n\nOK")
+        with mock.patch.object(mc.subprocess, "run", return_value=verde):
+            self.assertEqual(mc._ejecutar_tests(self.tmp, "test_x", 60), 0)
+        rojo = subprocess.CompletedProcess([], 1, "", "FAILED")
+        with mock.patch.object(mc.subprocess, "run", return_value=rojo):
+            self.assertEqual(mc._ejecutar_tests(self.tmp, "test_x", 60), 1)
 
     def test_main_batch_imprime_tabla(self):
         res = {
