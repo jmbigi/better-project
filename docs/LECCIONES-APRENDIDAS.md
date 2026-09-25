@@ -548,10 +548,17 @@ reutiliza el `.pyc` cuando coinciden (mtime, size) — el mutante N+1 se ejecuta
 bytecode del mutante N. Fix: `PYTHONDONTWRITEBYTECODE=1` en el entorno de los tests
 mutantes (mutation_check.py) + test que lo verifica (LSN-041). Recuento ya reproducible:
 analyze_shell 39/40 (L130 equivalente verificado empíricamente), audit_advisories 19/19
-(7 tests nuevos), tydm_calibration_merge 23/23, download_tydm_model 12/12; tydm_llama 19/30
-y tydm_calibration 30/40 quedan como deuda explícita del cierre (17 mutantes pendientes,
-ya con números estables). **Lección**: un runner que reescribe módulos debe desactivar la
-caché de bytecode; una sola corrida de mutación no es evidencia (P0.1).
+(7 tests nuevos), tydm_calibration_merge 23/23, download_tydm_model 12/12.
+**Cierre de mutantes (misma fecha)**: 17 tests dirigidos más (tokenización BOS/no-BOS,
+desempates de temperatura, conformal, caché) llevan tydm_llama a **30/30** y
+tydm_calibration a **40/40**; el recuento `--all` queda con un único mutante vivo,
+analyze_shell L130, verificado equivalente (su test específico pasa con el mutante).
+**Micro-lección**: al insertar tests con un ancla textual, verificar en qué CLASE caen:
+el primer intento quedó dentro del helper `_FakeTyDMClient` (sin TestCase) y unittest no
+los ejecutaba — el 0/8 de progreso en calibration solo se explicó con un diagnóstico
+empírico (`class ... count: 2` y "Ran 38 tests" en vez de 46). **Lección**: un runner que
+reescribe módulos debe desactivar la caché de bytecode; una sola corrida de mutación no
+es evidencia (P0.1), y un test que no se ejecuta no puede fallar (P1.1).
 
 ## 2026-09-25 (ronda 4) - Motor MDT `fast`: 0.802 de accuracy y 0.43 ms/item en CPU (REQ-027)
 

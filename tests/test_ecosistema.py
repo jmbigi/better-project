@@ -1859,6 +1859,110 @@ class TestTyDMLlama(unittest.TestCase):
             result = self.jl._main()
             self.assertEqual(result, 1)
 
+    def test_n_ctx_y_n_threads_explicitos(self):
+        client = self.jl.TyDMLlama(model_path=str(self.model_path), n_ctx=64, n_threads=2)
+        self.assertEqual(client.n_ctx, 64)
+        self.assertEqual(client.n_threads, 2)
+
+    def test_constructor_verbose_false(self):
+        client = self._client()
+        self.assertEqual(client.model._kwargs.get("verbose"), False)
+
+    def test_tokenize_default_sin_bos(self):
+        client = self._client()
+        visto = {}
+
+        def fake_tokenize(text, add_bos=False):
+            visto["add_bos"] = add_bos
+            return [1]
+
+        client.model.tokenize = fake_tokenize
+        client._tokenize("hola")
+        self.assertEqual(visto["add_bos"], False)
+        client._tokenize("hola", add_bos=True)
+        self.assertEqual(visto["add_bos"], True)
+
+    def test_first_token_probs_usa_bos(self):
+        client = self._client()
+        visto = {}
+
+        def fake_tokenize(text, add_bos=False):
+            visto["add_bos"] = add_bos
+            return [1, 2]
+
+        client.model.tokenize = fake_tokenize
+        client._first_token_probs("prompt", [1])
+        self.assertEqual(visto["add_bos"], True)
+
+    def test_answer_noul_tokens_sin_bos(self):
+        client = self._client()
+        vistos = {}
+
+        def fake_tokenize(text, add_bos=False):
+            nombre = text.decode() if isinstance(text, bytes) else text
+            vistos[nombre] = add_bos
+            return [1]
+
+        client.model.tokenize = fake_tokenize
+        client._answer_noul("estado", {"type": "noul", "instructions": "?"})
+        self.assertEqual(vistos.get("yes"), False)
+        self.assertEqual(vistos.get("no"), False)
+
+    def test_answer_choice_tokens_sin_bos(self):
+        client = self._client()
+        vistos = {}
+
+        def fake_tokenize(text, add_bos=False):
+            nombre = text.decode() if isinstance(text, bytes) else text
+            vistos[nombre] = add_bos
+            return [1]
+
+        client.model.tokenize = fake_tokenize
+        client._answer_choice("estado", {"type": "choice", "instructions": "?",
+                                         "criteria": {"a": "x", "b": "y", "c": "z"}})
+        self.assertEqual(vistos.get("a"), False)
+        self.assertEqual(vistos.get("b"), False)
+        self.assertEqual(vistos.get("c"), False)
+
+    def test_answer_score_tokens_sin_bos(self):
+        client = self._client()
+        vistos = {}
+
+        def fake_tokenize(text, add_bos=False):
+            nombre = text.decode() if isinstance(text, bytes) else text
+            vistos[nombre] = add_bos
+            return [1]
+
+        client.model.tokenize = fake_tokenize
+        client._answer_score("estado", {"type": "score", "instructions": "?",
+                                        "criteria": ["bajo", "medio", "alto"]})
+        self.assertEqual(vistos.get("0"), False)
+        self.assertEqual(vistos.get("1"), False)
+        self.assertEqual(vistos.get("2"), False)
+
+    def test_demo_conserva_acentos(self):
+        cliente = mock.MagicMock()
+        cliente.decide.return_value = {"x": {"texto": "decisión"}}
+        buf = io.StringIO()
+        with mock.patch.object(self.jl, "TyDMLlama", return_value=cliente), \
+                mock.patch.object(sys, "stdout", buf):
+            self.jl._demo()
+        self.assertIn("decisión", buf.getvalue())
+
+    def test_main_input_conserva_acentos(self):
+        data = {"state": "test", "questions": {"q": {"type": "noul", "instructions": "?"}}}
+        input_file = self.tmp / "input.json"
+        input_file.write_text(json.dumps(data), encoding="utf-8")
+        cliente = mock.MagicMock()
+        cliente.decide.return_value = {"q": {"texto": "decisión"}}
+        buf = io.StringIO()
+        with mock.patch.object(sys, "argv", ["tydm_llama.py", "--input", str(input_file)]), \
+                mock.patch.object(self.jl, "TyDMLlama", return_value=cliente), \
+                mock.patch.object(sys, "stdout", buf):
+            result = self.jl._main()
+        self.assertEqual(result, 0)
+        self.assertIn("decisión", buf.getvalue())
+
 
 class TestTyDMCalibration(unittest.TestCase):
     """REQ-011: matematicas de calibracion (NLL/Brier/ECE/temperatura)."""
@@ -2186,6 +2290,81 @@ class TestTyDMCalibration(unittest.TestCase):
                 mock_cache.assert_not_called()
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_hits_cuenta_aciertos(self):
+        self.assertEqual(jc._hits([[0.9, 0.1], [0.2, 0.8]], [0, 1]), 2)
+        self.assertEqual(jc._hits([[0.9, 0.1]], [1]), 0)
+
+    def test_evaluate_incluye_ece_adaptativo(self):
+        records = [
+            {"probs": [0.95, 0.05], "label_idx": 0},
+            {"probs": [0.6, 0.4], "label_idx": 1},
+            {"probs": [0.55, 0.45], "label_idx": 0},
+            {"probs": [0.9, 0.1], "label_idx": 1},
+        ]
+        m = jc.evaluate(records, 1.0)
+        probs_list = [r["probs"] for r in records]
+        labels = [r["label_idx"] for r in records]
+        self.assertAlmostEqual(
+            m["ece_adaptativo"], jc.ece(probs_list, labels, adaptativo=True), places=9)
+        self.assertNotAlmostEqual(m["ece"], m["ece_adaptativo"], places=6)
+
+    def test_fit_temperature_minimiza_nll(self):
+        # 60% de aciertos con probabilidad 0.95: sobreconfianza -> T > 1.
+        records = [
+            {"probs": [0.95, 0.05], "label_idx": 0 if i < 12 else 1}
+            for i in range(20)
+        ]
+        t = jc.fit_temperature(records)
+        self.assertGreater(t, 1.5)
+
+    def test_fit_temperature_empate_prefiere_t_uno(self):
+        # Con probabilidades uniformes todas las T empatan: desempate -> 1.0.
+        records = [{"probs": [0.5, 0.5], "label_idx": 0} for _ in range(10)]
+        self.assertEqual(jc.fit_temperature(records), 1.0)
+
+    def test_kfold_ajusta_temperatura_en_train(self):
+        records = [{"probs": [0.9, 0.1], "label_idx": i % 2} for i in range(8)]
+        tamanos = []
+        original = jc.fit_temperature
+
+        def espia(recs, grid=None):
+            tamanos.append(len(recs))
+            return original(recs, grid)
+
+        with mock.patch.object(jc, "fit_temperature", side_effect=espia):
+            jc.kfold(records, folds=4)
+        self.assertEqual(tamanos, [6, 6, 6, 6])
+
+    def test_load_set_sin_casos_falla(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ruta = Path(tmp) / "s.json"
+            ruta.write_text('{"casos": []}', encoding="utf-8")
+            with self.assertRaises(ValueError):
+                jc.load_set(ruta)
+
+    def test_guardar_cache_padres_idempotente_y_acentos(self):
+        cache = {"x": {"texto": "decisión"}}
+        with tempfile.TemporaryDirectory() as tmp:
+            ruta = Path(tmp) / "nested" / "dir" / "cache.json"
+            jc.guardar_cache(cache, ruta)
+            jc.guardar_cache(cache, ruta)  # idempotente: exist_ok=True
+            texto = ruta.read_text(encoding="utf-8")
+        self.assertIn("decisión", texto)
+
+    def test_run_cases_usa_modelo_en_clave_de_cache(self):
+        class ClienteFake:
+            model_path = "fake-model.gguf"
+
+            def decide(self, state, questions):
+                return {"q": {"probabilities": {"yes": 0.7, "no": 0.3}}}
+
+        caso = {"id": "N1", "tipo": "noul", "estado": "x", "instrucciones": "y",
+                "esperado": "yes"}
+        cache = {}
+        jc.run_cases(ClienteFake(), [caso], cache=cache, modelo="m1")
+        self.assertIn("m1|N1", cache)
+        self.assertEqual(cache["m1|N1"]["label_idx"], 0)
 
 
 class _FakeCalibClient:
