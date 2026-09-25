@@ -456,3 +456,37 @@ exacto del CI y actualizar GOVERNANCE.md, ci.sh y CHANGELOG.
 reached"), 23-09-2026. **Lección**: una cifra de cobertura vale lo que vale su comando;
 declarar qué queda fuera del denominador es parte del KPI, y toda cifra publicada debe
 re-medirse antes de citarla.
+
+## 2026-09-25 - El verificador Python exigía Syft (no instalado) y rompía la suite: check opcional alineado con REQ-020
+
+**Contexto**: al revisar el proyecto, `bash scripts/verificar-proyecto.sh` daba 53 OK/1 FALLO
+(por la suite) y la suite aislada fallaba en `test_verificador_en_verde_sobre_copia_intacta`
+con `[FALLO] SBOM regenerable (Syft CycloneDX/SPDX)`: `shutil.which("syft")` devolvía vacío.
+**Problema**: `scripts/verificar_proyecto.py` (usado por TestVerificador) exigía regenerar el
+SBOM con Syft en cada verificación, pero Syft no está instalado y `REQ-020` declara que
+syft/grype requieren autorización (P0.5) y que el escaneo de contenedores está fuera de
+alcance. El verificador bash no incluía ese check: dos verificadores con cobertura distinta,
+contradicción interna (P1.10) y suite roja por una dependencia opcional ausente, no por un
+defecto real.
+**Solución**: `_check_sbom` ahora imprime `[SKIP] SBOM regenerable (syft no instalado;
+ver REQ-020)` y devuelve True cuando `syft` no está en PATH (mismo patrón que `check_ruff`
+para herramientas opcionales), y solo ejecuta `generate_sbom.py --check` si está disponible.
+El mismo check opcional (`check_sbom`) se añadió a `verificar-proyecto.sh` para que ambos
+verificadores cubran los mismos checks.
+**Refuerzo de la suite (misma revisión)**: los 21 supervivientes de mutación de
+`scripts/index_knowledge.py` (score 0.475) se cerraron a **40/40 = 1.000** con 14 tests
+nuevos en `TestIndexKnowledge` (espejo FTS5 de `_sqlite_available`, imports de chroma
+simulados, ciclo de vida SQLite: construcción doble/anidada/vector normalizado/limpieza de
+obsoletos/DB desincronizada, `check_sqlite_fresh`, `_forced_backend`, backend JSON) y la
+extracción de `_normaliza_bm25` para probar la normalización con valores positivos y
+negativos. Lecciones LSN-033/LSN-034 cerradas en `.docs/lessons/2026.yaml` (resueltas en
+edaa76a, 21-09-2026).
+**Evidencia**: `python3 scripts/run_tests_isolated.py` → **385 OK, 0 FALLOS** antes de los
+tests de mutación y **399 OK, 0 FALLOS** después (25-09-2026);
+`python3 scripts/mutation_check.py --module scripts/index_knowledge.py` → 40/40, score 1.000;
+`python3 scripts/mutation_check.py --batch` → 183/187, score **0.979** (antes 162/187, 0.866);
+`bash scripts/verificar-proyecto.sh` → 53 OK, 1 FALLO (solo "árbol de trabajo limpio", por los
+cambios sin commitear de la revisión); `ruff check scripts tests` en verde; `py_compile` OK. **Lección**: una dependencia
+opcional nunca debe ser un gate duro de la suite; los dos verificadores (bash/Python) deben
+cubrir los mismos checks para no divergir; una rama no cubierta por tests es un mutante
+superviviente esperando (los equivalentes se documentan, los reales se cierran).

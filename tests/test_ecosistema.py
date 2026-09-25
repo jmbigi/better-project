@@ -592,6 +592,159 @@ class TestIndexKnowledge(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertIn("timeout", buf.getvalue())
 
+    def test_sqlite_available_refleja_soporte_fts5(self):
+        # El retorno debe coincidir con el soporte real de FTS5 del intérprete.
+        import sqlite3 as _sqlite3
+        try:
+            conn = _sqlite3.connect(":memory:")
+            conn.execute("CREATE VIRTUAL TABLE t USING fts5(c)")
+            conn.close()
+            esperado = True
+        except Exception:
+            esperado = False
+        self.assertEqual(ik._sqlite_available(), esperado)
+
+    def test_chroma_available_refleja_imports(self):
+        with mock.patch.dict(sys.modules, {"chromadb": mock.MagicMock(),
+                                           "sentence_transformers": mock.MagicMock()}):
+            self.assertTrue(ik._chroma_available())
+        with mock.patch.dict(sys.modules, {"chromadb": None}):
+            self.assertFalse(ik._chroma_available())
+
+    def test_build_sqlite_index_y_busqueda_ordenada(self):
+        (self.know / "a.md").write_text("## Alpha\nalpha beta gamma delta epsilon zeta\n")
+        (self.know / "b.md").write_text("## Beta\nalpha iota kappa lambda mu nu xi omicron\n")
+        n_files, n_chunks = ik.build_sqlite_index()
+        self.assertEqual(n_files, 2)
+        self.assertGreaterEqual(n_chunks, 2)
+        # Segunda construcción sobre el mismo storage: mkdir con exist_ok=True.
+        ik.build_sqlite_index()
+        resultados = ik.search_sqlite("alpha")
+        self.assertGreaterEqual(len(resultados), 2)
+        self.assertGreaterEqual(resultados[0]["score"], resultados[-1]["score"])
+
+    def test_build_sqlite_index_storage_con_padres(self):
+        nuevo = self.tmp / "nested" / "db"
+        ik.STORAGE_DIR = nuevo
+        ik.SQLITE_DB = nuevo / "knowledge.db"
+        ik.MANIFEST = nuevo / "manifest.json"
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        self.assertEqual(ik.build_sqlite_index()[0], 1)
+        self.assertTrue(ik.SQLITE_DB.exists())
+
+    def test_build_sqlite_index_vector_normalizado_por_tokens(self):
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        ik.build_sqlite_index()
+        import sqlite3 as _sqlite3
+        conn = _sqlite3.connect(ik.SQLITE_DB)
+        vector_json = conn.execute("SELECT vector FROM vectors").fetchone()[0]
+        conn.close()
+        vector = json.loads(vector_json)
+        # 6 tokens útiles, 1 archivo: peso = (1/6) * log(1 + 1/2).
+        esperado = (1 / 6) * math.log(1 + 1 / 2)
+        self.assertAlmostEqual(vector["alpha"], esperado, places=6)
+
+    def test_build_sqlite_index_limpia_obsoletos(self):
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        (self.know / "b.md").write_text("## B\nomega sigma tau upsilon phi chi psi\n")
+        ik.build_sqlite_index()
+        (self.know / "b.md").unlink()
+        ik.build_sqlite_index()
+        self.assertEqual(ik.search_sqlite("omega"), [])
+        hits = ik.search_sqlite("alpha")
+        self.assertGreaterEqual(len(hits), 1)
+        self.assertIn("alpha", hits[0]["contenido"])
+
+    def test_check_sqlite_fresh_variantes(self):
+        self.assertFalse(ik.check_sqlite_fresh())
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        ik.build_sqlite_index()
+        self.assertTrue(ik.check_sqlite_fresh())
+        ik.MANIFEST.unlink()
+        self.assertFalse(ik.check_sqlite_fresh())
+        ik.build_sqlite_index()
+        manifest = json.loads(ik.MANIFEST.read_text(encoding="utf-8"))
+        manifest["extra.md"] = 1.0
+        ik.MANIFEST.write_text(json.dumps(manifest), encoding="utf-8")
+        self.assertFalse(ik.check_sqlite_fresh())
+        ik.build_sqlite_index()
+        os.utime(self.know / "a.md", (1000000, 1000000))
+        self.assertFalse(ik.check_sqlite_fresh())
+
+    def test_forced_backend_argv_y_entorno(self):
+        with mock.patch.object(sys, "argv", ["index_knowledge.py", "--json"]):
+            self.assertEqual(ik._forced_backend(), "json")
+        with mock.patch.object(sys, "argv", ["index_knowledge.py"]):
+            self.assertIsNone(ik._forced_backend())
+        with mock.patch.object(sys, "argv", ["index_knowledge.py"]), \
+                mock.patch.dict(os.environ, {"BETTER_INDEX_BACKEND": " JSON "}):
+            self.assertEqual(ik._forced_backend(), "json")
+        with mock.patch.object(sys, "argv", ["index_knowledge.py"]), \
+                mock.patch.dict(os.environ, {"BETTER_INDEX_BACKEND": ""}):
+            self.assertIsNone(ik._forced_backend())
+
+    def test_index_all_backend_json_fresco_no_reconstruye(self):
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        with mock.patch.object(ik, "_chroma_available", return_value=False), \
+                mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.index_all(backend="json")
+        ik.JSON_INDEX.write_text("SENTINELA", encoding="utf-8")
+        with mock.patch.object(ik, "_chroma_available", return_value=False), \
+                mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.index_all(backend="json")
+        self.assertEqual(ik.JSON_INDEX.read_text(encoding="utf-8"), "SENTINELA")
+
+    def test_index_all_backend_json_regenera_si_falta(self):
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        with mock.patch.object(ik, "_chroma_available", return_value=False), \
+                mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.index_all(backend="json")
+        ik.JSON_INDEX.unlink()
+        with mock.patch.object(ik, "_chroma_available", return_value=False), \
+                mock.patch.object(ik, "_sqlite_available", return_value=False), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.index_all(backend="json")
+        self.assertTrue(ik.JSON_INDEX.exists())
+
+    def test_index_all_backend_json_no_usa_sqlite(self):
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        with mock.patch.object(ik, "_chroma_available", return_value=False), \
+                mock.patch.object(ik, "_sqlite_available", return_value=True), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            ik.index_all(backend="json")
+        self.assertTrue(ik.JSON_INDEX.exists())
+        self.assertFalse(ik.SQLITE_DB.exists())
+
+    def test_sqlite_available_false_si_connect_falla(self):
+        # Simula un intérprete sin FTS5: la excepción debe devolver False.
+        with mock.patch.object(ik.sqlite3, "connect", side_effect=Exception("sin FTS5")):
+            self.assertFalse(ik._sqlite_available())
+
+    def test_normaliza_bm25(self):
+        # FTS5 devuelve BM25 negativo (menor = mejor): exp lo lleva a (0,1].
+        self.assertAlmostEqual(ik._normaliza_bm25(-2.0), math.exp(-2.0), places=9)
+        # Valores no negativos usan 1/(1+bm25).
+        self.assertAlmostEqual(ik._normaliza_bm25(2.0), 1 / 3, places=9)
+
+    def test_search_sqlite_tolera_chunk_sin_vector(self):
+        # Caso límite: chunk presente en FTS pero sin fila en vectors
+        # (DB desincronizada); el cosine debe caer a 0.0, no romper.
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        ik.build_sqlite_index()
+        import sqlite3 as _sqlite3
+        conn = _sqlite3.connect(ik.SQLITE_DB)
+        conn.execute(
+            "INSERT INTO chunks (id, archivo, contenido, tokens, mtime) VALUES (?, ?, ?, ?, ?)",
+            ("huerfano", "f.md", "alpha", "[]", 0.0),
+        )
+        conn.commit()
+        conn.close()
+        resultados = ik.search_sqlite("alpha")
+        self.assertGreaterEqual(len(resultados), 1)
+
 
 class TestMCPServer(unittest.TestCase):
     def test_next_lesson_id(self):

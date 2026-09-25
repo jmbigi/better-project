@@ -79,6 +79,17 @@ check_ruff() {
     fi
 }
 
+# SBOM opcional (P0.18/REQ-020): syft no es dependencia obligatoria y su
+# instalacion requiere autorizacion (P0.5); si falta, el check se omite
+# igual que en verificar_proyecto.py (paridad entre ambos verificadores).
+check_sbom() {
+    if command -v syft >/dev/null 2>&1 || [ -x .local/bin/syft ] || [ -x .local/bin/syft.exe ]; then
+        check "SBOM regenerable (Syft CycloneDX/SPDX)" python3 scripts/generate_sbom.py --check
+    else
+        echo "  [SKIP] SBOM regenerable (syft no instalado; ver REQ-020)"
+    fi
+}
+
 otel_start_span "verificar.total"
 otel_start_span "verificar.reglas"
 echo "== 1. Reglas =="
@@ -412,6 +423,7 @@ if recall < 0.7:
     sys.exit(1)
 "
 check "suite de tests del ecosistema (aislada por proceso)" bash -c "python3 scripts/run_tests_isolated.py"
+check_sbom
 check "dashboard de salud con 5 KPIs y metas (REQ-024)" bash -c "test -f docs/health.md && grep -q 'Onboarding' docs/health.md && grep -q 'REQs trazados' docs/health.md && grep -q 'Mutation score' docs/health.md && grep -q 'Tiempo CI' docs/health.md && grep -q 'Coste mantenimiento' docs/health.md && grep -q 'Meta' docs/health.md"
 if [ "$LITE_MODE" = "false" ]; then
     check "demo valida con --root" bash -c "python3 scripts/doc_validator.py --root demo"

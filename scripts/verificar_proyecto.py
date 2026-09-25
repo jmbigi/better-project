@@ -9,6 +9,7 @@ import ipaddress
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -449,6 +450,20 @@ def _run_diagnostico() -> bool:
 
 
 def _check_sbom() -> bool:
+    # REQ-020: syft/grype no son dependencias obligatorias; requieren
+    # autorizacion para instalar (P0.5). El check se omite si no esta
+    # disponible (PATH o .local/bin), con la misma semantica que
+    # verificar-proyecto.sh y generate_sbom.check_syft.
+    syft_local = ROOT / ".local" / "bin" / "syft"
+    syft_local_exe = ROOT / ".local" / "bin" / "syft.exe"
+    disponible = (
+        shutil.which("syft") is not None
+        or os.access(syft_local, os.X_OK)
+        or os.access(syft_local_exe, os.X_OK)
+    )
+    if not disponible:
+        print("  [SKIP] SBOM regenerable (syft no instalado; ver REQ-020)")
+        return True
     return run_cmd([sys.executable, "scripts/generate_sbom.py", "--check"]).returncode == 0
 
 

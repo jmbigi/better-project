@@ -196,6 +196,11 @@ def build_sqlite_index() -> tuple[int, int]:
     return len(files), len(chunk_data)
 
 
+def _normaliza_bm25(bm25: float) -> float:
+    """Normaliza el BM25 de FTS5 (menor = mejor, tipicamente negativo) a (0, 1]."""
+    return math.exp(bm25) if bm25 < 0 else 1.0 / (1.0 + bm25)
+
+
 def search_sqlite(query: str, k: int = 5) -> list[dict]:
     """Busca combinando FTS5 (BM25) + similitud coseno TF-IDF."""
     qtokens = _tokenize(query)
@@ -250,12 +255,8 @@ def search_sqlite(query: str, k: int = 5) -> list[dict]:
         cosine = dot / (qnorm * vnorm) if qnorm and vnorm else 0.0
 
         # Score combinado: 70% cosine + 30% BM25 normalizado
-        # SQLite BM25 devuelve valores negativos (menor = mejor). Normalizar a [0,1]
-        # Usar exp(bm25) para convertir a probabilidad-like, o min-max sobre candidatos
         bm25 = bm25_map.get(rowid, 0.0)
-        # Normalizar BM25: exp(bm25) da valores en (0,1] donde mayor = mejor
-        import math as _math
-        bm25_norm = _math.exp(bm25) if bm25 < 0 else 1.0 / (1.0 + bm25)
+        bm25_norm = _normaliza_bm25(bm25)
         combined = 0.7 * cosine + 0.3 * bm25_norm
 
         if combined > 0:
