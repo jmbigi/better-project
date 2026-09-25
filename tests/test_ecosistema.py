@@ -768,6 +768,67 @@ class TestIndexKnowledge(unittest.TestCase):
         resultados = ik.search_sqlite("alpha")
         self.assertGreaterEqual(len(resultados), 1)
 
+    def test_files_sin_directorio(self):
+        """REQ-002: _files devuelve [] si KNOWLEDGE_DIR no existe."""
+        old = ik.KNOWLEDGE_DIR
+        ik.KNOWLEDGE_DIR = self.tmp / "no_existe"
+        try:
+            self.assertEqual(ik._files(), [])
+        finally:
+            ik.KNOWLEDGE_DIR = old
+
+    def test_search_sqlite_query_vacio(self):
+        """REQ-002: search_sqlite devuelve [] para consulta sin terminos utiles."""
+        self.assertEqual(ik.search_sqlite("el la los"), [])
+
+    def test_index_all_sin_archivos(self):
+        """REQ-002: index_all informa que no hay archivos cuando el directorio esta vacio."""
+        old = ik.KNOWLEDGE_DIR
+        ik.KNOWLEDGE_DIR = self.tmp / "vacio"
+        ik.KNOWLEDGE_DIR.mkdir()
+        buf = io.StringIO()
+        try:
+            with mock.patch.object(sys, "stdout", buf):
+                ik.index_all()
+            self.assertIn("no hay archivos", buf.getvalue())
+        finally:
+            ik.KNOWLEDGE_DIR = old
+
+    def test_check_fresh_no_manifest(self):
+        """REQ-002: check_fresh es False si no hay manifest."""
+        self.assertFalse(ik.check_fresh())
+
+    def test_check_fresh_no_index(self):
+        """REQ-002: check_fresh es False si hay manifest pero no indice."""
+        ik.MANIFEST.write_text("{}", encoding="utf-8")
+        self.assertFalse(ik.check_fresh())
+
+    def test_check_fresh_manifest_size(self):
+        """REQ-002: check_fresh es False si cambia el numero de archivos."""
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        ik.build_json_index()
+        ik.MANIFEST.write_text("{}", encoding="utf-8")
+        self.assertFalse(ik.check_fresh())
+
+    def test_check_fresh_mtime(self):
+        """REQ-002: check_fresh es False si cambia el mtime de un archivo."""
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        ik.build_json_index()
+        os.utime(self.know / "a.md", (1000000, 1000000))
+        self.assertFalse(ik.check_fresh())
+
+    def test_main_check_ok_y_fail(self):
+        """REQ-002: main --check devuelve 0 si indice fresco y 1 si no."""
+        (self.know / "a.md").write_text("## A\nalpha beta gamma delta epsilon zeta\n")
+        ik.build_json_index()
+        with mock.patch.object(sys, "argv", ["index_knowledge.py", "--check"]), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(ik.main(), 0)
+        ik.MANIFEST.unlink()
+        with mock.patch.object(sys, "argv", ["index_knowledge.py", "--check"]), \
+                mock.patch.object(sys, "stdout", io.StringIO()):
+            self.assertEqual(ik.main(), 1)
+
 
 class TestGenerateSbom(unittest.TestCase):
     """REQ-020: check_sbom valida sbom/ o verifica regeneracion real con syft."""
@@ -1381,6 +1442,98 @@ class TestTUI(unittest.TestCase):
                 mock.patch.object(tui.curses, "curs_set"):
             app.run(stdscr)
         self.assertEqual(stdscr.getch.call_count, 1)
+
+    def test_main_sin_curses_devuelve_1(self):
+        """REQ-006: main devuelve 1 si curses no esta disponible."""
+        with mock.patch.object(tui, "HAS_CURSES", False):
+            self.assertEqual(tui.main(), 1)
+
+    def test_busqueda_directa_sin_terminos_utiles(self):
+        """REQ-006: _busqueda_directa devuelve [] si no quedan terminos utiles."""
+        with tempfile.TemporaryDirectory() as tmp:
+            know = Path(tmp)
+            old_know, old_root = ik.KNOWLEDGE_DIR, tui.ROOT
+            ik.KNOWLEDGE_DIR = know
+            tui.ROOT = know
+            try:
+                app = tui.App()
+                self.assertEqual(app._busqueda_directa("el la los"), [])
+            finally:
+                ik.KNOWLEDGE_DIR, tui.ROOT = old_know, old_root
+
+    def test_run_resize_ignorado(self):
+        """REQ-006: KEY_RESIZE no interrumpe el bucle."""
+        app = tui.App()
+        stdscr = self._stdscr()
+        stdscr.getch.side_effect = [tui.curses.KEY_RESIZE, ord("q")]
+        with mock.patch.object(app, "_init_colores"), \
+                mock.patch.object(app, "cargar_requisitos"), \
+                mock.patch.object(app, "cargar_lecciones"), \
+                mock.patch.object(app, "_draw"), \
+                mock.patch.object(tui.curses, "curs_set"):
+            app.run(stdscr)
+        self.assertEqual(stdscr.getch.call_count, 2)
+
+    def test_tecla_detalle_vuelve_con_enter(self):
+        """REQ-006: Enter en detalle cierra el detalle."""
+        app = tui.App()
+        app.detalle = tui.Detalle("x", ["a", "b"])
+        self.assertTrue(app._tecla_detalle(ord("\n")))
+
+    def test_tecla_principal_navegacion_lista_vacia(self):
+        """REQ-006: navegacion en lista vacia no modifica seleccion."""
+        app = tui.App()
+        app.requisitos = []
+        app._tecla_principal(tui.curses.KEY_DOWN)
+        self.assertEqual(app.seleccion[0], 0)
+
+    def test_abrir_detalle_fuera_de_rango_no_cambia(self):
+        """REQ-006: abrir detalle con seleccion fuera de rango no cambia detalle."""
+        app = tui.App()
+        app.tab = 0
+        app.seleccion[0] = 999
+        app.requisitos = [{"id": "REQ-001", "meta": {}, "path": Path("x"), "refs": 0}]
+        app.detalle = None
+        app._abrir_detalle()
+        self.assertIsNone(app.detalle)
+
+    def test_draw_tabs_termina_si_no_cabe(self):
+        """REQ-006: _draw_tabs deja de escribir pestanas si no caben."""
+        app = tui.App()
+        stdscr = self._stdscr()
+        stdscr.getmaxyx.return_value = (24, 10)
+        with mock.patch.object(tui.curses, "color_pair", return_value=0):
+            app._draw_tabs(stdscr, 24, 10)
+        self.assertLessEqual(stdscr.addstr.call_count, 2)
+
+    def test_draw_requisitos_color_warn(self):
+        """REQ-006: la cabecera usa CP_WARN con advertencias y CP_OK sin ellas."""
+        app = tui.App()
+        app.requisitos = []
+        stdscr = self._stdscr()
+        with mock.patch.object(tui.curses, "color_pair", side_effect=lambda par: f"CP{par}"):
+            app.validacion = {"errores": 0, "advertencias": 1}
+            app._draw_requisitos(stdscr, 24, 80)
+            cabecera_con_warn = stdscr.addstr.call_args_list[0]
+            self.assertEqual(cabecera_con_warn.args[0], 2)
+            self.assertEqual(cabecera_con_warn.args[3], f"CP{tui.CP_WARN}")
+            self.assertIn("1W", cabecera_con_warn.args[2])
+            stdscr.addstr.reset_mock()
+            app.validacion = {"errores": 0, "advertencias": 0}
+            app._draw_requisitos(stdscr, 24, 80)
+            self.assertEqual(stdscr.addstr.call_args_list[0].args[3], f"CP{tui.CP_OK}")
+
+    def test_draw_detalle_sin_lineas_extra(self):
+        """REQ-006: _draw_detalle no escribe fuera de las lineas disponibles."""
+        app = tui.App()
+        app.detalle = tui.Detalle("x", [f"linea {i}" for i in range(50)])
+        stdscr = self._stdscr()
+        stdscr.getmaxyx.return_value = (6, 40)
+        with mock.patch.object(tui.curses, "color_pair", return_value=0):
+            app._draw_detalle(stdscr)
+        filas = [c.args[0] for c in stdscr.addstr.call_args_list]
+        self.assertTrue(filas)
+        self.assertEqual(max(filas), 5)  # ultima fila util de una pantalla de 6
 
 
 class TestIntegracionHook(unittest.TestCase):
@@ -2919,6 +3072,128 @@ class TestAutoAudit(unittest.TestCase):
     def test_main_all_en_verde(self):
         self.assertEqual(aa.main(["all"]), 0)
 
+    def test_frontmatter_vacio(self):
+        """REQ-014: _frontmatter devuelve {} si no hay frontmatter."""
+        self.assertEqual(aa._frontmatter("# titulo\nsin frontmatter\n"), {})
+
+    def test_auditar_sesgos_path_inexistente(self):
+        """REQ-014: auditar_sesgos ignora paths que no existen."""
+        self.assertEqual(aa.auditar_sesgos([self.tmp / "no_existe.md"]), [])
+
+    def test_auditar_evidencias_sbom_sin_fecha(self):
+        """REQ-014: SBOM con nombre no fecha genera advertencia."""
+        self._write("SBOM-foo.spdx.json", "{}")
+        errors, warnings = aa.auditar_evidencias(docs_dir=self.tmp)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("no se pudo leer" in w for w in warnings))
+
+    def test_scanner_disponible_osv(self):
+        """REQ-014: _scanner_disponible elige osv-scanner si pip-audit no esta."""
+        with mock.patch.object(aa.shutil, "which", side_effect=lambda x: x == "osv-scanner"):
+            nombre, builder = aa._scanner_disponible()
+            self.assertEqual(nombre, "osv-scanner")
+            self.assertEqual(
+                builder(Path("r.txt")),
+                ["osv-scanner", "--format", "json", "--lockfile", str(Path("r.txt"))],
+            )
+
+    def test_parse_pip_audit(self):
+        """REQ-014: _parse_pip_audit extrae vulnerabilidades del JSON."""
+        payload = {
+            "dependencies": [
+                {"name": "x", "version": "1.0", "vulns": [
+                    {"id": "CVE-1", "fix_versions": ["1.1"]}
+                ]},
+                {"name": "y", "version": "2.0", "vulns": None},
+            ]
+        }
+        hallazgos = aa._parse_pip_audit(payload)
+        self.assertEqual(len(hallazgos), 1)
+        self.assertEqual(hallazgos[0]["id"], "CVE-1")
+
+    def test_runner_pip_audit(self):
+        """REQ-014: _runner_pip_audit ejecuta el comando y parsea la salida."""
+        proc = mock.MagicMock()
+        proc.returncode = 1
+        proc.stdout = json.dumps({"dependencies": [{"name": "x", "version": "1.0", "vulns": []}]})
+        proc.stderr = ""
+        with mock.patch.object(aa.subprocess, "run", return_value=proc) as lanzado:
+            run = aa._runner_pip_audit(["pip-audit", "--format", "json"])
+            self.assertEqual(run(), [])
+            self.assertEqual(lanzado.call_args.args[0], ["pip-audit", "--format", "json"])
+        fallo = mock.MagicMock(returncode=2, stdout="", stderr="boom")
+        with mock.patch.object(aa.subprocess, "run", return_value=fallo):
+            with self.assertRaises(RuntimeError):
+                aa._runner_pip_audit(["pip-audit"])()
+
+    def test_auditar_decisiones_lecciones_exception(self):
+        """REQ-014: auditar_decisiones reporta si lessons_extractor falla."""
+        fake_module = mock.MagicMock()
+        fake_module.validate.side_effect = RuntimeError("boom")
+        with mock.patch.dict(sys.modules, {"lessons_extractor": fake_module}):
+            warns = aa.auditar_decisiones()
+        self.assertTrue(any("no se pudieron validar las lecciones" in w for w in warns))
+
+    def test_auditar_decisiones_index_exception(self):
+        """REQ-014: auditar_decisiones reporta si index_knowledge falla."""
+        fake_module = mock.MagicMock()
+        fake_module.check_fresh.side_effect = RuntimeError("boom")
+        with mock.patch.dict(sys.modules, {"lessons_extractor": le, "index_knowledge": fake_module}):
+            warns = aa.auditar_decisiones()
+        self.assertTrue(any("no se pudo comprobar el indice" in w for w in warns))
+
+    def test_es_asercion_assert_y_fail(self):
+        """REQ-014: _es_asercion reconoce assert, fail y metodos assert*."""
+        self.assertTrue(aa._es_asercion(ast.parse("assert x").body[0]))
+        self.assertTrue(aa._es_asercion(ast.parse("self.assertEqual(1, 1)").body[0].value))
+        self.assertTrue(aa._es_asercion(ast.parse("self.fail('x')").body[0].value))
+        self.assertTrue(aa._es_asercion(ast.parse("fail()").body[0].value))
+        self.assertFalse(aa._es_asercion(ast.parse("self.otro()").body[0].value))
+
+    def test_tautologia_assertIs_None(self):
+        """REQ-014: _tautologia detecta assertIs(None, None)."""
+        node = ast.parse("self.assertIs(None, None)").body[0].value
+        self.assertEqual(aa._tautologia(node), "assertIs(None)")
+
+    def test_auditar_calibracion_set_inexistente(self):
+        """REQ-014: calibracion sin set reporta error, candidatos ausentes no."""
+        c = self._write("c.json", json.dumps({"casos": []}))
+        errors, _ = aa.auditar_calibracion(set_path=self.tmp / "no.json", cand_path=c)
+        self.assertTrue(any("no existe el set" in e for e in errors))
+
+    def test_auditar_calibracion_json_invalido(self):
+        """REQ-014: calibracion con JSON invalido reporta error."""
+        s = self._write("s.json", "{no")
+        c = self._write("c.json", json.dumps({"casos": []}))
+        errors, _ = aa.auditar_calibracion(s, c)
+        self.assertTrue(any("JSON invalido" in e for e in errors))
+
+    def test_auditar_calibracion_escenario_duplicado(self):
+        """REQ-014: calibracion advierte escenarios duplicados."""
+        s = self._write("s.json", json.dumps({"casos": [
+            {"id": "N01", "tipo": "noul", "estado": "mismo", "instrucciones": "i", "esperado": "yes"},
+            {"id": "N02", "tipo": "noul", "estado": "Mismo", "instrucciones": "i", "esperado": "no"},
+        ]}))
+        c = self._write("c.json", json.dumps({"casos": []}))
+        _, warnings = aa.auditar_calibracion(s, c)
+        self.assertTrue(any("escenario duplicado" in w for w in warnings))
+
+    def test_main_vulns(self):
+        """REQ-014: main ejecuta subcomando vulns."""
+        with mock.patch.object(aa, "auditar_vulns", return_value=([], [])) as av:
+            self.assertEqual(aa.main(["vulns"]), 0)
+        av.assert_called_once()
+
+    def test_main_json_y_strict(self):
+        """REQ-014: main soporta salida JSON y modo strict."""
+        buf = io.StringIO()
+        with mock.patch.object(aa, "auditar_tests", return_value=(["tautologica"], [])), \
+                mock.patch.object(sys, "stdout", buf):
+            rc = aa.main(["tests", "--json", "--strict"])
+        self.assertEqual(rc, 1)
+        data = json.loads(buf.getvalue())
+        self.assertIn("tautologica", data["errores"])
+
 
 class TestMutationCheck(unittest.TestCase):
     """REQ-015: generacion de mutantes y agregacion del chequeo."""
@@ -3184,6 +3459,96 @@ class TestTyDMReview(unittest.TestCase):
             os.environ.pop("TYDM_REVIEW_REPORT", None)
             os.environ.pop("TYDM_REVIEW_CACHE", None)
 
+    def test_curses_works_false_si_wrapper_falla(self):
+        """REQ-016: _curses_works devuelve False si curses.wrapper falla."""
+        with mock.patch.object(jr.curses, "wrapper", side_effect=RuntimeError("sin curses")):
+            self.assertFalse(jr._curses_works())
+
+    def test_opciones_caso_choice(self):
+        """REQ-016: _opciones_caso para choice devuelve las claves de criterios."""
+        caso = {"tipo": "choice", "criterios": {"a": "A", "b": "B"}}
+        self.assertEqual(jr._opciones_caso(caso), ["a", "b"])
+
+    def test_opciones_caso_score(self):
+        """REQ-016: _opciones_caso para score devuelve indices como strings."""
+        caso = {"tipo": "score", "niveles": ["bajo", "medio", "alto"]}
+        self.assertEqual(jr._opciones_caso(caso), ["0", "1", "2"])
+
+    def test_cuerpo_sin_frontmatter_sin_delimitador(self):
+        """REQ-016: texto sin frontmatter se devuelve strip."""
+        self.assertEqual(jr._cuerpo_sin_frontmatter("  linea1\nlinea2  "), "linea1\nlinea2")
+
+    def test_construir_items_conocimiento(self):
+        """REQ-016: construir_items incluye archivos de .docs/knowledge."""
+        (self.tmp / ".docs" / "knowledge").mkdir(parents=True)
+        (self.tmp / ".docs" / "knowledge" / "a.md").write_text("## A\ncontenido\n", encoding="utf-8")
+        with mock.patch.object(jr, "ROOT", self.tmp):
+            items = jr.construir_items(["conocimiento"])
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["pilar"], "conocimiento")
+
+    def test_cargar_cache_json_invalido(self):
+        """REQ-016: cargar_cache tolera JSON corrupto."""
+        path = self.tmp / "cache.json"
+        path.write_text("{no valido", encoding="utf-8")
+        self.assertEqual(jr.cargar_cache(str(path)), {})
+
+    def test_imprimir_tabla_muestra_filas(self):
+        """REQ-016: imprimir_tabla genera lineas con item, pilar y estado."""
+        filas = [
+            {"item": "X", "pilar": "requisitos", "campo": "prioridad", "propuesta": "Alta",
+             "confianza": 0.8, "estado": "ok"},
+            {"item": "Y", "pilar": "lecciones", "campo": "estado", "propuesta": "Abierta",
+             "confianza": None, "estado": "pendiente"},
+        ]
+        buf = io.StringIO()
+        with mock.patch.object(sys, "stdout", buf):
+            jr.imprimir_tabla(filas)
+        salida = buf.getvalue()
+        self.assertIn("X", salida)
+        self.assertIn("requisitos", salida)
+        self.assertIn("n/a", salida)
+
+    def test_main_sin_items_devuelve_error(self):
+        """REQ-016: main retorna 1 si no hay items para revisar."""
+        out = self.tmp / "rev.json"
+        os.environ["TYDM_REVIEW_REPORT"] = str(out)
+        try:
+            with mock.patch.object(jr, "construir_items", return_value=[]):
+                self.assertEqual(jr.main(["--report", "--fake"]), 1)
+        finally:
+            os.environ.pop("TYDM_REVIEW_REPORT", None)
+
+    def test_main_modo_report_forzado_por_no_tty(self):
+        """REQ-016: main usa modo report cuando stdout no es tty."""
+        out = self.tmp / "rev.json"
+        os.environ["TYDM_REVIEW_REPORT"] = str(out)
+        os.environ["TYDM_REVIEW_CACHE"] = str(self.tmp / "cache.json")
+        try:
+            with mock.patch.object(sys.stdout, "isatty", return_value=False):
+                self.assertEqual(jr.main(["--fake", "--limit", "1"]), 0)
+            self.assertTrue(out.exists())
+        finally:
+            os.environ.pop("TYDM_REVIEW_REPORT", None)
+            os.environ.pop("TYDM_REVIEW_CACHE", None)
+
+    def test_main_advierte_curses_no_disponible(self):
+        """REQ-016: main advierte y usa report si curses no esta disponible."""
+        out = self.tmp / "rev.json"
+        err = io.StringIO()
+        os.environ["TYDM_REVIEW_REPORT"] = str(out)
+        os.environ["TYDM_REVIEW_CACHE"] = str(self.tmp / "cache.json")
+        try:
+            with mock.patch.object(jr, "CURSES_AVAILABLE", False), \
+                    mock.patch.object(sys.stdout, "isatty", return_value=True), \
+                    mock.patch.object(sys, "stderr", err):
+                self.assertEqual(jr.main(["--fake", "--limit", "1"]), 0)
+            self.assertIn("curses no disponible", err.getvalue())
+            self.assertTrue(out.exists())
+        finally:
+            os.environ.pop("TYDM_REVIEW_REPORT", None)
+            os.environ.pop("TYDM_REVIEW_CACHE", None)
+
 
 class TestDiagnostico(unittest.TestCase):
     """REQ-017: diagnostico de los cuatro pilares en proyectos externos."""
@@ -3416,7 +3781,17 @@ class TestTyDMFast(unittest.TestCase):
         total = sum(m["n"] for m in self.metricas.values())
         global_acc = sum(m["accuracy"] * m["n"] for m in self.metricas.values()) / total
         self.assertGreaterEqual(global_acc, 0.75)
-        resultado = tfa.bench(folds=3, repeticiones=2)
+        # La latencia se mide en un proceso real (sin el instrumentador de
+        # coverage): bajo `--cov` cada linea pasa por el tracer y el p50 medido
+        # seria el del profiler (~3 ms) y no el del motor (~0,4 ms). La
+        # inferencia in-process se cubre en test_cli_train_predict_bench.
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPTS / "tydm_fast.py"), "bench",
+             "--folds", "3", "--json"],
+            capture_output=True, text=True, cwd=ROOT, timeout=120,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr[-500:])
+        resultado = json.loads(proc.stdout)
         self.assertLess(resultado["latencia_us_p50"], 3000)
 
     def test_cli_train_predict_bench(self):

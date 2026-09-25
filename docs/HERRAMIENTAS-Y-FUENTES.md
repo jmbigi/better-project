@@ -121,6 +121,17 @@ ya no son zonas bajas; quedan `tydm_review.py` (71 %), `index_knowledge.py`
 (72 %), `tydm_llama.py` (81 %), `auto_audit.py` (83 %) y `lessons_extractor.py`
 (84 %), por ramas opcionales (chromadb/CLI) y utilidades.
 
+**Re-medición y cierre de huecos (2026-09-25)**: 42 tests nuevos suben la
+cobertura a **92 %** (3616 sentencias, 302 sin cubrir) con la suite en 489
+tests. Los cuatro módulos bajos mejoran: `auto_audit.py` 83→95 %,
+`tydm_review.py` 69→75 %, `index_knowledge.py` 84→86 % y `tui.py` 82→84 %.
+Lo que sigue sin cubrirse es, por diseño, la UI curses interactiva
+(`repl_curses`, bucle real de `tui.py`) y el backend ChromaDB de
+`index_knowledge.py` (dependencia opcional no instalada); forzarlas con mocks
+daría tests que no verifican el comportamiento real (P1.1). Advertencia de
+método: una aserción de **latencia** ejecutada bajo `coverage --cov` mide el
+tracer y no el motor (LSN-043); esas medidas van en un proceso aparte.
+
 `mutation_check.py` (REQ-015, heurística stdlib). El modo `--batch` mide varios
 módulos y agrega el score ponderado por mutantes (integrado en `scripts/ci.sh`
 con `--strict --umbral 0.8`, ~110 s); `--all` mide todos los módulos con test
@@ -157,6 +168,29 @@ vale README.md docs .docs    # rutas explícitas: 'vale .' rompe por el
 
 Es **opcional**: no entra en el verificador (puede no estar instalado en todos
 los entornos). Complementa `auto_audit sesgos` (heurística stdlib).
+
+### 5.1 Entorno local: binarios opcionales y dependencias por plataforma
+
+- **`curses`** es stdlib en Linux y macOS, pero **no existe en Windows**: allí
+  las interfaces se importan con guarda y degradan con mensaje explícito en vez
+  de romper la suite:
+  - `scripts/tui.py` (REQ-006): sin `curses` imprime el error y devuelve 1.
+  - `scripts/tydm_review.py` (REQ-016): sin `curses` avisa y fuerza el modo
+    `--report` (revisión por archivo), que no necesita terminal interactiva.
+  - Para recuperar la TUI en Windows nativo: `pip install windows-curses`
+    dentro del venv del proyecto (dependencia opcional; P0.5: no se instala sin
+    orden).
+- **Binarios de cadena de suministro en `.local/bin/`** (`syft`, `grype`,
+  `scorecard`): se instalan ahí (usuario, sin `sudo`, con checksum verificado)
+  y **no están en el PATH** por defecto. Para usarlos en una sesión:
+
+  ```bash
+  export PATH="$PWD/.local/bin:$PATH"
+  syft dir:. -o cyclonedx-json > /tmp/sbom.json && grype /tmp/sbom.json
+  ```
+
+  El verificador no los exige: `generate_sbom.py --check` omite el check con
+  un `[SKIP]` visible si `syft` no está disponible (REQ-020).
 
 ## 6. Para los proyectos que sigan estas reglas
 

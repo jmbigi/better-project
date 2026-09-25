@@ -382,3 +382,23 @@
   estado: Resuelta
   fecha: 2026-09-25
   fecha_resolucion: 2026-09-25
+- id: LSN-043
+  proyecto: "Ecosistema (REQ-027)"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El guardarrail de latencia del backend fast (REQ-027, p50 < 3 ms) media tfa.bench() DENTRO del proceso de tests. Con 'pytest --cov=scripts' el tracer de coverage instrumenta cada linea y el p50 medido subia a 3214 us frente a 413 us en un proceso real: el test fallaba en arbol limpio sin que el motor hubiera empeorado, y el verificador reportaba '[FALLO] coverage: tests fallaron'."
+  recomendacion: "Ninguna asercion de rendimiento debe ejecutarse bajo instrumentacion (coverage/tracer/profiler): la latencia se mide en un proceso real (subprocess) y el proceso instrumentado se reserva para correccion funcional. Un umbral de rendimiento solo es evidencia si el instrumento no altera lo medido."
+  resolucion: "test_umbral_competitivo mide la latencia lanzando 'tydm_fast.py bench --folds 3 --json' como subproceso (sin tracer) y mantiene la accuracy in-process. Verificado 2026-09-25: 'pytest --cov=scripts' verde con p50 413 us (antes 3214 us > 3000)."
+  estado: Resuelta
+  fecha: 2026-09-25
+  fecha_resolucion: 2026-09-25
+- id: LSN-044
+  proyecto: "Ecosistema (calidad de tests)"
+  fase: "Testing"
+  categoria: "Proceso"
+  problema: "Al cerrar huecos de cobertura con un agente delegado, 3 de los 42 tests entregados afirmaban menos (o distinto) de lo que declaraba su nombre: test_draw_requisitos_color_warn solo comprobaba addstr.called (no el color), test_draw_detalle_sin_lineas_extra no verificaba el limite de filas y test_runner_pip_audit no comprobaba el comando ejecutado. Suben la cobertura sin poder fallar por el motivo que anuncian (P1.1)."
+  recomendacion: "Revisar la asercion, no solo el nombre: cada test debe poder fallar si se rompe el comportamiento que declara, y la revision de una entrega delegada incluye ese chequeo antes de aceptarla. La cobertura es una senal, no la prueba."
+  resolucion: "Reescritos los 3 tests con aserciones especificas (par de color CP_WARN/CP_OK en la cabecera, fila maxima escrita = 5 en pantalla de 6, comando pasado a subprocess.run y RuntimeError con exit 2). Verificado 2026-09-25: los tests dirigidos pasan y 'ruff check tests/test_ecosistema.py' queda en verde."
+  estado: Resuelta
+  fecha: 2026-09-25
+  fecha_resolucion: 2026-09-25
