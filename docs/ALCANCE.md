@@ -7,6 +7,10 @@ requisitos, conocimiento, lecciones y control de sesgos como archivos Git, y los
 consuma con agentes de IA vía `AGENTS.md` + un servidor MCP local. Sin nube, sin
 Jira/Notion, sin dependencias obligatorias.
 
+Adopción en un proyecto existente: `bash scripts/init.sh --root <dir>` (REQ-028)
+instala el ruleset y un tooling portable en `scripts/` con un verificador
+genérico, sin depender del repo del framework.
+
 ## Encaje recomendado
 
 | Caso | Adecuado | Notas |

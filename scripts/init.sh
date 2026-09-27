@@ -2,6 +2,8 @@
 # better-project init — Inicializa el framework en un proyecto existente.
 # Uso: bash scripts/init.sh [--yes] [--root <dir>]
 # Idempotente: se puede ejecutar multiples veces sin efectos adversos.
+# REQ-028: entrega tooling portable (scripts/tools/) y un verificador generico
+# en vez del verificador especifico del framework.
 
 set -euo pipefail
 
@@ -528,11 +530,38 @@ $(generate_bash_patterns "$STACKS")
 EOF
 echo "[OK] opencode.json generado (adaptado a: $STACKS)"
 
-# 3. Copiar scripts de verificacion
+# 3. Copiar tooling portable (REQ-028): validadores + verificador generico en
+#    scripts/ (mismo layout que el framework: cada modulo resuelve su raiz como
+#    parent.parent). El tooling queda excluido del escaneo de trazabilidad del
+#    destino por su propia lista de --ignore.
 mkdir -p "$TARGET_ROOT/scripts"
-cp "$REPO_ROOT/scripts/verificar-proyecto.sh" "$TARGET_ROOT/scripts/verificar-proyecto.sh"
+for tool in doc_validator.py lessons_extractor.py index_knowledge.py portable_verifier.py; do
+    if [ -f "$TARGET_ROOT/scripts/$tool" ] && ! cmp -s "$REPO_ROOT/scripts/$tool" "$TARGET_ROOT/scripts/$tool"; then
+        echo "[WARN] sobrescribe scripts/$tool existente (init es idempotente)"
+    fi
+    cp "$REPO_ROOT/scripts/$tool" "$TARGET_ROOT/scripts/$tool"
+done
+echo "[OK] tooling portable copiado a scripts/"
+cat > "$TARGET_ROOT/scripts/verificar-proyecto.sh" <<'EOF'
+#!/usr/bin/env bash
+# Verificador portable de better-project; generado por init.sh.
+# No editar a mano: se regenera al re-ejecutar scripts/init.sh del framework.
+set -u
+cd "$(dirname "$0")/.." || exit 1
+python3 scripts/portable_verifier.py "$@"
+EOF
 chmod +x "$TARGET_ROOT/scripts/verificar-proyecto.sh"
-echo "[OK] verificar-proyecto.sh copiado"
+echo "[OK] verificador portable generado"
+
+# 3b. Copiar plantillas de hooks (para reinstalar y comparar sincronia)
+mkdir -p "$TARGET_ROOT/scripts/hooks"
+for hook in pre-commit commit-msg; do
+    if [ -f "$REPO_ROOT/scripts/hooks/$hook" ]; then
+        cp "$REPO_ROOT/scripts/hooks/$hook" "$TARGET_ROOT/scripts/hooks/$hook"
+        chmod +x "$TARGET_ROOT/scripts/hooks/$hook"
+    fi
+done
+echo "[OK] plantillas de hooks copiadas"
 
 # 4. Instalar hooks git
 mkdir -p "$TARGET_ROOT/.git/hooks"
@@ -597,7 +626,7 @@ echo "=== Inicializacion completada ==="
 echo ""
 echo "Proximos pasos:"
 echo "  1. Revisa y adapta AGENTS.md y opencode.json a tu proyecto"
-echo "  2. Ejecuta: python3 scripts/verificar-proyecto.sh --lite"
+echo "  2. Ejecuta: bash scripts/verificar-proyecto.sh"
 echo "  3. Anade requisitos en .docs/requirements/REQ-XXX.md"
-echo "  4. Ejecuta: python3 scripts/index_knowledge.py"
+echo "  4. Indexa conocimiento: python3 scripts/index_knowledge.py"
 echo "  5. Usa opencode con el framework activo"

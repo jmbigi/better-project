@@ -434,3 +434,11 @@
   recomendacion: "Validar todo YAML editado con un parser antes de commitear (python3 -c \"import yaml; yaml.safe_load(open(ruta))\") y citar los valores que contienen ':' u otros caracteres especiales."
   estado: Abierta
   fecha: 2026-09-26
+- id: LSN-049
+  proyecto: "better-project"
+  fase: "Implementacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "Copiar los validadores a scripts/tools/ del proyecto adoptado rompia su resolucion de raiz (ROOT = parent.parent = scripts/, no la raiz del proyecto): doc_validator buscaba .docs/ en el lugar equivocado, lessons_extractor validaba 0 lecciones y el verificador reportaba FALLO de trazabilidad con referencias del propio tooling."
+  recomendacion: "Al copiar tooling portable, reutilizar el layout del framework (scripts/<tool>.py) para que cada modulo resuelva su raiz como parent.parent; excluir el tooling copiado del escaneo con --ignore explicito y verificar con un E2E en directorio temporal antes de entregar."
+  estado: Abierta
+  fecha: 2026-09-26

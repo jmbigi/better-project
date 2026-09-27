@@ -167,6 +167,8 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │   ├── mcp_server.py        # servidor MCP para agentes (REQ-004, endurecido REQ-007)
 │   ├── tui.py               # interfaz TUI minimalista (REQ-006)
 │   ├── setup.sh             # onboarding guiado (REQ-008)
+│   ├── init.sh              # adopcion portable en otro proyecto (REQ-028)
+│   ├── portable_verifier.py # verificador generico del proyecto adoptado (REQ-028)
 │   ├── ci.sh                # CI local sin proveedores (REQ-009)
 │   ├── verificar-proyecto.sh# verificacion de coherencia del repo (tests: REQ-010)
 │   ├── run_tests_isolated.py# tests aislados por proceso (REQ-026)
@@ -200,6 +202,10 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 ```bash
 # Onboarding guiado: entorno, hook, deps opcionales y primera validacion
 bash scripts/setup.sh
+
+# Adoptar el framework en otro proyecto (idempotente; REQ-028):
+# copia el ruleset y el tooling portable con un verificador generico en scripts/
+bash scripts/init.sh --root ../otro-proyecto
 
 # Generar el indice de conocimiento (tras clonar)
 python3 scripts/index_knowledge.py

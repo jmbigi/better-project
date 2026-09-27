@@ -17,10 +17,11 @@
 | 13 | **Resolver árboles huérfanos que bloquean el gate `fsck`** (`1c62aa5f` raíz, `0fec6a9b` scripts; creados 2026-09-24 10:44:33) | P0 | 95 | 1-3 | `[FALLO] sin objetos huerfanos en git (fsck)` en `verificar-proyecto.sh --pre-commit` | Resuelto (2026-09-25): `git fsck --no-progress` sin hallazgos en Linux; era un artefacto del entorno Git Bash/Windows, no del repositorio |
 | 14 | **Suite aislada falla solo dentro del hook (Git Bash)**: `python3` ahí es Python 3.12.4 de QGIS (`C:\Python314\python3.exe` no existe) | P0 | 90 | 2-4 | `[FALLO] suite de tests (aislada por proceso)` en el hook con 1 test fallido sin identificar | Pendiente y **no verificable en este equipo**: en Linux la suite aislada pasa (evidencia en `docs/LECCIONES-APRENDIDAS.md`, 2026-09-25). Requiere reproducir en Windows/Git Bash |
 | 15 | **Temporales versionados en la raíz** (`run_test.py`, `simple_test.py`; a943243 solo ignoró `test_*.py`) | P2 | 40 | 0.2 | `git status` los mostraba; hoy están **dentro** del repo (rastreados) | Hecho (2026-09-26): `git rm run_test.py simple_test.py` con orden explícita del programador; verificado que solo se citaban en esta lista |
+| 16 | **Adopción portable rota**: `init.sh` copiaba `verificar-proyecto.sh` (repo-específico) sin su toolchain; proyecto externo quedaba con 9 OK/27 FALLOS y hook bloqueante | P1 | 85 | 3 | Hallazgo 2026-09-26 reproducido en proyecto externo temporal | Hecho (2026-09-26): tooling portable + `scripts/portable_verifier.py` + `doc_validator --ignore` (REQ-028); E2E externo 5 OK/0 fallos |
 
 ## Resumen de impacto (recalculado 2026-09-25)
 
-- **Hechas**: 1, 2, 3, 6, 7, 9, 10, 11, 12, 13, 15 (11 de 15).
+- **Hechas**: 1, 2, 3, 6, 7, 9, 10, 11, 12, 13, 15, 16 (12 de 16).
 - **Parciales**: 4 y 8 (falta el escáner en el venv y la ejecución en Windows nativo).
 - **Pendientes reales**: 5 y 14 (ambas exigen un entorno Windows).
 - **Quién bloquea**: nada bloquea el CI en Linux; lo que queda depende de una sesión Windows o de una decisión del programador.
@@ -65,6 +66,11 @@
 - **KPI desactualizado**: `docs/health.md` reportaba "REQs trazados 25/25".
   Hecho (2026-09-26): `bash scripts/ci.sh` regeneró el dashboard con 26/26,
   mutación 1.000, cobertura 91.77 % (gate 85 %), onboarding 156 s y CI 380 s.
+- **Adopción portable (REQ-028)**: `init.sh` copiaba el verificador específico
+  del framework sin su toolchain (9 OK/27 FALLOS en el destino; el hook
+  bloqueaba commits). Ahora copia tooling portable a `scripts/`, genera un
+  wrapper y un verificador genérico que excluye el propio tooling del escaneo
+  de trazabilidad. E2E en proyecto externo temporal: 5 OK / 0 FALLOS.
 
 ## Criterio de priorización
 

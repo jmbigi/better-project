@@ -9,6 +9,8 @@ Uso:
     python scripts/doc_validator.py            # errores -> exit 1
     python scripts/doc_validator.py --strict   # errores Y advertencias -> exit 1
     python scripts/doc_validator.py --root demo  # valida otro proyecto (demo/)
+    python scripts/doc_validator.py --ignore scripts/tools  # excluye dirs del
+                                               # escaneo de refs (REQ-028, vendor)
 
 Sin dependencias externas (solo stdlib).
 """
@@ -30,6 +32,8 @@ EXCLUDE = {
     "tests",
     "demo",
 }
+# REQ-028: directorios excluidos del escaneo de referencias (tooling copiado).
+IGNORE: list[Path] = []
 CODE_RE = re.compile(r"\b(?://\s*|#\s*|/\*\s*)?(?:IMPLEMENTS:\s*)?REQ-(\d{3})\b")
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.S)
 ALLOWED_STATES = {"Draft", "Aprobado", "Implementado", "Deprecado"}
@@ -110,6 +114,9 @@ def collect_code_refs() -> dict[str, list[str]]:
             continue
         if any(part.startswith(".") for part in path.parts[1:]):
             continue
+        rel = path.relative_to(ROOT)
+        if any(rel == ign or ign in rel.parents for ign in IGNORE):
+            continue
         try:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -155,6 +162,14 @@ def analizar(reqs: dict, refs: dict) -> None:
 def main() -> int:
     global ROOT, REQ_DIR
     args = [a for a in sys.argv if a != "--strict"]
+    ignore_raw: list[str] = []
+    while "--ignore" in args:
+        idx = args.index("--ignore")
+        if idx + 1 >= len(args):
+            print("doc_validator: --ignore requiere una ruta (p.ej. scripts/tools)")
+            return 1
+        ignore_raw.append(args[idx + 1])
+        del args[idx : idx + 2]
     if "--root" in args:
         idx = args.index("--root")
         if idx + 1 >= len(args):
@@ -163,6 +178,7 @@ def main() -> int:
         ROOT = ROOT_BASE / args[idx + 1]
         REQ_DIR = ROOT / ".docs" / "requirements"
         EXCLUDE.discard("demo")
+    IGNORE[:] = [Path(p) for p in ignore_raw]
     reqs = collect_req_files()
     refs = collect_code_refs()
     analizar(reqs, refs)
