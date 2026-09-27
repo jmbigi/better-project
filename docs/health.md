@@ -1,21 +1,22 @@
 # Salud del proyecto
 
 > Generado por `scripts/health_dashboard.py` (REQ-024); no editar a mano.
-> Ultimo run registrado: 2026-09-25.
+> Ultimo run registrado: 2026-09-26.
 
 | # | KPI | Valor | Meta | Estado |
 |---|-----|-------|------|--------|
-| 1 | 1. Onboarding (clone -> verificador verde) | 181 s | <= 600 s | OK |
-| 2 | 2. REQs trazados (Implementados con refs / no Deprecados) | 100.0 % (25/25) | >= 90 % | OK |
+| 1 | 1. Onboarding (clone -> verificador verde) | 156 s | <= 600 s | OK |
+| 2 | 2. REQs trazados (Implementados con refs / no Deprecados) | 100.0 % (26/26) | >= 90 % | OK |
 | 3 | 3. Mutation score (batch ponderado) | 1.000 | >= 0.85 | OK |
-| 4 | 4. Tiempo CI completo | 325 s | <= 1800 s | OK |
-| 5 | 5. Coste mantenimiento (% producto demo) | 1.3 % (72/5730 SLOC) | <= 20 % | OK |
+| 4 | 4. Tiempo CI completo | 380 s | <= 1800 s | OK |
+| 5 | 5. Coste mantenimiento (% producto demo) | 1.2 % (72/6234 SLOC) | <= 20 % | OK |
 
 ## Tendencia (ultimos 10 runs)
 
 | Fecha | Onboarding (s) | REQs trazados (%) | Mutation | CI (s) | Producto (%) |
 |-------|----------------|-------------------|----------|--------|--------------|
 | 2026-09-25 | 181 s | 100.0 | 1.0 | 325 s | 1.3 |
+| 2026-09-26 | 156 s | 100.0 | 1.0 | 380 s | 1.2 |
 
 ## Definiciones
 

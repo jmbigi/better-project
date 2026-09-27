@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Verify (${{ matrix.os }}, Python ${{ matrix.python }})
@@ -15,15 +18,12 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         python: ["3.11", "3.12"]
-        include:
-          - os: ubuntu-latest
-            python: "3.11"
-            syft_install: |
-              curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-          - os: windows-latest
-            python: "3.11"
-            syft_install: |
-              powershell -Command "Invoke-WebRequest -Uri 'https://github.com/anchore/syft/releases/latest/download/syft_windows_amd64.zip' -OutFile 'syft.zip'; Expand-Archive -Path 'syft.zip' -DestinationPath '.local/bin' -Force; Remove-Item 'syft.zip'"
+    env:
+      # P0.18: version fijada y SHA256 oficial del release (verificado 2026-09-26
+      # contra syft_1.52.0_checksums.txt); sin curl | sh ni descargas sin hash.
+      SYFT_VERSION: "v1.52.0"
+      SYFT_SHA256_LINUX: "caeedb81fb0491615f1ebd1761e4145d41ee86dd2cc7bf80669f9f5ad9d6133d"
+      SYFT_SHA256_WINDOWS: "de787a374cf961c56fd7b206b2e183295abba32d0af3cb44d9aef2357ca9eda2"
 
     steps:
       - name: Checkout
@@ -34,9 +34,28 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install syft
-        run: ${{ matrix.syft_install }}
+      - name: "Install syft - Linux (pin + SHA256, P0.18)"
+        if: runner.os == 'Linux'
         shell: bash
+        run: |
+          set -euo pipefail
+          version="${SYFT_VERSION#v}"
+          curl -sSfL -o syft.tar.gz \
+            "https://github.com/anchore/syft/releases/download/${SYFT_VERSION}/syft_${version}_linux_amd64.tar.gz"
+          echo "${SYFT_SHA256_LINUX}  syft.tar.gz" | sha256sum -c -
+          mkdir -p .local/bin
+          tar -xzf syft.tar.gz -C .local/bin syft
+
+      - name: "Install syft - Windows (pin + SHA256, P0.18)"
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${SYFT_VERSION#v}"
+          curl -sSfL -o syft.zip \
+            "https://github.com/anchore/syft/releases/download/${SYFT_VERSION}/syft_${version}_windows_amd64.zip"
+          echo "${SYFT_SHA256_WINDOWS}  syft.zip" | sha256sum -c -
+          powershell -Command "Expand-Archive -Path 'syft.zip' -DestinationPath '.local/bin' -Force"
 
       - name: Add .local/bin to PATH
         run: echo "$(pwd)/.local/bin" >> $GITHUB_PATH

@@ -426,3 +426,11 @@
   recomendacion: "Definir la politica en terminos verificables (\"sin cuenta, sin pagos; verificacion local como fuente de verdad\") en vez de prohibiciones absolutas que el repo contradice; validar que los artefactos de CI apunten a rutas que el pipeline realmente produce."
   estado: Abierta
   fecha: 2026-09-26
+- id: LSN-048
+  proyecto: "better-project"
+  fase: "Implementacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "Al editar .github/workflows/ci.yml, un ':' dentro de un valor sin comillas (name: Install syft (Linux: pin + SHA256, P0.18)) rompia el parseo YAML: ScannerError 'mapping values are not allowed here'. El archivo se habria subido roto al remoto sin ejecutar la verificacion local (que no parsea YAML)."
+  recomendacion: "Validar todo YAML editado con un parser antes de commitear (python3 -c \"import yaml; yaml.safe_load(open(ruta))\") y citar los valores que contienen ':' u otros caracteres especiales."
+  estado: Abierta
+  fecha: 2026-09-26

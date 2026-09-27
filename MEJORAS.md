@@ -57,10 +57,14 @@
   verificación local" (aclarada por el programador). Documentada en `AGENTS.md`
   y `docs/AGENT-ARCHITECTURE.md`; corregido el artefacto roto de
   `.github/workflows/ci.yml` (subía `.docs/.storage/tydm_review.json`, que
-  `audit_advisories.py` nunca escribe). Pendiente: el paso `Install syft` usa
-  `curl | sh` (choca con P0.8); requiere fijar checksum.
-- **KPI desactualizado**: `docs/health.md` reporta "REQs trazados 25/25" y hoy
-  son 26 Implementados (REQ-027); se regenerará en el próximo `ci.sh`.
+  `audit_advisories.py` nunca escribe). Hecho (2026-09-26): instalación de syft
+  con versión fijada (v1.52.0) + SHA256 oficial para Linux y Windows,
+  verificados descargando ambos artefactos; se eliminó `curl | sh` y la matriz
+  parcial (antes solo Python 3.11 instalaba syft); `permissions: contents: read`.
+  Ejecución real del workflow no verificable desde este equipo.
+- **KPI desactualizado**: `docs/health.md` reportaba "REQs trazados 25/25".
+  Hecho (2026-09-26): `bash scripts/ci.sh` regeneró el dashboard con 26/26,
+  mutación 1.000, cobertura 91.77 % (gate 85 %), onboarding 156 s y CI 380 s.
 
 ## Criterio de priorización
 
