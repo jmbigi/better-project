@@ -96,6 +96,7 @@ contra las P0, donde la regla gana y se consulta.
 Todo local y open source: `scripts/verificar-proyecto.sh` (más de 50
 comprobaciones, ver el propio script), `scripts/ci.sh` (REQ-009: exporta HEAD a
 copia limpia y verifica allí, como un clon fresco), hook pre-commit local y
-suite unittest stdlib. No se usa
-GitHub Actions, GitLab CI ni servicios externos por decisión del programador
-(2026-09-04).
+suite unittest stdlib. No se requiere cuenta de GitHub, GitLab CI, servicios
+externos ni pagos por decisión del programador (2026-09-04; aclarado
+2026-09-26: los workflows de `.github/workflows/` pueden existir, pero deben
+poder ejecutarse localmente sin cuenta y no sustituyen a `ci.sh`).

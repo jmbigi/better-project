@@ -402,3 +402,27 @@
   estado: Resuelta
   fecha: 2026-09-25
   fecha_resolucion: 2026-09-25
+- id: LSN-045
+  proyecto: "better-project"
+  fase: "Verificacion"
+  categoria: "Proceso"
+  problema: "El mapeo OWASP del proyecto parecia desactualizado: la web genai.owasp.org muestra el Top 10 2025, mientras el repo cita la edicion 2026. Se estuvo a punto de \"corregir\" el mapeo a 2025, pero la URL citada (GenAI-Security-Project/GenAI-LLM-Top10/2026/final) existe y contiene la edicion 2026 con los mismos nombres usados por el proyecto (LLM03 Excessive Agency, LLM07 Misinformation, LLM08 Hidden Context Exposure)."
+  recomendacion: "Antes de declarar desactualizada una fuente citada, verificar la URL exacta que cita el proyecto, no solo la pagina principal del organismo. Al citar taxonomias con numeracion versionada, anotar siempre la edicion (2025 vs 2026) para evitar ambiguedad."
+  estado: Abierta
+  fecha: 2026-09-26
+- id: LSN-046
+  proyecto: "better-project"
+  fase: "Implementacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "La herramienta MCP run_verification era sincrona con timeout de 300 s, menor que los ~357 s medidos de la verificacion completa: toda llamada fallaba siempre (el cliente devolvio -32001 Request timed out) y el agente no podia verificar el repo via MCP."
+  recomendacion: "Ejecutar verificaciones largas en segundo plano (P1.34) devolviendo PID y ruta de log, con guarda de no duplicacion; cubrir el camino async con tests que mockeen Popen y no ejecuten la suite real."
+  estado: Abierta
+  fecha: 2026-09-26
+- id: LSN-047
+  proyecto: "better-project"
+  fase: "Deploy"
+  categoria: "Proceso"
+  problema: "La documentacion decia \"No se usa GitHub Actions\" mientras .github/workflows/ci.yml esta versionado, y ese workflow subia como artefacto .docs/.storage/tydm_review.json, un archivo que audit_advisories.py nunca genera (artefacto roto silencioso)."
+  recomendacion: "Definir la politica en terminos verificables (\"sin cuenta, sin pagos; verificacion local como fuente de verdad\") en vez de prohibiciones absolutas que el repo contradice; validar que los artefactos de CI apunten a rutas que el pipeline realmente produce."
+  estado: Abierta
+  fecha: 2026-09-26

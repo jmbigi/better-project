@@ -54,7 +54,8 @@ Quedan dentro del alcance, entre otros:
 - Eludir los patrones de permiso de `opencode.json`/`kilo.json`
   (218 `deny`, 85 `ask`, 1 `allow`).
 - Inyección a través de contenido no confiable procesado por el agente
-  (P0.13) o fuga del system prompt (OWASP LLM07).
+  (P0.13) o fuga del system prompt (OWASP LLM07 System Prompt Leakage,
+  edición 2025; en la 2026: LLM08 Hidden Context Exposure).
 - Ejecución de código no confiable (`curl | bash`, `eval`/`exec`) vía los
   wrappers o el servidor MCP.
 - Fuga de secretos, credenciales o datos personales en el repositorio.

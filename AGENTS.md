@@ -328,8 +328,10 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
   dependencias opcionales (doble confirmación de riesgo, P0.18) y primera
   validación (REQ-008).
 - `bash scripts/ci.sh` — CI local sin proveedores: exporta HEAD a una copia
-  limpia y ejecuta allí toda la verificación (REQ-009). No se usa GitHub
-  Actions ni servicios externos (decisión del programador, 2026-09-04).
+  limpia y ejecuta allí toda la verificación (REQ-009). No se requiere cuenta
+  de GitHub, servicios externos ni pagos: la verificación es local; los
+  workflows de `.github/workflows/` son opcionales y no sustituyen a `ci.sh`
+  (decisión del programador, 2026-09-04; política aclarada 2026-09-26).
 - Arquitectura de agentes y cómo extender el ruleset:
   `docs/AGENT-ARCHITECTURE.md`.
 - MCP (opencode lo lanza vía `opencode.json`): `search_knowledge`,

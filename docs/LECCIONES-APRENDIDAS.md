@@ -584,3 +584,13 @@ latencia. Lección LSN-042. **Lección**: una dependencia
 opcional nunca debe ser un gate duro de la suite; los dos verificadores (bash/Python) deben
 cubrir los mismos checks para no divergir; una rama no cubierta por tests es un mutante
 superviviente esperando (los equivalentes se documentan, los reales se cierran).
+
+## 2026-09-26 - Tres verificaciones que no verificaban: OWASP mal leído, MCP síncrono y artefacto de CI roto
+
+**Contexto**: auditoría del programador ("honesto 100%") y mejoras autorizadas después (MCP, OWASP, typo de hook, borrado de temporales; política de GitHub aclarada por el programador).
+**Hallazgos**:
+- La web `genai.owasp.org` muestra el Top 10 2025, pero la URL citada por el proyecto (`GenAI-Security-Project/GenAI-LLM-Top10/2026/final`) existe con la edición 2026: el mapeo era correcto y "corregirlo" a 2025 habría introducido un error. Se anotó la edición en las 4 referencias que citaban la numeración 2025 (README #35, CHECKLIST, SECURITY, REGLAS-COMPLETAS). LSN-045.
+- `run_verification` del servidor MCP tenía timeout de 300 s y la verificación completa mide ~357 s: fallaba siempre. Ahora se lanza en segundo plano con PID + log e idempotencia. LSN-046.
+- `AGENTS.md`/`AGENT-ARCHITECTURE.md` decían "no se usa GitHub Actions" y el workflow estaba versionado; además subía un artefacto inexistente. Política redefinida como "sin cuenta, sin pagos; verificación local"; ruta del artefacto corregida. LSN-047.
+**Evidencia** (26-09-2026): `bash scripts/verificar-proyecto.sh` 55 OK / 0 fallos antes de los cambios; `python3 -m unittest tests.test_ecosistema.TestMCPServer` 38 tests OK; `lessons_extractor --check` 47 lecciones, 0 errores; `git rm run_test.py simple_test.py` con orden explícita (MEJORAS #15, `TestTyDMReview` sigue en la suite estándar).
+**Lección**: verificar la fuente citada exacta, no solo la página principal del organismo; ninguna herramienta de verificación puede exceder el timeout de quien la invoca; y una política documentada que el repositorio contradice es un fallo de verificación, no de redacción.

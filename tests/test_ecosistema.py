@@ -1030,25 +1030,72 @@ class TestMCPServer(unittest.TestCase):
         self.assertEqual(report["estado"], "con advertencias")
         self.assertIn("w", report["advertencias"])
 
-    def test_run_verification_ok_y_fallo(self):
-        with mock.patch.object(mcp.subprocess, "run",
-                               return_value=mock.Mock(returncode=0, stdout="todo ok", stderr="")):
-            content, ok = mcp.run_verification()
-        self.assertTrue(ok)
-        self.assertIn("verificacion OK", content[0]["text"])
+    def test_run_verification_lanza_en_segundo_plano(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old_log, old_pid = mcp.VERIFICATION_LOG, mcp.VERIFICATION_PID
+            mcp.VERIFICATION_LOG = Path(tmp) / "verificacion.log"
+            mcp.VERIFICATION_PID = Path(tmp) / "verificacion.pid"
+            fake = mock.Mock(pid=4242)
+            try:
+                with mock.patch.object(mcp.subprocess, "Popen", return_value=fake) as popen:
+                    content, ok = mcp.run_verification()
+                self.assertTrue(ok)
+                payload = json.loads(content[0]["text"])
+                self.assertEqual(payload["estado"], "en curso")
+                self.assertEqual(payload["pid"], 4242)
+                self.assertEqual(mcp.VERIFICATION_PID.read_text(encoding="utf-8"), "4242")
+                args = popen.call_args.args[0]
+                self.assertEqual(args[0], "bash")
+                self.assertTrue(args[1].endswith("verificar-proyecto.sh"))
+                kwargs = popen.call_args.kwargs
+                self.assertEqual(kwargs["cwd"], mcp.ROOT)
+                self.assertIs(kwargs["stderr"], mcp.subprocess.STDOUT)
+                self.assertTrue(kwargs["start_new_session"])
+            finally:
+                mcp.VERIFICATION_LOG, mcp.VERIFICATION_PID = old_log, old_pid
 
-        fail = mock.Mock(returncode=2, stdout="", stderr="mal")
-        with mock.patch.object(mcp.subprocess, "run", return_value=fail):
-            content, ok = mcp.run_verification()
-        self.assertFalse(ok)
-        self.assertIn("FALLO (exit 2)", content[0]["text"])
+    def test_run_verification_no_duplica_si_esta_en_curso(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old_log, old_pid = mcp.VERIFICATION_LOG, mcp.VERIFICATION_PID
+            mcp.VERIFICATION_LOG = Path(tmp) / "verificacion.log"
+            mcp.VERIFICATION_PID = Path(tmp) / "verificacion.pid"
+            mcp.VERIFICATION_PID.write_text(str(os.getpid()), encoding="utf-8")
+            try:
+                with mock.patch.object(mcp.subprocess, "Popen") as popen:
+                    content, ok = mcp.run_verification()
+                self.assertTrue(ok)
+                popen.assert_not_called()
+                payload = json.loads(content[0]["text"])
+                self.assertEqual(payload["pid"], os.getpid())
+                self.assertIn("en curso", payload["mensaje"])
+            finally:
+                mcp.VERIFICATION_LOG, mcp.VERIFICATION_PID = old_log, old_pid
 
-    def test_run_verification_timeout(self):
-        with mock.patch.object(mcp.subprocess, "run",
-                               side_effect=subprocess.TimeoutExpired(cmd="x", timeout=1)):
-            content, ok = mcp.run_verification()
-        self.assertFalse(ok)
-        self.assertIn("tiempo limite", content[0]["text"])
+    def test_verification_running_pidfiles_ausente_invalido_o_muerto(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old_pid = mcp.VERIFICATION_PID
+            mcp.VERIFICATION_PID = Path(tmp) / "verificacion.pid"
+            try:
+                self.assertIsNone(mcp._verification_running())
+                mcp.VERIFICATION_PID.write_text("no-numero", encoding="utf-8")
+                self.assertIsNone(mcp._verification_running())
+                mcp.VERIFICATION_PID.write_text("999999999", encoding="utf-8")
+                self.assertIsNone(mcp._verification_running())
+            finally:
+                mcp.VERIFICATION_PID = old_pid
+
+    def test_run_verification_error_de_lanzamiento(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            old_log, old_pid = mcp.VERIFICATION_LOG, mcp.VERIFICATION_PID
+            mcp.VERIFICATION_LOG = Path(tmp) / "verificacion.log"
+            mcp.VERIFICATION_PID = Path(tmp) / "verificacion.pid"
+            try:
+                with mock.patch.object(mcp.subprocess, "Popen", side_effect=OSError("boom")):
+                    content, ok = mcp.run_verification()
+                self.assertFalse(ok)
+                self.assertIn("no se pudo lanzar", content[0]["text"])
+            finally:
+                mcp.VERIFICATION_LOG, mcp.VERIFICATION_PID = old_log, old_pid
 
     def test_handle_call_excepcion_es_error(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1089,16 +1136,20 @@ class TestMCPServer(unittest.TestCase):
 
     def test_handle_call_run_verification(self):
         with tempfile.TemporaryDirectory() as tmp:
-            old_log = mcp.AUDIT_LOG
+            old_log, old_pid = mcp.VERIFICATION_LOG, mcp.VERIFICATION_PID
+            old_audit = mcp.AUDIT_LOG
+            mcp.VERIFICATION_LOG = Path(tmp) / "v.log"
+            mcp.VERIFICATION_PID = Path(tmp) / "v.pid"
             mcp.AUDIT_LOG = Path(tmp) / "a.jsonl"
             try:
-                with mock.patch.object(mcp.subprocess, "run",
-                                       return_value=mock.Mock(returncode=0, stdout="ok", stderr="")):
+                with mock.patch.object(mcp.subprocess, "Popen",
+                                       return_value=mock.Mock(pid=777)):
                     content, is_error = mcp.handle_call("run_verification", {})
                 self.assertFalse(is_error)
-                self.assertIn("verificacion OK", content[0]["text"])
+                self.assertIn("en curso", content[0]["text"])
             finally:
-                mcp.AUDIT_LOG = old_log
+                mcp.VERIFICATION_LOG, mcp.VERIFICATION_PID = old_log, old_pid
+                mcp.AUDIT_LOG = old_audit
 
     def test_stdio_messages_header_incompleto(self):
         srv = mcp.StdioServer()

@@ -88,12 +88,12 @@ jobs:
       - name: Install pip-audit
         run: .venv-audit/bin/pip install pip-audit
       - name: Run advisories audit
-        run: python scripts/audit_advisories.py --pip-audit-path .venv-audit/bin/pip-audit
+        run: python scripts/audit_advisories.py --pip-audit-path .venv-audit/bin/pip-audit --json > advisories-report.json
       - name: Upload advisories report
         uses: actions/upload-artifact@v4
         with:
           name: advisories-report
-          path: .docs/.storage/tydm_review.json
+          path: advisories-report.json
           retention-days: 7
 
   docs:

@@ -11,7 +11,7 @@ repos:
         entry: python3 scripts/lessons_extractor.py --check
         language: system
         pass_filenames: false
-      - id: index-knledge
+      - id: index-knowledge
         name: index-knowledge (indice de conocimiento)
         entry: python3 scripts/index_knowledge.py
         language: system

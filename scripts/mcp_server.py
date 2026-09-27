@@ -6,13 +6,18 @@ Expone las herramientas del ecosistema a opencode y otros agentes via stdio:
 - read_requirement(id): lee una especificacion REQ-XXX.
 - validate_requirements(): valida trazabilidad REQ (doc_validator).
 - create_lesson(...): anade una leccion a .docs/lessons/<anio>.yaml.
-- run_verification(): ejecuta scripts/verificar-proyecto.sh (verificacion integral).
+- run_verification(): lanza scripts/verificar-proyecto.sh en segundo plano (~6 min)
+  y devuelve PID + ruta del log (.docs/.storage/verification-last.log).
 
-Sin dependencias externas. Framing stdio: JSON por linea (espec MCP 2025-06-18)
-con soporte retrocompatible de cabeceras Content-Length.
+Sin dependencias externas. Framing stdio: JSON por linea. La revision vigente de
+MCP es 2026-07-28, que mantiene compatibilidad con el handshake de 2025-11-25 y
+anteriores; este servidor implementa ese handshake (initialize/tools/*), responde
+con la version solicitada por el cliente (o 2025-11-25 si falta) y soporta
+cabeceras Content-Length retrocompatibles.
 """
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -26,6 +31,8 @@ KNOWLEDGE_DIR = ROOT / ".docs" / "knowledge"
 JSON_INDEX = ROOT / ".docs" / ".storage" / "index.json"
 LESSONS_DIR = ROOT / ".docs" / "lessons"
 AUDIT_LOG = ROOT / ".docs" / ".storage" / "mcp_audit.jsonl"
+VERIFICATION_LOG = ROOT / ".docs" / ".storage" / "verification-last.log"
+VERIFICATION_PID = ROOT / ".docs" / ".storage" / "verification.pid"
 
 # REQ-007: limites de entrada aplicados en servidor (el inputSchema es solo
 # declarativo). OWASP MCP Top 10: context injection / consumo no acotado.
@@ -91,8 +98,10 @@ TOOLS = [
     {
         # REQ-004: ejecucion de la verificacion integral del proyecto como
         # herramienta MCP (antes configurada, por error, como servidor MCP).
+        # P1.34: se lanza en segundo plano porque la verificacion completa tarda
+        # ~6 min, mas que el timeout del cliente MCP.
         "name": "run_verification",
-        "description": "Ejecuta la verificacion integral del repo (scripts/verificar-proyecto.sh) y devuelve su salida y codigo de salida.",
+        "description": "Lanza la verificacion integral del repo (scripts/verificar-proyecto.sh, ~6 min) en segundo plano y devuelve PID y ruta del log; consulta el log para el resultado.",
         "inputSchema": {"type": "object", "properties": {}},
     },
 ]
@@ -278,25 +287,52 @@ def create_lesson(args: dict) -> tuple[list[dict], bool]:
     return [{"type": "text", "text": f"leccion {entry['id']} anadida a {year_file.name}"}], True
 
 
-def run_verification() -> tuple[list[dict], bool]:
-    # REQ-004: la verificacion es una herramienta del servidor MCP (no un
-    # servidor MCP por si misma); se ejecuta y se devuelve su salida.
-    # Devuelve (content, ok): ok=True solo si el script termina con exit 0.
-    script = SCRIPTS / "verificar-proyecto.sh"
+def _verification_running() -> int | None:
+    # P1.34: idempotencia; devuelve el PID de una verificacion en curso o None.
     try:
-        proc = subprocess.run(
-            ["bash", str(script)],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-            timeout=300,
-            check=False,
-        )
-    except subprocess.TimeoutExpired:
-        return [{"type": "text", "text": "error: la verificacion excedio el tiempo limite (300 s)"}], False
-    salida = (proc.stdout or "") + (proc.stderr or "")
-    estado = "OK" if proc.returncode == 0 else f"FALLO (exit {proc.returncode})"
-    return [{"type": "text", "text": f"verificacion {estado}\n\n{salida}"}], proc.returncode == 0
+        pid = int(VERIFICATION_PID.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return None
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return None
+    return pid
+
+
+def run_verification() -> tuple[list[dict], bool]:
+    # REQ-004/P1.34: la verificacion completa tarda ~6 min, mas que el timeout
+    # del cliente MCP; se lanza en segundo plano y se devuelve PID + log. Si ya
+    # hay una en curso no se lanza otra (idempotencia).
+    running = _verification_running()
+    if running is not None:
+        payload = {
+            "estado": "en curso",
+            "pid": running,
+            "log": str(VERIFICATION_LOG),
+            "mensaje": "ya habia una verificacion en curso; no se lanza otra",
+        }
+        return [{"type": "text", "text": json.dumps(payload, ensure_ascii=False, indent=2)}], True
+    VERIFICATION_LOG.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with VERIFICATION_LOG.open("w", encoding="utf-8") as log_file:
+            proc = subprocess.Popen(
+                ["bash", str(SCRIPTS / "verificar-proyecto.sh")],
+                cwd=ROOT,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+    except OSError as exc:
+        return [{"type": "text", "text": f"error: no se pudo lanzar la verificacion: {exc}"}], False
+    VERIFICATION_PID.write_text(str(proc.pid), encoding="utf-8")
+    payload = {
+        "estado": "en curso",
+        "pid": proc.pid,
+        "log": str(VERIFICATION_LOG),
+        "mensaje": "verificacion lanzada en segundo plano (~6 min); consulta el log para el resultado",
+    }
+    return [{"type": "text", "text": json.dumps(payload, ensure_ascii=False, indent=2)}], True
 
 
 class StdioServer:
@@ -360,7 +396,10 @@ class StdioServer:
                     "jsonrpc": "2.0",
                     "id": msg_id,
                     "result": {
-                        "protocolVersion": message.get("params", {}).get("protocolVersion", "2025-06-18"),
+                        # Negotiation por handshake: se responde la version del
+                        # cliente; default = ultima revision con handshake (la
+                        # 2026-07-28 usa negociacion por request y server/discover).
+                        "protocolVersion": message.get("params", {}).get("protocolVersion", "2025-11-25"),
                         "capabilities": {"tools": {"listChanged": False}},
                         "serverInfo": {"name": "better-project", "version": "0.1.0"},
                     },

@@ -16,13 +16,13 @@
 | 12 | **Benchmark retrieval quality** (recall@10, MRR, nDCG) automatizado | P3 | 30 | 4 | P0.20 requiere métricas cuantitativas | Hecho: `recall@10 >= 0.7` en `verificar-proyecto.sh:386` y `verificar_proyecto.py:630` |
 | 13 | **Resolver árboles huérfanos que bloquean el gate `fsck`** (`1c62aa5f` raíz, `0fec6a9b` scripts; creados 2026-09-24 10:44:33) | P0 | 95 | 1-3 | `[FALLO] sin objetos huerfanos en git (fsck)` en `verificar-proyecto.sh --pre-commit` | Resuelto (2026-09-25): `git fsck --no-progress` sin hallazgos en Linux; era un artefacto del entorno Git Bash/Windows, no del repositorio |
 | 14 | **Suite aislada falla solo dentro del hook (Git Bash)**: `python3` ahí es Python 3.12.4 de QGIS (`C:\Python314\python3.exe` no existe) | P0 | 90 | 2-4 | `[FALLO] suite de tests (aislada por proceso)` en el hook con 1 test fallido sin identificar | Pendiente y **no verificable en este equipo**: en Linux la suite aislada pasa (evidencia en `docs/LECCIONES-APRENDIDAS.md`, 2026-09-25). Requiere reproducir en Windows/Git Bash |
-| 15 | **Temporales versionados en la raíz** (`run_test.py`, `simple_test.py`; a943243 solo ignoró `test_*.py`) | P2 | 40 | 0.2 | `git status` los mostraba; hoy están **dentro** del repo (rastreados) | Pendiente: propuesta de eliminarlos en un commit dedicado; **no ejecutado** (borrado de ficheros rastreados: requiere orden explícita, P0.3) |
+| 15 | **Temporales versionados en la raíz** (`run_test.py`, `simple_test.py`; a943243 solo ignoró `test_*.py`) | P2 | 40 | 0.2 | `git status` los mostraba; hoy están **dentro** del repo (rastreados) | Hecho (2026-09-26): `git rm run_test.py simple_test.py` con orden explícita del programador; verificado que solo se citaban en esta lista |
 
 ## Resumen de impacto (recalculado 2026-09-25)
 
-- **Hechas**: 1, 2, 3, 6, 7, 9, 10, 11, 12, 13 (10 de 15).
+- **Hechas**: 1, 2, 3, 6, 7, 9, 10, 11, 12, 13, 15 (11 de 15).
 - **Parciales**: 4 y 8 (falta el escáner en el venv y la ejecución en Windows nativo).
-- **Pendientes reales**: 5, 14 (ambas exigen un entorno Windows) y 15 (borrado que requiere orden).
+- **Pendientes reales**: 5 y 14 (ambas exigen un entorno Windows).
 - **Quién bloquea**: nada bloquea el CI en Linux; lo que queda depende de una sesión Windows o de una decisión del programador.
 
 ## Hallazgos de la revisión del 2026-09-25
@@ -38,6 +38,29 @@
   ChromaDB (ver `docs/HERRAMIENTAS-Y-FUENTES.md` §5.1).
 - **Mutación `--all`**: medición en una sola pasada registrada en
   `docs/LECCIONES-APRENDIDAS.md` (2026-09-25).
+
+## Hallazgos de la revisión del 2026-09-26
+
+- **MCP `run_verification` inviable**: el timeout síncrono era de 300 s y la
+  verificación completa mide ~357 s (medido con `time`), por lo que toda
+  llamada fallaba (`-32001 Request timed out` en el cliente). Ahora se lanza en
+  segundo plano con PID + log (`.docs/.storage/verification-last.log`) y guarda
+  de no duplicación (REQ-004/P1.34); cubierto por tests async en
+  `TestMCPServer` que no ejecutan la suite real.
+- **OWASP**: la edición 2026 citada por el proyecto existe en el repositorio
+  oficial (`GenAI-Security-Project/GenAI-LLM-Top10/2026/final`), así que el
+  mapeo es correcto; el malentendido vino de que `genai.owasp.org` aún muestra
+  la edición 2025. Se anotó la edición en las 4 referencias que mezclaban
+  numeración 2025 (README #35, CHECKLIST, SECURITY y REGLAS-COMPLETAS,
+  System Prompt Leakage).
+- **GitHub Actions**: la política real es "sin cuenta requerida, sin pagos;
+  verificación local" (aclarada por el programador). Documentada en `AGENTS.md`
+  y `docs/AGENT-ARCHITECTURE.md`; corregido el artefacto roto de
+  `.github/workflows/ci.yml` (subía `.docs/.storage/tydm_review.json`, que
+  `audit_advisories.py` nunca escribe). Pendiente: el paso `Install syft` usa
+  `curl | sh` (choca con P0.8); requiere fijar checksum.
+- **KPI desactualizado**: `docs/health.md` reporta "REQs trazados 25/25" y hoy
+  son 26 Implementados (REQ-027); se regenerará en el próximo `ci.sh`.
 
 ## Criterio de priorización
 
