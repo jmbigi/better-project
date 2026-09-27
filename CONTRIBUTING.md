@@ -84,6 +84,7 @@
   ```
 - **Revisión humana obligatoria** (P1.15): El humano debe entender y probar lo generado
 - **Modelos permitidos**: Solo `opencode/deepseek-v4-flash-free` o `opencode-go/deepseek-v4-flash`
+- **Excepción**: modelos locales gratuitos (Ollama/llama.cpp en localhost) SOLO para la matriz de pruebas de reglas; nunca como modelo principal de desarrollo (AGENTS.md)
 - **Nunca** uses modelos `pro` sin permiso explícito
 
 ## Seguridad

@@ -21,6 +21,7 @@ import os
 import re
 import subprocess
 import sys
+import threading
 import time
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -287,15 +288,38 @@ def create_lesson(args: dict) -> tuple[list[dict], bool]:
     return [{"type": "text", "text": f"leccion {entry['id']} anadida a {year_file.name}"}], True
 
 
+def _pid_activo(pid: int) -> bool:
+    # P1.34: un proceso zombie (estado Z en /proc) no esta activo aunque
+    # os.kill(pid, 0) no falle; sin esto, el guard de idempotencia quedaria
+    # bloqueado tras cada verificacion (hallazgo 2026-09-27).
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    try:
+        estado = Path(f"/proc/{pid}/stat").read_text(encoding="utf-8")
+        return estado.split(") ", 1)[1].split()[0] not in {"Z", "X"}
+    except (OSError, IndexError):
+        return True
+
+
 def _verification_running() -> int | None:
     # P1.34: idempotencia; devuelve el PID de una verificacion en curso o None.
     try:
         pid = int(VERIFICATION_PID.read_text(encoding="utf-8").strip())
     except (OSError, ValueError):
         return None
-    try:
-        os.kill(pid, 0)
-    except OSError:
+    if not _pid_activo(pid):
+        # Recolecta el hijo zombie si es nuestro: evita que el PID quede
+        # reservado y que el guard bloquee la siguiente verificacion.
+        try:
+            os.waitpid(pid, os.WNOHANG)
+        except ChildProcessError:
+            # El PID no es hijo de este proceso: no hay nada que recolectar.
+            return None
+        except OSError as exc:
+            # No hay fallback silencioso (P1.26): se reporta y se trata como no activo.
+            log(f"aviso: no se pudo recolectar el PID {pid}: {exc}")
         return None
     return pid
 
@@ -326,6 +350,9 @@ def run_verification() -> tuple[list[dict], bool]:
     except OSError as exc:
         return [{"type": "text", "text": f"error: no se pudo lanzar la verificacion: {exc}"}], False
     VERIFICATION_PID.write_text(str(proc.pid), encoding="utf-8")
+    # P1.34: recolectar el proceso al terminar evita dejarlo zombie y que el
+    # guard de idempotencia lo confunda con una verificacion en curso.
+    threading.Thread(target=proc.wait, daemon=True).start()
     payload = {
         "estado": "en curso",
         "pid": proc.pid,

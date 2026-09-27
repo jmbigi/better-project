@@ -442,3 +442,43 @@
   recomendacion: "Al copiar tooling portable, reutilizar el layout del framework (scripts/<tool>.py) para que cada modulo resuelva su raiz como parent.parent; excluir el tooling copiado del escaneo con --ignore explicito y verificar con un E2E en directorio temporal antes de entregar."
   estado: Abierta
   fecha: 2026-09-26
+- id: LSN-050
+  proyecto: "better-project"
+  fase: "Configuracion"
+  categoria: "Seguridad"
+  problema: "Auditoria externa (2026-09-27): AGENTS.md documenta la excepcion de modelos locales gratuitos (matriz de pruebas P0/P1, 6 modelos ollama medidos el 2026-09-07) pero experimental.policies de opencode.json/kilo.json no incluia el proveedor ollama: el texto permitia lo que la config determinista bloqueaba (contradiccion P1.10). El verificador solo comprobaba la lista esperada, que tambien omitia ollama."
+  recomendacion: "Cada excepcion documentada en las reglas debe tener contrapartida en la config determinista y un check del verificador (bash y Python) que la valide. Al portar reglas entre repos (better-ai -> better-project) revisar el texto que respalda cada entrada de la allow-list antes de eliminarla."
+  estado: Abierta
+  fecha: 2026-09-27
+- id: LSN-051
+  proyecto: "better-project"
+  fase: "Testing"
+  categoria: "Seguridad"
+  problema: "Auditoria externa (2026-09-27): experimental.policies (deny all + allow list de proveedores) solo se valida estructuralmente (presencia y contenido de la lista); no existe test de comportamiento que confirme que un proveedor no permitido queda bloqueado en runtime. Tampoco hay prueba local del red-team de los 304 patrones bash: la evidencia de PRUEBAS.md es heredada de better-ai y no re-ejecutada en este repo."
+  recomendacion: "Anadir un test de integracion aislado que lance opencode con config minima y verifique que un proveedor fuera de la allow-list es rechazado (prototipar aislado P1.21; puede requerir red/cuota). Mientras tanto, declarar explicitamente en PRUEBAS.md que la evidencia de red-team de denies es heredada hasta re-ejecutarla aqui."
+  estado: Abierta
+  fecha: 2026-09-27
+- id: LSN-052
+  proyecto: "better-project"
+  fase: "Documentacion"
+  categoria: "Proceso"
+  problema: "Auditoria externa (2026-09-27): .docs/rubric-evaluacion.md declaraba \"Peso total: 100%\" pero los pesos por categoria suman 110 (15+20+15+10+15+20+10+5); cualquier nota global calculada quedaba ambigua (normalizada o no)."
+  recomendacion: "Verificar la aritmetica de las rubricas con un calculo reproducible (suma de pesos) antes de publicar un score, y declarar la normalizacion explicitamente en el documento."
+  estado: Abierta
+  fecha: 2026-09-27
+- id: LSN-053
+  proyecto: "better-project"
+  fase: "Documentacion"
+  categoria: "Proceso"
+  problema: "Auditoria externa (2026-09-27): docs/ALCANCE.md afirmaba \"MDT es experimental (accuracy 0.646)\" mientras README y docs/TDM-COMPETITIVO.md reportan 0.802 para el backend fast: 0.646 es el backend llama (Qwen3.5-4B). Una cifra unica sin nombrar el motor confundia ambos backends."
+  recomendacion: "Al citar metricas de un sistema con multiples backends, nombrar el backend y el set de evaluacion junto a la cifra (p. ej. \"fast: 0.802 en set v18; llama: 0.646\")."
+  estado: Abierta
+  fecha: 2026-09-27
+- id: LSN-054
+  proyecto: "better-project"
+  fase: "Implementacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "Al cerrar la auditoria externa (2026-09-27), la verificacion lanzada via MCP quedo como proceso zombie (su padre no recolectaba al hijo) y os.kill(pid, 0) seguia respondiendo: el guard de idempotencia de run_verification bloqueaba nuevas verificaciones (\"ya habia una verificacion en curso\" con un PID <defunct>/Z)."
+  recomendacion: "Tratar un proceso en estado Z/X como no activo: en el guard comprobar /proc/<pid>/stat y recolectar con waitpid(WNOHANG) si es hijo propio; ademas lanzar un hilo demonio proc.wait() tras Popen para no dejar zombies. Cubrir con un test que cree un hijo no recolectado y verifique que el guard lo ignora y recolecta."
+  estado: Abierta
+  fecha: 2026-09-27

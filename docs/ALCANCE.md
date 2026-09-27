@@ -26,8 +26,10 @@ genérico, sin depender del repo del framework.
   (`scripts/ci.sh`), no una auditoría de terceros.
 - **Reproducibilidad bit a bit** de modelos: `seed` no está soportado por
   opencode (`docs/ARQUITECTURA-DETERMINISMO.md`).
-- **IA fiable para decidir**: MDT es experimental (accuracy 0.646); ningún tipo
-  experimental emite decisión autoritativa (P0.20/P1.31).
+- **IA fiable para decidir**: los backends MDT son experimentales y no
+  autoritativos: `llama` (Qwen3.5-4B) mide 0.646 de accuracy y `fast` 0.802 en
+  el set v18 (REQ-027; `docs/TDM-COMPETITIVO.md`); ningún tipo experimental
+  emite decisión autoritativa (P0.20/P1.31).
 - **Cero riesgo de dependencias**: los extras opcionales tienen 5 advisories sin
   parche (chromadb/diskcache); el backend stdlib evita instalarlos.
 

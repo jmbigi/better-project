@@ -15,7 +15,7 @@
 | **Configuración** | 10% | kilo.json/opencode.json consistentes, agentes deterministas, políticas correctas. |
 | **Gestión de Dependencias** | 5% | Deps opcionales documentadas con advisories; stdlib fallback. |
 
-**Peso total: 100%**
+**Peso total: 110 puntos** (los pesos por categoría suman 110; la nota global se normaliza: `puntos obtenidos / 110 * 100`)
 
 ---
 

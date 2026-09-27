@@ -184,21 +184,21 @@ for sec in ('edit', 'read'):
     for pat in ('~/.ssh/*', '*.ssh/*', '~/.aws/*', '*.aws/*', '*.pem', '*id_rsa*', '*id_ed25519*', '*credentials*'):
         assert p[sec].get(pat) == 'deny', (sec, pat)
 "
-check "experimental.policies en kilo.json: deny all + allow kilo, deepseek, openrouter" python3 -c "
+check "experimental.policies en kilo.json: deny all + allow kilo, deepseek, openrouter, ollama" python3 -c "
 import json
 c = json.load(open('kilo.json'))
 policies = c.get('experimental', {}).get('policies', [])
 assert policies[0] == {'effect': 'deny', 'action': 'provider.use', 'resource': '*'}, policies[0]
 allowed = [p['resource'] for p in policies if p['effect'] == 'allow']
-assert set(allowed) == {'kilo', 'deepseek', 'openrouter'}, allowed
+assert set(allowed) == {'kilo', 'deepseek', 'openrouter', 'ollama'}, allowed
 "
-check "experimental.policies en opencode.json: deny all + allow opencode, opencode-go, kilo, deepseek" python3 -c "
+check "experimental.policies en opencode.json: deny all + allow opencode, opencode-go, kilo, deepseek, ollama" python3 -c "
 import json
 c = json.load(open('opencode.json'))
 policies = c.get('experimental', {}).get('policies', [])
 assert policies[0] == {'effect': 'deny', 'action': 'provider.use', 'resource': '*'}, policies[0]
 allowed = [p['resource'] for p in policies if p['effect'] == 'allow']
-assert set(allowed) == {'opencode', 'opencode-go', 'kilo', 'deepseek'}, allowed
+assert set(allowed) == {'opencode', 'opencode-go', 'kilo', 'deepseek', 'ollama'}, allowed
 "
     check "agente determinista: temperature/top_p/steps (sin seed ni maxSteps deprecado)" python3 -c "
 import json

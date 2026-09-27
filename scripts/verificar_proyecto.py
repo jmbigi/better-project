@@ -175,7 +175,7 @@ def _check_kilo_policies() -> bool:
     if policies[0] != {"effect": "deny", "action": "provider.use", "resource": "*"}:
         return False
     allowed = [p["resource"] for p in policies if p["effect"] == "allow"]
-    return set(allowed) == {"kilo", "deepseek", "openrouter"}
+    return set(allowed) == {"kilo", "deepseek", "openrouter", "ollama"}
 
 
 def _check_opencode_policies() -> bool:
@@ -184,7 +184,7 @@ def _check_opencode_policies() -> bool:
     if policies[0] != {"effect": "deny", "action": "provider.use", "resource": "*"}:
         return False
     allowed = [p["resource"] for p in policies if p["effect"] == "allow"]
-    return set(allowed) == {"opencode", "opencode-go", "kilo", "deepseek"}
+    return set(allowed) == {"opencode", "opencode-go", "kilo", "deepseek", "ollama"}
 
 
 def _check_deterministic_agent() -> bool:
@@ -600,8 +600,8 @@ def main():
     check("304 patrones de permisos bash (218 deny, 85 ask, 1 allow)", _check_bash_patterns)
     check("kilo.json y opencode.json tienen los mismos permisos bash", _check_same_permissions)
     check("edit/read bloquean claves y credenciales", _check_edit_read_deny)
-    check("experimental.policies en kilo.json: deny all + allow kilo, deepseek, openrouter", _check_kilo_policies)
-    check("experimental.policies en opencode.json: deny all + allow opencode, opencode-go, kilo, deepseek", _check_opencode_policies)
+    check("experimental.policies en kilo.json: deny all + allow kilo, deepseek, openrouter, ollama", _check_kilo_policies)
+    check("experimental.policies en opencode.json: deny all + allow opencode, opencode-go, kilo, deepseek, ollama", _check_opencode_policies)
     check("agente determinista: temperature/top_p/steps (sin seed ni maxSteps deprecado)", _check_deterministic_agent)
     check("init.sh genera perfiles con steps (sin seed ni maxSteps)", _check_init_sh)
     if not args.lite:

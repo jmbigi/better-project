@@ -72,6 +72,16 @@
   wrapper y un verificador genérico que excluye el propio tooling del escaneo
   de trazabilidad. E2E en proyecto externo temporal: 5 OK / 0 FALLOS.
 
+## Hallazgos de la revisión externa del 2026-09-27
+
+| # | Mejora | Prioridad | Valor (%) | Esfuerzo (h) | Evidencia | Estado |
+|---|--------|-----------|-----------|--------------|-----------|--------|
+| 17 | **Test de comportamiento de `experimental.policies`** (proveedor fuera de la allow-list rechazado en runtime) y re-ejecución local del red-team de los 304 deny (hoy heredado de better-ai) | P1 | 80 | 3-4 | Auditoría externa 2026-09-27 (LSN-051); `PRUEBAS.md` no cubre policies y su red-team es del repo upstream | Pendiente (prototipar aislado P1.21; puede requerir red/cuota) |
+| 18 | **Coherencia ollama**: el texto permitía modelos locales para la matriz de pruebas pero `policies` los bloqueaba | P1 | 90 | 0.5 | Auditoría externa 2026-09-27 (LSN-050): allow `ollama` en `opencode.json`, `kilo.json` e `init.sh`; checks bash/Python del verificador y `CONTRIBUTING.md` actualizados | Hecho (2026-09-27); reverificado en `verificar-proyecto.sh` |
+| 19 | **Aritmética de la rúbrica**: decía "Peso total: 100%" con pesos que suman 110 | P2 | 40 | 0.2 | Auditoría externa 2026-09-27 (LSN-052); normalización explícita en `.docs/rubric-evaluacion.md` | Hecho (2026-09-27) |
+| 20 | **Cifra de accuracy sin backend**: ALCANCE decía 0.646 y README/TDM 0.802 (llama vs fast) | P2 | 40 | 0.2 | Auditoría externa 2026-09-27 (LSN-053); `docs/ALCANCE.md` ahora nombra backend y set | Hecho (2026-09-27) |
+| 21 | **Guard de idempotencia bloqueado por un zombie**: `run_verification` no recolectaba al hijo y `os.kill(pid, 0)` responde también en `<defunct>`; tras la primera verificación el MCP decía "ya había una en curso" con un PID muerto | P1 | 85 | 0.5 | Auditoría externa 2026-09-27 (LSN-054): `ps` mostró el PID 665983 `<defunct>` y el MCP rechazó el relanzamiento; `_pid_activo` + `waitpid(WNOHANG)` + hilo reaper; test `test_verification_running_ignora_zombie_y_lo_recolecta` | Hecho (2026-09-27) |
+
 ## Criterio de priorización
 
 - **P0**: Bloquea entrega / viola regla P0 / rompe CI en plataforma soportada

@@ -21,6 +21,11 @@
         "effect": "allow",
         "action": "provider.use",
         "resource": "openrouter"
+      },
+      {
+        "effect": "allow",
+        "action": "provider.use",
+        "resource": "ollama"
       }
     ]
   },

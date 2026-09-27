@@ -1127,6 +1127,33 @@ class TestMCPServer(unittest.TestCase):
             finally:
                 mcp.VERIFICATION_PID = old_pid
 
+    @unittest.skipUnless(os.path.isdir("/proc"), "requiere /proc (Linux)")
+    def test_verification_running_ignora_zombie_y_lo_recolecta(self):
+        import time
+
+        with tempfile.TemporaryDirectory() as tmp:
+            old_pid = mcp.VERIFICATION_PID
+            mcp.VERIFICATION_PID = Path(tmp) / "verificacion.pid"
+            try:
+                proc = subprocess.Popen(["true"], stdout=subprocess.DEVNULL)
+                estado = ""
+                deadline = time.time() + 5
+                while time.time() < deadline:
+                    try:
+                        stat = Path(f"/proc/{proc.pid}/stat").read_text(encoding="utf-8")
+                    except OSError:
+                        break
+                    estado = stat.split(") ", 1)[1].split()[0]
+                    if estado == "Z":
+                        break
+                    time.sleep(0.02)
+                self.assertEqual(estado, "Z", "el hijo no quedo zombie a tiempo")
+                mcp.VERIFICATION_PID.write_text(str(proc.pid), encoding="utf-8")
+                self.assertIsNone(mcp._verification_running())
+                self.assertFalse(Path(f"/proc/{proc.pid}").exists())
+            finally:
+                mcp.VERIFICATION_PID = old_pid
+
     def test_run_verification_error_de_lanzamiento(self):
         with tempfile.TemporaryDirectory() as tmp:
             old_log, old_pid = mcp.VERIFICATION_LOG, mcp.VERIFICATION_PID

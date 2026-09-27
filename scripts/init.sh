@@ -479,7 +479,8 @@ cat > "$TARGET_ROOT/opencode.json" <<EOF
       { "effect": "allow", "action": "provider.use", "resource": "opencode" },
       { "effect": "allow", "action": "provider.use", "resource": "opencode-go" },
       { "effect": "allow", "action": "provider.use", "resource": "kilo" },
-      { "effect": "allow", "action": "provider.use", "resource": "deepseek" }
+      { "effect": "allow", "action": "provider.use", "resource": "deepseek" },
+      { "effect": "allow", "action": "provider.use", "resource": "ollama" }
     ]
   },
   "mcp": {
