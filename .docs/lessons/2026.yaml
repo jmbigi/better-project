@@ -506,3 +506,11 @@
   recomendacion: "Verificar version, licencia y dependencias en PyPI antes de adoptar una herramienta (P0.2/P0.18), y escribir el primer archivo de un formato nuevo leyendo la gramatica del paquete instalado (grep en el codigo fuente del paquete), nunca desde la memoria; prototipar en /tmp hasta exportar en verde antes de integrar (P1.21)."
   estado: Resuelta
   fecha: 2026-10-01
+- id: LSN-058
+  proyecto: "better-project"
+  fase: "Testing"
+  categoria: "Proceso"
+  problema: "Un REQ marcado Implementado y referenciado solo desde tests/ hace que doc_validator --strict advierta ('Implementado pero no tiene referencias en codigo') y rompe 3 tests de integracion (2026-10-01, REQ-033): doc_validator excluye tests/ del escaneo de referencias (igual que strictdoc_bridge y que la exclusion de demo/ de LSN-003)."
+  recomendacion: "Al cerrar un REQ en la misma entrega: estado Implementado + referencia REQ-XXX en codigo NO-test (script, docstring o comentario de implementacion) + suite verde antes de darlo por cerrado; las referencias en tests no cuentan como trazabilidad de implementacion."
+  estado: Resuelta
+  fecha: 2026-10-01

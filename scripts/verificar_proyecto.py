@@ -2,6 +2,7 @@
 """Verificación de coherencia del proyecto better-project (versión Python cross-platform).
 REQ-010: este verificador está cubierto por TestVerificador en tests/test_ecosistema.py.
 REQ-022: verificador determinista (sin falsos positivos por árbol sucio).
+REQ-033: lectura con Path.read_text (cero descriptores sin cerrar).
 """
 
 import argparse
@@ -83,22 +84,22 @@ def check_strictdoc() -> None:
 
 # == 1. Reglas ==
 def _check_p0_rules() -> bool:
-    return len(re.findall(r"^### P0\.", open(ROOT / "AGENTS.md").read(), re.M)) == 20
+    return len(re.findall(r"^### P0\.", (ROOT / "AGENTS.md").read_text(encoding="utf-8"), re.M)) == 20
 
 
 def _check_p1_rules() -> bool:
-    return len(re.findall(r"^### P1\.", open(ROOT / "AGENTS.md").read(), re.M)) == 37
+    return len(re.findall(r"^### P1\.", (ROOT / "AGENTS.md").read_text(encoding="utf-8"), re.M)) == 37
 
 
 def _check_ids_identical() -> bool:
-    agents_ids = sorted(re.findall(r"^### P[0-2]\.[0-9]+", open(ROOT / "AGENTS.md").read(), re.M))
-    reglas_ids = sorted(re.findall(r"^### P[0-2]\.[0-9]+", open(ROOT / "docs/REGLAS-COMPLETAS.md").read(), re.M))
+    agents_ids = sorted(re.findall(r"^### P[0-2]\.[0-9]+", (ROOT / "AGENTS.md").read_text(encoding="utf-8"), re.M))
+    reglas_ids = sorted(re.findall(r"^### P[0-2]\.[0-9]+", (ROOT / "docs/REGLAS-COMPLETAS.md").read_text(encoding="utf-8"), re.M))
     return agents_ids == reglas_ids
 
 
 def _check_titles_identical() -> bool:
-    agents_titles = re.findall(r"^### P[01].*", open(ROOT / "AGENTS.md").read(), re.M)
-    reglas_titles = re.findall(r"^### P[01].*", open(ROOT / "docs/REGLAS-COMPLETAS.md").read(), re.M)
+    agents_titles = re.findall(r"^### P[01].*", (ROOT / "AGENTS.md").read_text(encoding="utf-8"), re.M)
+    reglas_titles = re.findall(r"^### P[01].*", (ROOT / "docs/REGLAS-COMPLETAS.md").read_text(encoding="utf-8"), re.M)
     return agents_titles == reglas_titles
 
 
@@ -112,7 +113,7 @@ def _check_refs_exist() -> bool:
     }
     rutas = set()
     for f in files:
-        content = open(ROOT / f).read()
+        content = (ROOT / f).read_text(encoding="utf-8")
         for m in re.findall(r"(?:docs/|scripts/|\.opencode/)[A-Za-z0-9_./-]+\.(?:md|sh|py)", content):
             rutas.add(m)
     faltan = [r for r in sorted(rutas) if r not in placeholders and not (ROOT / r).exists()]
@@ -130,74 +131,74 @@ def _check_no_env_in_git() -> bool:
 
 
 def _check_limitaciones() -> bool:
-    return len(re.findall(r"^\| \*\*", open(ROOT / "docs/REGLAS-COMPLETAS.md").read(), re.M)) == 52
+    return len(re.findall(r"^\| \*\*", (ROOT / "docs/REGLAS-COMPLETAS.md").read_text(encoding="utf-8"), re.M)) == 52
 
 
 def _check_readme_errores() -> bool:
-    return len(re.findall(r"^[0-9]+\. \*\*", open(ROOT / "README.md").read(), re.M)) == 50
+    return len(re.findall(r"^[0-9]+\. \*\*", (ROOT / "README.md").read_text(encoding="utf-8"), re.M)) == 50
 
 
 def _check_checklist_ids() -> bool:
-    checklist_ids = set(re.findall(r"P[0-2]\.[0-9]+", open(ROOT / "CHECKLIST.md").read()))
-    agents_ids = set(re.findall(r"P[0-2]\.[0-9]+", open(ROOT / "AGENTS.md").read()))
+    checklist_ids = set(re.findall(r"P[0-2]\.[0-9]+", (ROOT / "CHECKLIST.md").read_text(encoding="utf-8")))
+    agents_ids = set(re.findall(r"P[0-2]\.[0-9]+", (ROOT / "AGENTS.md").read_text(encoding="utf-8")))
     return checklist_ids <= agents_ids
 
 
 def _check_readme_ids() -> bool:
-    readme_ids = set(re.findall(r"P[0-2]\.[0-9]+", open(ROOT / "README.md").read()))
-    agents_ids = set(re.findall(r"P[0-2]\.[0-9]+", open(ROOT / "AGENTS.md").read()))
+    readme_ids = set(re.findall(r"P[0-2]\.[0-9]+", (ROOT / "README.md").read_text(encoding="utf-8")))
+    agents_ids = set(re.findall(r"P[0-2]\.[0-9]+", (ROOT / "AGENTS.md").read_text(encoding="utf-8")))
     return readme_ids <= agents_ids
 
 
 def _check_pruebas_sequential() -> bool:
-    nums = [int(m) for m in re.findall(r"^\| (\d+) \|", open(ROOT / "docs/PRUEBAS.md").read(), re.M)]
+    nums = [int(m) for m in re.findall(r"^\| (\d+) \|", (ROOT / "docs/PRUEBAS.md").read_text(encoding="utf-8"), re.M)]
     return nums == list(range(1, len(nums) + 1))
 
 
 def _check_lecciones_citan_pruebas() -> bool:
-    citadas = set(int(m) for m in re.findall(r"pruebas? (\d+)", open(ROOT / "docs/LECCIONES-APRENDIDAS.md").read()))
-    existentes = set(int(m) for m in re.findall(r"^\| (\d+) \|", open(ROOT / "docs/PRUEBAS.md").read(), re.M))
+    citadas = set(int(m) for m in re.findall(r"pruebas? (\d+)", (ROOT / "docs/LECCIONES-APRENDIDAS.md").read_text(encoding="utf-8")))
+    existentes = set(int(m) for m in re.findall(r"^\| (\d+) \|", (ROOT / "docs/PRUEBAS.md").read_text(encoding="utf-8"), re.M))
     return citadas <= existentes
 
 
 def _check_total_reglas() -> bool:
-    p0 = len(re.findall(r"^### P0\.", open(ROOT / "AGENTS.md").read(), re.M))
-    p1 = len(re.findall(r"^### P1\.", open(ROOT / "AGENTS.md").read(), re.M))
-    p2 = len(re.findall(r"^\s*-\s*P2\.", open(ROOT / "AGENTS.md").read(), re.M))
+    p0 = len(re.findall(r"^### P0\.", (ROOT / "AGENTS.md").read_text(encoding="utf-8"), re.M))
+    p1 = len(re.findall(r"^### P1\.", (ROOT / "AGENTS.md").read_text(encoding="utf-8"), re.M))
+    p2 = len(re.findall(r"^\s*-\s*P2\.", (ROOT / "AGENTS.md").read_text(encoding="utf-8"), re.M))
     return p0 == 20 and p1 == 37 and p2 == 5 and (p0 + p1 + p2) == 62
 
 
 def _check_readme_no_50_reglas() -> bool:
-    txt = open(ROOT / "README.md").read()
+    txt = (ROOT / "README.md").read_text(encoding="utf-8")
     return "50 reglas" not in txt or "61 reglas" in txt
 
 
 def _check_mcp_tools() -> bool:
-    mcp = json.load(open(ROOT / "opencode.json"))["mcp"]
+    mcp = json.loads((ROOT / "opencode.json").read_text(encoding="utf-8"))["mcp"]
     tools = [k for k, v in mcp.items() if v.get("enabled", True)]
     return len(tools) == 4 and set(tools) == {"context7", "gh_grep", "sentry", "better-project"}
 
 
 def _check_pruebas_rondas() -> bool:
-    txt = open(ROOT / "docs/PRUEBAS.md").read()
+    txt = (ROOT / "docs/PRUEBAS.md").read_text(encoding="utf-8")
     rondas = set(int(m) for m in re.findall(r"Ronda (\d+)", txt))
-    return max(rondas) == 38 and len(rondas) == 35
+    return max(rondas) == 39 and len(rondas) == 36
 
 
 # == 2. Config ==
 def _check_bash_patterns() -> bool:
-    b = json.load(open(ROOT / "kilo.json"))["permission"]["bash"]
+    b = json.loads((ROOT / "kilo.json").read_text(encoding="utf-8"))["permission"]["bash"]
     return len(b) == 304 and sum(1 for v in b.values() if v == "deny") == 218 and sum(1 for v in b.values() if v == "ask") == 85 and sum(1 for v in b.values() if v == "allow") == 1
 
 
 def _check_same_permissions() -> bool:
-    a = json.load(open(ROOT / "kilo.json"))["permission"]["bash"]
-    b = json.load(open(ROOT / "opencode.json"))["permission"]["bash"]
+    a = json.loads((ROOT / "kilo.json").read_text(encoding="utf-8"))["permission"]["bash"]
+    b = json.loads((ROOT / "opencode.json").read_text(encoding="utf-8"))["permission"]["bash"]
     return a == b
 
 
 def _check_edit_read_deny() -> bool:
-    p = json.load(open(ROOT / "kilo.json"))["permission"]
+    p = json.loads((ROOT / "kilo.json").read_text(encoding="utf-8"))["permission"]
     for sec in ("edit", "read"):
         for pat in ("~/.ssh/*", "*.ssh/*", "~/.aws/*", "*.aws/*", "*.pem", "*id_rsa*", "*id_ed25519*", "*credentials*"):
             if p[sec].get(pat) != "deny":
@@ -206,7 +207,7 @@ def _check_edit_read_deny() -> bool:
 
 
 def _check_kilo_policies() -> bool:
-    c = json.load(open(ROOT / "kilo.json"))
+    c = json.loads((ROOT / "kilo.json").read_text(encoding="utf-8"))
     policies = c.get("experimental", {}).get("policies", [])
     if policies[0] != {"effect": "deny", "action": "provider.use", "resource": "*"}:
         return False
@@ -215,7 +216,7 @@ def _check_kilo_policies() -> bool:
 
 
 def _check_opencode_policies() -> bool:
-    c = json.load(open(ROOT / "opencode.json"))
+    c = json.loads((ROOT / "opencode.json").read_text(encoding="utf-8"))
     policies = c.get("experimental", {}).get("policies", [])
     if policies[0] != {"effect": "deny", "action": "provider.use", "resource": "*"}:
         return False
@@ -224,7 +225,7 @@ def _check_opencode_policies() -> bool:
 
 
 def _check_deterministic_agent() -> bool:
-    a = json.load(open(ROOT / "opencode.json"))["agent"]
+    a = json.loads((ROOT / "opencode.json").read_text(encoding="utf-8"))["agent"]
     for perfil, temp, pasos in (("build", 0.3, 50), ("plan", 0.1, 30), ("audit", 0.0, 20)):
         cfg = a[perfil]
         if cfg["temperature"] != temp or cfg["top_p"] != 1.0 or cfg["steps"] != pasos:
@@ -235,25 +236,25 @@ def _check_deterministic_agent() -> bool:
 
 
 def _check_init_sh() -> bool:
-    t = open(ROOT / "scripts/init.sh").read()
+    t = (ROOT / "scripts/init.sh").read_text(encoding="utf-8")
     return '"maxSteps"' not in t and '"seed"' not in t and t.count('"steps"') == 3
 
 
 def _check_readme_patterns() -> bool:
-    b = json.load(open(ROOT / "kilo.json"))["permission"]["bash"]
-    r = open(ROOT / "README.md").read()
+    b = json.loads((ROOT / "kilo.json").read_text(encoding="utf-8"))["permission"]["bash"]
+    r = (ROOT / "README.md").read_text(encoding="utf-8")
     total, deny, ask = len(b), sum(1 for v in b.values() if v == "deny"), sum(1 for v in b.values() if v == "ask")
     return f"{total} patrones" in r and f"{deny} `deny`" in r and f"{ask} `ask`" in r and f"{total} patrones bash ({deny} `deny`, {ask} `ask`" in r
 
 
 def _check_env_patterns() -> bool:
-    p = json.load(open(ROOT / "kilo.json"))["permission"]
+    p = json.loads((ROOT / "kilo.json").read_text(encoding="utf-8"))["permission"]
     return (p["edit"].get("*.env") == "deny" and p["edit"].get("*.env.*") == "deny" and p["edit"].get("*.env.example") == "allow" and
             p["read"].get("*.env") == "deny" and p["read"].get("*.env.*") == "deny" and p["read"].get("*.env.example") == "allow")
 
 
 def _check_critical_deny_pairs() -> bool:
-    k = list(json.load(open(ROOT / "kilo.json"))["permission"]["bash"])
+    k = list(json.loads((ROOT / "kilo.json").read_text(encoding="utf-8"))["permission"]["bash"])
     pares = [
         ("rm *", "rm -rf *"), ("rm *", "rm -r *"), ("rm *", "rm -f *"),
         ("git reset *", "git reset --hard*"),
@@ -278,7 +279,7 @@ def _check_critical_deny_pairs() -> bool:
 
 
 def _check_no_ask_overrides_deny() -> bool:
-    cfg = json.load(open(ROOT / "kilo.json"))["permission"]["bash"]
+    cfg = json.loads((ROOT / "kilo.json").read_text(encoding="utf-8"))["permission"]["bash"]
     k = list(cfg)
 
     def matchea(patron: str, comando: str) -> bool:
@@ -337,7 +338,7 @@ def _check_no_personal_data() -> bool:
     pat_home = re.compile(r"/home/[A-Za-z0-9_.-]+/")
     excl = re.compile(r"(deny|patrones|claves SSH|no leas|comitees|dummy|BLOQUEADO|127\.0\.0\.1)")
     for ruta in _source_files():
-        for linea in open(ruta, errors="ignore"):
+        for linea in Path(ruta).read_text(encoding="utf-8", errors="ignore").splitlines():
             if excl.search(linea):
                 continue
             if pat_home.search(linea):
@@ -358,7 +359,7 @@ def _check_no_emails() -> bool:
     excl = re.compile(r"(youremail@example|creativecommons|dummy@example|security@better-project\.local)")
     email_pat = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
     for ruta in _source_files():
-        for linea in open(ruta, errors="ignore"):
+        for linea in Path(ruta).read_text(encoding="utf-8", errors="ignore").splitlines():
             if excl.search(linea):
                 continue
             if email_pat.search(linea):
@@ -369,7 +370,7 @@ def _check_no_emails() -> bool:
 def _check_no_api_keys() -> bool:
     api_pat = re.compile(r"(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)")
     for ruta in _source_files():
-        for linea in open(ruta, errors="ignore"):
+        for linea in Path(ruta).read_text(encoding="utf-8", errors="ignore").splitlines():
             if api_pat.search(linea):
                 return False
     return True
@@ -380,7 +381,7 @@ def _check_no_eval_exec() -> bool:
     for f in sorted(os.listdir(ROOT / "scripts")):
         if not f.endswith(".sh") or f == "verificar-proyecto.sh":
             continue
-        for i, linea in enumerate(open(ROOT / "scripts" / f), 1):
+        for i, linea in enumerate((ROOT / "scripts" / f).read_text(encoding="utf-8").splitlines(), 1):
             if linea.lstrip().startswith("#"):
                 continue
             if re.search(r'":\s*"', linea) or re.search(r'"(eval|exec)\s', linea):
@@ -628,11 +629,11 @@ def main():
         check("conteo total reglas P0+P1+P2 = 62 (20 P0 + 37 P1 + 5 P2)", _check_total_reglas)
         check("README no dice '50 reglas P0/P1/P2' (son 61 reglas, 50 errores)", _check_readme_no_50_reglas)
         check("tools MCP habilitados = 4 (context7, gh_grep, sentry, better-project)", _check_mcp_tools)
-        check("rondas PRUEBAS.md = 35 (coherente en todo el doc)", _check_pruebas_rondas)
+        check("rondas PRUEBAS.md = 36 (coherente en todo el doc)", _check_pruebas_rondas)
 
     print("== 2. Config ==")
-    check("kilo.json es JSON valido", lambda: json.load(open(ROOT / "kilo.json")))
-    check("opencode.json es JSON valido (compatibilidad)", lambda: json.load(open(ROOT / "opencode.json")))
+    check("kilo.json es JSON valido", lambda: json.loads((ROOT / "kilo.json").read_text(encoding="utf-8")))
+    check("opencode.json es JSON valido (compatibilidad)", lambda: json.loads((ROOT / "opencode.json").read_text(encoding="utf-8")))
     check("304 patrones de permisos bash (218 deny, 85 ask, 1 allow)", _check_bash_patterns)
     check("kilo.json y opencode.json tienen los mismos permisos bash", _check_same_permissions)
     check("edit/read bloquean claves y credenciales", _check_edit_read_deny)

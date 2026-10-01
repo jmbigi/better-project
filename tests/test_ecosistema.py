@@ -1153,6 +1153,8 @@ class TestMCPServer(unittest.TestCase):
                 mcp.VERIFICATION_PID.write_text(str(proc.pid), encoding="utf-8")
                 self.assertIsNone(mcp._verification_running())
                 self.assertFalse(Path(f"/proc/{proc.pid}").exists())
+                # REQ-033: recolectar también desde el test (ResourceWarning)
+                proc.wait()
             finally:
                 mcp.VERIFICATION_PID = old_pid
 

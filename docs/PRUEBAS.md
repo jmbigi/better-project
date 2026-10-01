@@ -600,3 +600,25 @@ de dependencias (P0.18) precedió a cualquier uso.
 paquete instalado — nunca de memoria); ADR-011 fija la convivencia `.md`
 (autoridad) + `.sdoc` (requisitos nuevos enriquecidos) y el esquema `SDOC-\d{3}`
 anticolisión con `doc_validator`.
+
+## Ronda 39 — Higiene de recursos: cero ResourceWarning en la suite (REQ-033) (01-10-2026)
+
+La suite terminaba verde pero con 4 `ResourceWarning` por corrida
+(`sys:1:` al apagado): 3 descriptores sin cerrar (`name=4,5,7`) y 1
+subproceso sin recolectar. Investigación con atribución por evidencia
+(tracemalloc, `/proc/self/fd` en `atexit`, bisección por clases).
+
+| # | Prueba | Resultado |
+|---|---|---|
+| 163 | **Atribución del subproceso**: `PYTHONTRACEMALLOC=1` sobre la suite | ✅ `Object allocated at tests/test_ecosistema.py:1140` — el test zombie creaba un `Popen(["true"])` real sin `wait()` (el zombie era el objetivo del test; la fuga, el efecto colateral) |
+| 164 | **Atribución de los 3 descriptores**: listado de `/proc/self/fd` en `atexit` antes del GC | ✅ fd 4 (`wb`), 5 (`rb`), 7 (`rb`) = **tuberías** (`pipe:[...]`), no archivos del disco; bisección por clases descartó las 11 primeras alfabéticas (225 tests limpios) |
+| 165 | **Fix zombie (prototipo P1.21)**: `waitpid(pid, WNOHANG)` externo + `proc.wait()` después | ✅ `proc.wait()` devuelve 0 sin `ChildProcessError`; aplicado en el test (comentario REQ-033) |
+| 166 | **Higiene del verificador**: 41 sitios `open()` sin cerrar → `Path.read_text(encoding="utf-8")` / `json.loads(...)` / `splitlines()` | ✅ Transformación mecánica 1:1 revisada con `git diff`; 0 `open(` restantes; 9 checks afectados re-ejecutados en verde; paridad intacta |
+| 167 | **Efecto colateral detectado por la propia suite**: REQ-033 `Implementado` referenciado solo desde `tests/` → `doc_validator --strict` advertía y 3 tests de integración fallaban | ✅ Lección: `doc_validator` excluye `tests/` del escaneo de referencias; la referencia se añadió al docstring del verificador y los 3 tests volvieron a verde |
+| 168 | **Suite completa tras los fixes**: `python3 -m unittest discover -s tests -q` | ✅ **533 tests OK (skipped=1) y CERO `ResourceWarning`** (antes: 4 por corrida en cada ejecución) |
+| 169 | **Verificación final completa**: `bash scripts/verificar-proyecto.sh` con la ronda documentada | ✅ 53 OK / **1 FALLO esperado**: `arbol de trabajo limpio` (cambios a la espera del commit del programador, P0.7) |
+
+**Hallazgos**: LSN-058 (la trazabilidad de un REQ vive en código NO-test:
+`doc_validator` excluye `tests/` del escaneo de referencias); método de
+atribución de fugas documentado en `docs/LECCIONES-APRENDIDAS.md` (tracemalloc
++ `/proc/self/fd` en `atexit` + bisección por clases).

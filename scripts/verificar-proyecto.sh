@@ -149,12 +149,12 @@ tools = [k for k, v in mcp.items() if v.get('enabled', True)]
 assert len(tools) == 4, f'tools MCP habilitados = {len(tools)}: {tools}'
 assert set(tools) == {'context7', 'gh_grep', 'sentry', 'better-project'}, tools
 "
-    check "rondas PRUEBAS.md = 35 (coherente en todo el doc)" python3 -c "
+    check "rondas PRUEBAS.md = 36 (coherente en todo el doc)" python3 -c "
 import re
 txt = open('docs/PRUEBAS.md').read()
 rondas = set(int(m) for m in re.findall(r'Ronda (\\d+)', txt))
-assert max(rondas) == 38, f'rondas max = {max(rondas)}, esperado 38'
-assert len(rondas) == 35, f'rondas únicas = {len(rondas)}, esperado 35 (faltan 32, 33, 34)'
+assert max(rondas) == 39, f'rondas max = {max(rondas)}, esperado 39'
+assert len(rondas) == 36, f'rondas únicas = {len(rondas)}, esperado 36 (faltan 32, 33, 34)'
 "
 fi
 otel_end_span "verificar.reglas"
