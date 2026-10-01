@@ -546,3 +546,57 @@ y el verificador omite el chequeo de mutación en la reentrada.
   Todas las pruebas de este informe se ejecutaron con `opencode-go/deepseek-v4-flash`.
 - Entornos de **producción** reales (prohibido por P0.4; solo se prueban entornos
   temporales aislados).
+
+## Ronda 37 — Sonda de guardarraíles en runtime, verificador sin ruff e instrumentación de tiempos (01-10-2026)
+
+Ronda de calidad autorizada por el programador (planilla A+B+C: REQ-029,
+REQ-030, REQ-031) sobre un clon fresco en equipo Linux **limpio** (sin ruff ni
+syft; opencode **1.18.32**; Python 3.12.3). Las sondas de runtime se ejecutaron
+en directorios temporales aislados (P1.21); el repo y el sistema quedaron
+intactos. Modelos de las sondas: `deepseek/deepseek-flash` (sondas provider y
+red-team bash, 4 llamadas mínimas); `opencode-go/deepseek-v4-flash` inutilizable
+("An active OpenCode Go subscription is required").
+
+| # | Prueba | Resultado |
+|---|---|---|
+| 142 | **Línea base en máquina limpia**: suite `python3 -m unittest discover -s tests -q` y `bash scripts/verificar-proyecto.sh` | ❌ 509 tests con **1 fallo** (`FileNotFoundError: 'ruff'`); verificador 50 OK / 3 FALLOS (suite aislada + 2 hooks no instalados en el clon) |
+| 143 | **Causa raíz (REQ-029)**: `check_ruff()` en `verificar_proyecto.py:42` ejecutaba `run_cmd(["ruff", "--version"])` fuera del wrapper `check()` | ✅ Confirmada: sin ruff, excepción no capturada → exit 1; la versión bash sí omite (`command -v`, `.sh:72-78`). El `[SKIP]` existía pero era inalcanzable |
+| 144 | **Fix + regresión (REQ-029)**: `shutil.which("ruff")` + 2 tests que simulan ausencia/presencia de ruff con mocks | ✅ `test_check_ruff_sin_ruff_emite_skip_sin_excepcion` y `test_check_ruff_con_ruff_ejecuta_lint` verdes; paridad bash/Python intacta |
+| 145 | **Instrumentación de tiempos (REQ-030)**: `BETTER_TIMING=1` opt-in; salida por defecto byte-idéntica | ✅ 2 tests verdes. Línea base medida (este equipo, 55 checks): suite aislada **196583 ms**, mutación batch **130707 ms**, HEAD remoto 2452 ms, sintaxis python 1400 ms, auto-auditoría 589 ms; **TOTAL 332835 ms** (98 % = suite + mutación) |
+| 146 | **Sonda `policies` (proyecto)**: config temporal `deny provider.use *` + allow solo `opencode`, `XDG_CONFIG_HOME` aislado; `opencode run -m deepseek/deepseek-flash "di hola"` | ⚠️ **HUECO**: el proveedor denegado respondió `¡Hola!` — `experimental.policies` NO se cumple en runtime (proyecto) |
+| 147 | **Sonda `policies` (global)**: `XDG_CONFIG_HOME` con config global `deny provider.use *` sin allows; proyecto sin config | ⚠️ **HUECO**: respondió `hola` igualmente — tampoco se cumple a nivel global |
+| 148 | **Control de schema**: ¿existe `experimental.policies` en `https://opencode.ai/config.json` vigente? | ✅ Existe (`ConfigV2.Experimental.Policy`, acción `provider.use`): el hueco es de **enforcement**, no de config obsoleta. Controles positivos: con allow, el modelo corre idéntico; modelo inexistente da `ProviderModelNotFoundError` (error distinto) |
+| 149 | **Red-team bash `deny`**: con la config del repo (304 patrones) copiada a temporal, sesión real pidiendo `rm -rf` de un directorio temporal creado al efecto | ✅ **BLOQUEADO**: `rm -rf ... failed — "rule which prevents you from using this specific tool call"` citando `{"pattern":"rm -rf *","action":"deny"}`; el directorio **sobrevivió** (verificado con `ls`). Los 218 `deny` SÍ se cumplen en runtime |
+| 150 | **Sonda reproducible**: `scripts/probar_policies.py {provider|bash|all}` (stdlib; ejecución manual por coste de tokens, como `test_determinism.py`) + 7 tests con runner mockeado | ✅ `TestProbarPolicies` 7/7 verdes: detecta hueco, bloqueo, borrado e inconcluso sin llamadas reales |
+| 151 | **Suite completa tras la ronda**: `python3 -m unittest discover -s tests -q` | ✅ **520 tests OK** (skipped=1; antes 509 con 1 fallo: +11 tests nuevos, 0 fallos) |
+| 152 | **Verificación final completa**: `bash scripts/verificar-proyecto.sh` con esta ronda ya documentada | ✅ 52 OK / **1 FALLO esperado**: `arbol de trabajo limpio` (los cambios de la ronda esperan el commit del programador, P0.7); SBOM [SKIP] (syft no instalado; REQ-020) |
+
+**Hallazgos**: LSN-055 (sondas de disponibilidad sin excepción + tests que
+simulan ausencia), LSN-056 (`experimental.policies` ilusorio en 1.18.32 →
+MEJORAS #22; la restricción de proveedores se apoya en credenciales mínimas y
+regla de texto hasta que opencode lo haga cumplir).
+
+## Ronda 38 — Puente opcional StrictDoc (REQ-032, ADR-011) (01-10-2026)
+
+Orden del programador: complementar el proyecto con StrictDoc (requisitos en
+texto plano, Mermaid, pseudocódigo, colaboración asíncrona vía Git). Todo el
+prototipo se ejecutó aislado en `/tmp` (P1.21) ANTES de integrar; la auditoría
+de dependencias (P0.18) precedió a cualquier uso.
+
+| # | Prueba | Resultado |
+|---|---|---|
+| 153 | **Verificación de datos (P0.2)**: versión, licencia y deps en PyPI (`pypi.org/pypi/strictdoc/json`) | ⚠️ La versión citada en la petición ("7.13") **no existe**: máximo real **0.30.1**; Apache-2.0 ✅; Python >=3.10 ✅; ~20 deps directas pesadas (fastapi, pandas, plotly…) |
+| 154 | **Auditoría P0.18 antes de usar**: instalación aislada `pip --target` + `pip-audit 2.10.1 --path` (OSV) | ✅ **0 vulnerabilidades conocidas**; 444 MB / ~100 paquetes transitivos (dato clave para la decisión de capa aislada, ADR-011) |
+| 155 | **Gramática real desde el paquete** (no desde memoria): 3 errores de sintaxis corregidos con evidencia | ✅ `MARKUP:` va dentro de `OPTIONS:`; los nodos `[TEXT]` usan `STATEMENT: >>> … <<<`; `[FREETEXT]` no existe en 0.30.x (grep en `strictdoc/backend/sdoc/grammar/grammar.py`) |
+| 156 | **Prototipo `/tmp/sdoc-demo`**: 2 requisitos + diagrama Mermaid, `strictdoc export` | ✅ 4 vistas HTML en ~1.6 s (17 MB estáticos); Mermaid renderizado como `<pre class="mermaid">` (motor local: el texto no sale del equipo) |
+| 157 | **Bridge stdlib** `scripts/strictdoc_bridge.py` + batería de casos límite | ✅ `tests/test_strictdoc_bridge.py` **13/13**: UID duplicado, sin UID, sin TITLE/STATEMENT, referencia a UID inexistente, `>>>` sin cerrar, no colisión `REQ-\d{3}`, exclusión de `tests/`, `--root` externo, `--json`, exit 1, stdlib puro (AST) |
+| 158 | **Check en verificador (paridad bash/Python)**: `trazabilidad StrictDoc (.sdoc)` con `[SKIP]` si no hay `.sdoc` | ✅ `[OK]` en ambos; bridge sobre el repo: `1 .sdoc, 2 UIDs, 2 referencias en código, Resultado: OK` |
+| 159 | **Dogfooding**: `.docs/requirements/puente-strictdoc.sdoc` (SDOC-001/002 + Mermaid) exportado con strictdoc real | ✅ Export 1.66 s; `<pre class="mermaid">` presente; UIDs SDOC-001/002 en el HTML |
+| 160 | **Higiene**: `SyntaxWarning` por `\d` en docstring detectado al ejecutar el bridge | ✅ Corregido (docstring crudo `r"""`); `python3 -W error::SyntaxWarning -m py_compile` limpio |
+| 161 | **Suite completa tras la integración**: `python3 -m unittest discover -s tests -q` | ✅ **533 tests OK** (skipped=1; 520 de la ronda 37 + 13 del bridge) |
+| 162 | **Verificación final completa**: `bash scripts/verificar-proyecto.sh` con la integración documentada | ✅ 53 OK / **1 FALLO esperado**: `arbol de trabajo limpio` (cambios a la espera del commit del programador, P0.7); el check nuevo `trazabilidad StrictDoc (.sdoc)` en [OK] |
+
+**Hallazgos**: LSN-057 (versión y gramática se verifican en la fuente — PyPI y
+paquete instalado — nunca de memoria); ADR-011 fija la convivencia `.md`
+(autoridad) + `.sdoc` (requisitos nuevos enriquecidos) y el esquema `SDOC-\d{3}`
+anticolisión con `doc_validator`.

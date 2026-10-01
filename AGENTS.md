@@ -296,6 +296,10 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
 - `python scripts/doc_validator.py [--strict] [--root <carpeta>]` — valida
   trazabilidad REQ (referencias REQ-XXX en el código vs archivos en
   `.docs/requirements/`); `--root demo` valida un proyecto externo.
+- `python scripts/strictdoc_bridge.py [--root <carpeta>] [--json]` — valida los
+  `.sdoc` de `.docs/requirements/` (estructura, UIDs `SDOC-XXX` únicos y
+  referencias en código) sin instalar strictdoc; la export HTML es capa
+  opcional aislada (`requirements-strictdoc.txt`, REQ-032, ADR-011).
 - `python scripts/index_knowledge.py` — indexa `.docs/knowledge/` en
   `.docs/.storage/` (ChromaDB si está instalado; si no, índice JSON puro).
 - `python scripts/lessons_extractor.py [--check|--json]` — valida y exporta

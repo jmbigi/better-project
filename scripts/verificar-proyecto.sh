@@ -149,12 +149,12 @@ tools = [k for k, v in mcp.items() if v.get('enabled', True)]
 assert len(tools) == 4, f'tools MCP habilitados = {len(tools)}: {tools}'
 assert set(tools) == {'context7', 'gh_grep', 'sentry', 'better-project'}, tools
 "
-    check "rondas PRUEBAS.md = 33 (coherente en todo el doc)" python3 -c "
+    check "rondas PRUEBAS.md = 35 (coherente en todo el doc)" python3 -c "
 import re
 txt = open('docs/PRUEBAS.md').read()
 rondas = set(int(m) for m in re.findall(r'Ronda (\\d+)', txt))
-assert max(rondas) == 36, f'rondas max = {max(rondas)}, esperado 36'
-assert len(rondas) == 33, f'rondas únicas = {len(rondas)}, esperado 33 (faltan 32, 33, 34)'
+assert max(rondas) == 38, f'rondas max = {max(rondas)}, esperado 38'
+assert len(rondas) == 35, f'rondas únicas = {len(rondas)}, esperado 35 (faltan 32, 33, 34)'
 "
 fi
 otel_end_span "verificar.reglas"
@@ -380,6 +380,12 @@ else
         python3 scripts/mutation_check.py --batch --strict --umbral 0.85
 fi
 check "trazabilidad REQ valida (doc_validator --strict)" bash -c "python3 scripts/doc_validator.py --strict"
+# REQ-032: trazabilidad de documentos StrictDoc (bridge stdlib); SKIP si no hay .sdoc
+if find .docs/requirements -name '*.sdoc' 2>/dev/null | grep -q .; then
+    check "trazabilidad StrictDoc (.sdoc)" python3 scripts/strictdoc_bridge.py
+else
+    echo "  [SKIP] trazabilidad StrictDoc (sin .sdoc; ver REQ-032)"
+fi
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py --json && python3 scripts/index_knowledge.py --check"
 # P0.20: validacion de calidad de retrieval (recall@k, MRR)

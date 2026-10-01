@@ -76,7 +76,7 @@
 
 | # | Mejora | Prioridad | Valor (%) | Esfuerzo (h) | Evidencia | Estado |
 |---|--------|-----------|-----------|--------------|-----------|--------|
-| 17 | **Test de comportamiento de `experimental.policies`** (proveedor fuera de la allow-list rechazado en runtime) y re-ejecución local del red-team de los 304 deny (hoy heredado de better-ai) | P1 | 80 | 3-4 | Auditoría externa 2026-09-27 (LSN-051); `PRUEBAS.md` no cubre policies y su red-team es del repo upstream | Pendiente (prototipar aislado P1.21; puede requerir red/cuota) |
+| 17 | **Test de comportamiento de `experimental.policies`** (proveedor fuera de la allow-list rechazado en runtime) y re-ejecución local del red-team de los 304 deny (hoy heredado de better-ai) | P1 | 80 | 3-4 | Auditoría externa 2026-09-27 (LSN-051); `PRUEBAS.md` no cubre policies y su red-team es del repo upstream | Hecho (2026-10-01): red-team bash `deny` verificado en runtime (`rm -rf` bloqueado, prueba 149) y sonda reproducible `scripts/probar_policies.py` (REQ-031); la sonda de `policies` destapó el hueco #22 (LSN-056) |
 | 18 | **Coherencia ollama**: el texto permitía modelos locales para la matriz de pruebas pero `policies` los bloqueaba | P1 | 90 | 0.5 | Auditoría externa 2026-09-27 (LSN-050): allow `ollama` en `opencode.json`, `kilo.json` e `init.sh`; checks bash/Python del verificador y `CONTRIBUTING.md` actualizados | Hecho (2026-09-27); reverificado en `verificar-proyecto.sh` |
 | 19 | **Aritmética de la rúbrica**: decía "Peso total: 100%" con pesos que suman 110 | P2 | 40 | 0.2 | Auditoría externa 2026-09-27 (LSN-052); normalización explícita en `.docs/rubric-evaluacion.md` | Hecho (2026-09-27) |
 | 20 | **Cifra de accuracy sin backend**: ALCANCE decía 0.646 y README/TDM 0.802 (llama vs fast) | P2 | 40 | 0.2 | Auditoría externa 2026-09-27 (LSN-053); `docs/ALCANCE.md` ahora nombra backend y set | Hecho (2026-09-27) |
@@ -88,3 +88,24 @@
 - **P1**: Deuda técnica que impide verificación completa / compliance parcial
 - **P2**: Mejora DX / prevención / documentación
 - **P3**: Arquitectura / métricas avanzadas / nice-to-have
+
+## Hallazgos de la revisión del 2026-10-01
+
+Ronda ejecutada en equipo Linux limpio (sin ruff ni syft instalados; opencode
+1.18.32). Evidencia completa: `docs/PRUEBAS.md` ronda 37 (pruebas 142-152).
+
+| # | Mejora | Prioridad | Valor (%) | Esfuerzo (h) | Evidencia | Estado |
+|---|--------|-----------|-----------|--------------|-----------|--------|
+| 22 | ⚠️ **`experimental.policies` no se cumple en runtime (opencode 1.18.32)**: con `deny provider.use *` (aislado a nivel proyecto Y a nivel global) el proveedor denegado ejecuta igualmente; el schema oficial sigue vigente, así que el hueco es de enforcement, no de config | P1 | 90 | 0.5 por reintento | Pruebas 146-148, LSN-056 | Ticket: mitigación efectiva hoy = credenciales mínimas + regla de texto; re-probar con `scripts/probar_policies.py provider` tras cada actualización de opencode |
+
+Cerrados en la misma ronda (con REQ propio y tests de regresión):
+
+- **REQ-029**: el verificador Python abortaba entero en máquina sin ruff
+  (`FileNotFoundError` fuera del wrapper `check()`); fix `shutil.which` + 2
+  tests que simulan ausencia/presencia (pruebas 142-144, LSN-055).
+- **REQ-030**: instrumentación opt-in de tiempos por check (`BETTER_TIMING=1`)
+  con salida por defecto byte-idéntica; línea base medida registrada en la
+  prueba 145.
+- **REQ-031**: `scripts/probar_policies.py` (sonda manual runtime, 7 tests
+  deterministas) + red-team de `permission.bash` en runtime: **los 218 `deny`
+  sí se cumplen** (`rm -rf` bloqueado por regla, temporal intacto, prueba 149).

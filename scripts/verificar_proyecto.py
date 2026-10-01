@@ -12,6 +12,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,19 +20,43 @@ ROOT = Path(__file__).resolve().parent.parent
 PASS = 0
 FAIL = 0
 
+# REQ-030: instrumentación opt-in de tiempos por check (BETTER_TIMING=1).
+# Por defecto la salida es byte-idéntica a la anterior (paridad bash/Python).
+TIMING = os.environ.get("BETTER_TIMING") == "1"
+_TIEMPOS: list[tuple[str, float]] = []
+
+
+def _sufijo_timing(t0: float) -> str:
+    if not TIMING:
+        return ""
+    return f" ({(time.perf_counter() - t0) * 1000:.0f} ms)"
+
+
+def print_timing_summary() -> None:
+    if not TIMING or not _TIEMPOS:
+        return
+    print("== Tiempos por check (BETTER_TIMING=1) ==")
+    for desc, seg in sorted(_TIEMPOS, key=lambda t: t[1], reverse=True)[:5]:
+        print(f"  {seg * 1000:9.0f} ms  {desc}")
+    total = sum(seg for _, seg in _TIEMPOS)
+    print(f"  TOTAL: {total * 1000:.0f} ms en {len(_TIEMPOS)} checks")
+
 
 def check(desc: str, fn) -> None:
     global PASS, FAIL
+    t0 = time.perf_counter()
     try:
         if fn():
-            print(f"  [OK] {desc}")
+            print(f"  [OK] {desc}{_sufijo_timing(t0)}")
             PASS += 1
         else:
-            print(f"  [FALLO] {desc}")
+            print(f"  [FALLO] {desc}{_sufijo_timing(t0)}")
             FAIL += 1
     except Exception as e:
-        print(f"  [FALLO] {desc}: {e}")
+        print(f"  [FALLO] {desc}: {e}{_sufijo_timing(t0)}")
         FAIL += 1
+    if TIMING:
+        _TIEMPOS.append((desc, time.perf_counter() - t0))
 
 
 def run_cmd(cmd: list[str], cwd: Path = ROOT) -> subprocess.CompletedProcess:
@@ -39,10 +64,21 @@ def run_cmd(cmd: list[str], cwd: Path = ROOT) -> subprocess.CompletedProcess:
 
 
 def check_ruff() -> None:
-    if run_cmd(["ruff", "--version"]).returncode == 0:
+    # REQ-029: disponibilidad sin excepción (shutil.which), paridad con el
+    # verificador bash (`command -v ruff`): sin ruff se omite con [SKIP].
+    if shutil.which("ruff") is not None:
         check("lint ruff (ruff.toml)", lambda: run_cmd(["ruff", "check", "scripts", "tests"]).returncode == 0)
     else:
         print("  [SKIP] lint ruff (no instalado; ver docs/HERRAMIENTAS-Y-FUENTES.md)")
+
+
+def check_strictdoc() -> None:
+    # REQ-032: trazabilidad de documentos StrictDoc (bridge stdlib); [SKIP]
+    # si no hay .sdoc (paridad con el verificador bash, `find ... -name '*.sdoc'`).
+    if any((ROOT / ".docs" / "requirements").rglob("*.sdoc")):
+        check("trazabilidad StrictDoc (.sdoc)", lambda: run_cmd([sys.executable, "scripts/strictdoc_bridge.py"]).returncode == 0)
+    else:
+        print("  [SKIP] trazabilidad StrictDoc (sin .sdoc; ver REQ-032)")
 
 
 # == 1. Reglas ==
@@ -145,7 +181,7 @@ def _check_mcp_tools() -> bool:
 def _check_pruebas_rondas() -> bool:
     txt = open(ROOT / "docs/PRUEBAS.md").read()
     rondas = set(int(m) for m in re.findall(r"Ronda (\d+)", txt))
-    return max(rondas) == 36 and len(rondas) == 33
+    return max(rondas) == 38 and len(rondas) == 35
 
 
 # == 2. Config ==
@@ -592,7 +628,7 @@ def main():
         check("conteo total reglas P0+P1+P2 = 62 (20 P0 + 37 P1 + 5 P2)", _check_total_reglas)
         check("README no dice '50 reglas P0/P1/P2' (son 61 reglas, 50 errores)", _check_readme_no_50_reglas)
         check("tools MCP habilitados = 4 (context7, gh_grep, sentry, better-project)", _check_mcp_tools)
-        check("rondas PRUEBAS.md = 33 (coherente en todo el doc)", _check_pruebas_rondas)
+        check("rondas PRUEBAS.md = 35 (coherente en todo el doc)", _check_pruebas_rondas)
 
     print("== 2. Config ==")
     check("kilo.json es JSON valido", lambda: json.load(open(ROOT / "kilo.json")))
@@ -625,6 +661,7 @@ def main():
     else:
         check("mutacion rapida batch critico (umbral 0.85)", _run_mutation_check)
     check("trazabilidad REQ valida (doc_validator --strict)", _run_doc_validator_strict)
+    check_strictdoc()
     check("lecciones validas (lessons_extractor --check)", _run_lessons_check)
     check("indice de conocimiento generable", _check_knowledge_index)
     check("retrieval quality recall@10 >= 0.7", _check_retrieval_quality)
@@ -653,6 +690,7 @@ def main():
 
     print()
     print(f"Resultado: {PASS} OK, {FAIL} FALLOS")
+    print_timing_summary()
     if FAIL > 0:
         sys.exit(1)
 

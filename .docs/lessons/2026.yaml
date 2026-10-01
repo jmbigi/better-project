@@ -482,3 +482,27 @@
   recomendacion: "Tratar un proceso en estado Z/X como no activo: en el guard comprobar /proc/<pid>/stat y recolectar con waitpid(WNOHANG) si es hijo propio; ademas lanzar un hilo demonio proc.wait() tras Popen para no dejar zombies. Cubrir con un test que cree un hijo no recolectado y verifique que el guard lo ignora y recolecta."
   estado: Abierta
   fecha: 2026-09-27
+- id: LSN-055
+  proyecto: "better-project"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "En una maquina limpia (sin ruff), el verificador Python abortaba entero con FileNotFoundError: check_ruff() llamaba run_cmd(['ruff', ...]) fuera del wrapper check() que captura excepciones. La version bash si omitia el lint (command -v), asi que la paridad bash/Python solo fallaba donde faltaba la dependencia opcional: justo el entorno que el SKIP debia soportar (prueba 142-144, REQ-029)."
+  recomendacion: "Toda sonda de disponibilidad de una herramienta opcional debe ser incapaz de lanzar excepcion (shutil.which en vez de ejecutarla) y tener un test que simule su ausencia con mocks, no depender de que la maquina de desarrollo la tenga instalada o no."
+  estado: Resuelta
+  fecha: 2026-10-01
+- id: LSN-056
+  proyecto: "better-project"
+  fase: "Testing"
+  categoria: "Seguridad"
+  problema: "La sonda de runtime REQ-031 (2026-10-01, opencode 1.18.32) evidencio que experimental.policies NO impide usar un proveedor denegado: con deny provider.use * (aislado a nivel proyecto y tambien a nivel global) deepseek/deepseek-flash respondio igualmente (pruebas 146-148). El mismo red-team confirmo que permission.bash SI se cumple: rm -rf sobre un temporal fue bloqueado por la regla deny y el directorio sobrevivio (prueba 149)."
+  recomendacion: "No fiar la seguridad a un guardarrail solo verificado estaticamente: cada control critico necesita su sonda de comportamiento en runtime (scripts/probar_policies.py, ejecucion manual por coste de tokens). Mientras opencode no haga cumplir policies, la restriccion de proveedores se apoya en credenciales minimas y en la regla de texto; re-probar tras cada actualizacion de opencode."
+  estado: Abierta
+  fecha: 2026-10-01
+- id: LSN-057
+  proyecto: "better-project"
+  fase: "Implementacion"
+  categoria: "Proceso"
+  problema: "Al integrar StrictDoc (2026-10-01), la peticion citaba la version '7.13' (inexistente: maximo en PyPI 0.30.1) y la gramatica .sdoc escrita de memoria fallo 3 veces (MARKUP va dentro de OPTIONS:, los nodos [TEXT] usan STATEMENT: >>> ... <<< como campo de contenido, y [FREETEXT] no existe en 0.30.x)."
+  recomendacion: "Verificar version, licencia y dependencias en PyPI antes de adoptar una herramienta (P0.2/P0.18), y escribir el primer archivo de un formato nuevo leyendo la gramatica del paquete instalado (grep en el codigo fuente del paquete), nunca desde la memoria; prototipar en /tmp hasta exportar en verde antes de integrar (P1.21)."
+  estado: Resuelta
+  fecha: 2026-10-01

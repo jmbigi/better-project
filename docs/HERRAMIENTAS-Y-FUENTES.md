@@ -26,6 +26,7 @@
 | **Hypothesis** | Property-based testing: genera casos límite que no se te ocurren | por verificar | Alto: endurece P1.1/P1.21 |
 | **Giskard** (v3) | Evals y red teaming de agentes LLM; calidad RAG; alineado a OWASP LLM | Apache-2.0 | Alto si se prueban agentes; pesado (Python 3.12+) |
 | **OpenSSF Scorecard** | Métricas de salud de seguridad de un repositorio | Apache-2.0 | Medio: requiere token y red; auditoría puntual |
+| **StrictDoc** (0.30.1) | Requisitos en texto plano con UIDs, diagramas Mermaid/PlantUML renderizados en local, export HTML estático | Apache-2.0 | Alto como capa opcional: puente Pilar 1 (REQ-032, ADR-011); pesada (~444 MB, ~100 paquetes) → aislada; pip-audit 0 vulns (01-10-2026) |
 | **SLSA** | Niveles de integridad y procedencia de artefactos | Community Specification | Medio: guía para releases firmados (hoy no hay releases) |
 
 ## 3. Herramientas candidatas (licencia/versión por verificar antes de adoptar)
@@ -72,6 +73,7 @@
 | 5 | Re-escaneo de dependencias (`auto_audit vulns` con pip-audit/osv-scanner) | Implementado (2026-09-19) |
 | 6 | Lint de codigo `ruff` (config `ruff.toml`, E/F/W sin E501); opcional, se ejecuta en el verificador si esta instalado | Implementado (2026-09-20) |
 | 7 | Cadena de suministro (REQ-020): extras aislados, `requirements-optional.lock` con hashes, y `scripts/audit_advisories.py` (severidad CVSS via OSV) | Implementado (2026-09-20) |
+| 8 | Puente StrictDoc (REQ-032, ADR-011): `scripts/strictdoc_bridge.py` stdlib, `.docs/requirements/puente-strictdoc.sdoc` (dogfood SDOC-001/002), `requirements-strictdoc.txt` aislado, check en ambos verificadores | Implementado (2026-10-01) |
 
 **Hallazgo del re-escaneo (2026-09-20)**: `auto_audit vulns` detectó 5
 advisories sin parche: 4 en chromadb 1.5.9 y 1 en diskcache 5.6.3 (transitiva).

@@ -147,7 +147,14 @@ implementar, fundamentar en conocimiento, revisar lecciones antes de
 depurar). `opencode.json` lanza `scripts/mcp_server.py` como servidor MCP
 local con las herramientas `search_knowledge`, `read_requirement`,
 `validate_requirements` y `create_lesson`. El guardarrailes de `opencode.json`
-hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85 `ask`, 1 `allow`)**, bloqueo de lectura/edicion de claves y credenciales, y proveedores de modelo restringidos.
+hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85 `ask`, 1 `allow`)**, bloqueo de lectura/edicion de claves y credenciales, y proveedores de modelo restringidos vía `experimental.policies`.
+
+> ⚠️ Matiz verificado (sonda REQ-031, 2026-10-01): los 218 `deny` de bash SÍ se
+> cumplen en runtime (`rm -rf` bloqueado por regla, prueba 149), pero
+> `experimental.policies` NO impide usar un proveedor denegado en opencode
+> 1.18.32 (pruebas 146-148). La restricción de proveedores se apoya hoy en las
+> credenciales mínimas y en la regla de texto; re-probar con
+> `scripts/probar_policies.py provider` tras cada actualización de opencode.
 
 ## Estructura
 
@@ -286,6 +293,16 @@ Sin dependencias, el ecosistema funciona con stdlib (indice JSON TF-IDF). Los
 extras estan aislados: `requirements-vector.txt` (busqueda vectorial, REQ-002) y
 `requirements-tydm.txt` (motor MDT, REQ-011); `requirements-optional.txt` los
 incluye. El contrato reproducible es `requirements-optional.lock` (117 paquetes
+
+### Capa StrictDoc (REQ-032, opcional y aislada)
+
+Los documentos `.sdoc` de `.docs/requirements/` (requisitos enriquecidos con
+diagramas Mermaid) se validan con `scripts/strictdoc_bridge.py` **sin instalar
+nada** (stdlib; UIDs `SDOC-XXX`, sin colision con `REQ-XXX`, ADR-011). Solo para
+exportar HTML hace falta la capa pesada (`requirements-strictdoc.txt`,
+strictdoc==0.30.1, ~444 MB): instalacion aislada (venv o `pip --target`, P0.5)
+tras auditoria P0.18 documentada (pip-audit 0 vulns, 01-10-2026; PRUEBAS ronda
+38). El Markdown `REQ-XXX.md` sigue siendo la autoridad de trazabilidad.
 con hashes transitivos, generado con `uv pip compile --generate-hashes`).
 
 ```bash

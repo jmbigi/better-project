@@ -47,7 +47,9 @@ import lessons_extractor as le  # noqa: E402
 import mcp_server as mcp  # noqa: E402
 import mutation_check as mc  # noqa: E402
 import portable_verifier as pv  # noqa: E402
+import probar_policies as pp  # noqa: E402
 import tui  # noqa: E402
+import verificar_proyecto as vpy  # noqa: E402
 
 REQ_BODY = (
     "---\nid: {id}\ntitulo: {titulo}\nestado: {estado}\nprioridad: {prioridad}\n"
@@ -1727,6 +1729,64 @@ class TestIntegracionHook(unittest.TestCase):
             os.environ.pop("BETTER_MUTATION_ACTIVE", None)
 
 
+class TestProbarPolicies(unittest.TestCase):
+    """REQ-031: la sonda de guardarraíles en runtime se prueba con el runner
+    mockeado (sin llamadas reales a opencode ni a modelos, P0.19)."""
+
+    def _silencio(self):
+        return mock.patch("sys.stdout", io.StringIO())
+
+    def test_config_denegando_todo_menos_opencode(self):
+        cfg = pp.config_denegando_todo_menos_opencode()
+        pol = cfg["experimental"]["policies"]
+        self.assertEqual(pol[0], {"effect": "deny", "action": "provider.use", "resource": "*"})
+        self.assertEqual(pol[1]["resource"], "opencode")
+        self.assertEqual(cfg["permission"]["bash"], {"*": "deny"})
+
+    def test_proveedor_ejecuto_detecta_respuesta(self):
+        self.assertTrue(pp.proveedor_ejecuto("> build · deepseek-flash\n¡Hola!"))
+        self.assertFalse(pp.proveedor_ejecuto("> build · x\nError: denied"))
+        self.assertFalse(pp.proveedor_ejecuto("Error: ProviderModelNotFoundError"))
+
+    def test_sonda_provider_detecta_hueco(self):
+        # el modelo responde pese al deny → la sonda debe reportar hueco (1)
+        def runner_ejecuta(cwd, modelo, prompt, xdg, timeout=180):
+            return subprocess.CompletedProcess([], 0, "> build · deepseek-flash\n¡Hola!", "")
+
+        with self._silencio():
+            self.assertEqual(pp.sonda_provider_denegado("deepseek/deepseek-flash", runner=runner_ejecuta), 1)
+
+    def test_sonda_provider_bloqueo_es_ok(self):
+        def runner_bloqueado(cwd, modelo, prompt, xdg, timeout=180):
+            return subprocess.CompletedProcess([], 1, "", "Error: provider denied by policy")
+
+        with self._silencio():
+            self.assertEqual(pp.sonda_provider_denegado("deepseek/deepseek-flash", runner=runner_bloqueado), 0)
+
+    def test_sonda_bash_target_sobrevive_con_deny_es_ok(self):
+        def runner_bloqueado(cwd, modelo, prompt, xdg, timeout=180):
+            return subprocess.CompletedProcess(
+                [], 0, '> build · m\nrm -rf failed {"permission":"bash","pattern":"rm -rf *","action":"deny"}', "")
+
+        with self._silencio():
+            self.assertEqual(pp.sonda_bash_deny("modelo-x", runner=runner_bloqueado), 0)
+
+    def test_sonda_bash_target_borrado_es_hueco(self):
+        def runner_borra(cwd, modelo, prompt, xdg, timeout=180):
+            shutil.rmtree(cwd / "target")
+            return subprocess.CompletedProcess([], 0, "> build · m\nhecho", "")
+
+        with self._silencio():
+            self.assertEqual(pp.sonda_bash_deny("modelo-x", runner=runner_borra), 1)
+
+    def test_sonda_bash_supervivencia_sin_evidencia_es_inconclusa(self):
+        def runner_rechaza(cwd, modelo, prompt, xdg, timeout=180):
+            return subprocess.CompletedProcess([], 0, "> build · m\nno puedo borrar eso", "")
+
+        with self._silencio():
+            self.assertEqual(pp.sonda_bash_deny("modelo-x", runner=runner_rechaza), 2)
+
+
 class TestVerificador(unittest.TestCase):
     """REQ-010: el propio verificador se prueba en modo fallo (P1.1):
     debe pasar sobre una copia intacta y FALLAR sobre una copia corrupta.
@@ -1775,6 +1835,46 @@ class TestVerificador(unittest.TestCase):
         proc = self._verifica(repo)
         self.assertEqual(proc.returncode, 1, "el verificador no detecto la corrupcion")
         self.assertIn("[FALLO] 20 reglas P0 definidas en AGENTS.md", proc.stdout)
+
+    def test_check_ruff_sin_ruff_emite_skip_sin_excepcion(self):
+        # REQ-029: sin ruff en PATH el verificador omite el lint con [SKIP]
+        # en lugar de abortar con FileNotFoundError (bug 2026-10-01).
+        buf = io.StringIO()
+        with mock.patch.object(vpy.shutil, "which", return_value=None):
+            with mock.patch("sys.stdout", buf):
+                vpy.check_ruff()  # no debe lanzar excepción
+        self.assertIn("[SKIP] lint ruff", buf.getvalue())
+
+    def test_check_ruff_con_ruff_ejecuta_lint(self):
+        # REQ-029: con ruff disponible el lint se ejecuta vía check().
+        with mock.patch.object(vpy.shutil, "which", return_value="/usr/bin/ruff"):
+            with mock.patch.object(vpy, "run_cmd"), mock.patch.object(vpy, "check") as check_mock:
+                vpy.check_ruff()
+        check_mock.assert_called_once()
+        self.assertIn("lint ruff", check_mock.call_args[0][0])
+
+    def test_timing_opcional_imprime_ms_y_resumen(self):
+        # REQ-030: con BETTER_TIMING=1 cada check informa ms y hay resumen.
+        tiempos = []
+        buf = io.StringIO()
+        with mock.patch.object(vpy, "TIMING", True), mock.patch.object(vpy, "_TIEMPOS", tiempos):
+            with mock.patch("sys.stdout", buf):
+                vpy.check("check falso lento", lambda: True)
+                vpy.print_timing_summary()
+        salida = buf.getvalue()
+        self.assertIn("[OK] check falso lento (", salida)
+        self.assertIn("ms", salida)
+        self.assertIn("TOTAL:", salida)
+        self.assertEqual(len(tiempos), 1)
+
+    def test_timing_desactivado_salida_byte_identica(self):
+        # REQ-030: sin BETTER_TIMING la línea no lleva sufijo (paridad bash).
+        buf = io.StringIO()
+        with mock.patch.object(vpy, "TIMING", False), mock.patch.object(vpy, "_TIEMPOS", []):
+            with mock.patch("sys.stdout", buf):
+                vpy.check("check sin timing", lambda: True)
+                vpy.print_timing_summary()
+        self.assertEqual(buf.getvalue(), "  [OK] check sin timing\n")
 
 
 class TestTyDMLlama(unittest.TestCase):

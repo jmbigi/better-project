@@ -1,0 +1,7 @@
+# Extra: export HTML de documentos StrictDoc (REQ-032). Opcional.
+# NO es núcleo: el bridge (scripts/strictdoc_bridge.py) valida .sdoc con stdlib
+# sin instalar nada. Instalar SOLO para `strictdoc export` (HTML estático) o
+# `strictdoc server`, en entorno aislado (P0.5): venv o `pip install --target`.
+# Auditoría P0.18 (2026-10-01): pip-audit 2.10.1 sobre el entorno completo
+# (~100 paquetes, 444 MB) → 0 vulnerabilidades conocidas (OSV).
+strictdoc==0.30.1

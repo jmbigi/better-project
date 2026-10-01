@@ -1,0 +1,28 @@
+[DOCUMENT]
+TITLE: Puente StrictDoc — requisitos enriquecidos (REQ-032)
+OPTIONS:
+  MARKUP: Markdown
+
+[REQUIREMENT]
+UID: SDOC-001
+TITLE: Trazabilidad de documentos StrictDoc
+STATEMENT: Todo documento .sdoc versionado en .docs/requirements/ debera validar su estructura (UIDs unicos y campos minimos) y su trazabilidad con el codigo (referencias SDOC-XXX) mediante scripts/strictdoc_bridge.py, con salida 0 en verde y 1 en rojo.
+
+[REQUIREMENT]
+UID: SDOC-002
+TITLE: Diagramas Mermaid en requisitos
+STATEMENT: Los documentos .sdoc podran incluir diagramas Mermaid (MARKUP: Markdown) renderizados localmente por strictdoc export sin que el texto del diagrama salga del equipo.
+
+[TEXT]
+STATEMENT: >>>
+Flujo del puente (REQ-032):
+
+```mermaid
+flowchart LR
+    A[.sdoc en .docs/requirements] --> B[strictdoc_bridge.py]
+    C[refs SDOC-XXX en codigo] --> B
+    B --> D{valido?}
+    D -- si --> E[exit 0 / OK]
+    D -- no --> F[exit 1 / FALLO]
+```
+<<<
