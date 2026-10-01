@@ -45,6 +45,15 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
   `CODE_OF_CONDUCT.md`, `CHECKLIST.md`.
 - Instrumentación opcional con OpenTelemetry en el verificador (P1.30) y
   wrappers anti-RCE `safe-curl`/`safe-wget` (P0.8).
+- Sonda de comportamiento de guardarraíles en runtime
+  (`scripts/probar_policies.py`, REQ-031) con 7 tests deterministas.
+- Instrumentación opt-in de tiempos por check del verificador
+  (`BETTER_TIMING=1`, REQ-030) con línea base medida (333 s / 55 checks).
+- Puente opcional StrictDoc para el Pilar 1 (REQ-032, ADR-011):
+  `scripts/strictdoc_bridge.py` stdlib (13 tests),
+  `.docs/requirements/puente-strictdoc.sdoc` (SDOC-001/002 con Mermaid),
+  check `trazabilidad StrictDoc (.sdoc)` en ambos verificadores y
+  `requirements-strictdoc.txt` aislado (pip-audit 0 vulns, 2026-10-01).
 
 ### Cambiado
 
@@ -75,6 +84,12 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
   `Assisted-by`.
 - Recolección de tests de `pytest` acotada con `pytest.ini` (`testpaths=tests`)
   para no ejecutar scripts manuales que gastan tokens (P0.19).
+- `verificar_proyecto.py` abortaba entero en máquinas sin ruff instalado
+  (`check_ruff` fuera del wrapper `check()`): ahora omite con `[SKIP]`
+  (REQ-029, LSN-055).
+- Fugas de recursos en la suite (4 `ResourceWarning` por corrida): test
+  zombie sin recolectar (`proc.wait()`) y 41 `open()` sin cerrar en el
+  verificador migrados a `Path.read_text` (REQ-033, pruebas 163-168).
 
 ### Seguridad
 
@@ -85,3 +100,8 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
 - Advisories **abiertos** sin parche en dependencias opcionales
   (chromadb 1.5.9, diskcache 5.6.3). El backend stdlib por defecto no los
   instala; detalle y mitigación en `README.md` y `docs/ALCANCE.md`.
+- Hallazgo verificado (2026-10-01): `experimental.policies` no impide el uso
+  de proveedores denegados en runtime en opencode 1.18.32 (sonda REQ-031,
+  pruebas 146-148); la restricción efectiva hoy son las credenciales mínimas
+  y la regla de texto (MEJORAS #22, LSN-056). Los 218 `deny` de bash sí se
+  cumplen en runtime (red-team, prueba 149).

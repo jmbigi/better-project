@@ -169,6 +169,7 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │                            # cost-optimizer, dependency-auditor (solo lectura)
 ├── scripts/
 │   ├── doc_validator.py     # trazabilidad REQ (REQ-001)
+│   ├── strictdoc_bridge.py  # trazabilidad .sdoc stdlib (REQ-032)
 │   ├── index_knowledge.py   # indice de conocimiento (REQ-002)
 │   ├── lessons_extractor.py # exportacion de lecciones (REQ-003)
 │   ├── mcp_server.py        # servidor MCP para agentes (REQ-004, endurecido REQ-007)
@@ -179,6 +180,7 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 │   ├── ci.sh                # CI local sin proveedores (REQ-009)
 │   ├── verificar-proyecto.sh# verificacion de coherencia del repo (tests: REQ-010)
 │   ├── run_tests_isolated.py# tests aislados por proceso (REQ-026)
+│   ├── probar_policies.py   # sonda runtime de guardarrailes opencode (REQ-031)
 │   ├── adr_validator.py    # valida ADRs y audita sesgos (REQ-013)
 │   ├── auto_audit.py       # auto-auditoria del proyecto (REQ-014)
 │   ├── mutation_check.py   # chequeo de mutaciones (REQ-015)
@@ -222,6 +224,12 @@ python3 scripts/index_knowledge.py search "tiempo de espera"
 
 # Validar trazabilidad de requisitos
 python3 scripts/doc_validator.py --strict
+
+# Validar documentos StrictDoc (.sdoc) sin instalar nada (REQ-032)
+python3 scripts/strictdoc_bridge.py
+
+# Sonda runtime de los guardarrailes opencode (manual; gasta tokens, P0.19)
+python3 scripts/probar_policies.py all
 
 # Validar un proyecto externo (la demo)
 python3 scripts/doc_validator.py --root demo

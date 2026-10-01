@@ -300,6 +300,9 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
   `.sdoc` de `.docs/requirements/` (estructura, UIDs `SDOC-XXX` únicos y
   referencias en código) sin instalar strictdoc; la export HTML es capa
   opcional aislada (`requirements-strictdoc.txt`, REQ-032, ADR-011).
+- `python scripts/probar_policies.py {provider|bash|all}` — sonda de
+  comportamiento de los guardarraíles de opencode en runtime (REQ-031);
+  ejecución MANUAL por coste de tokens (P0.19); 7 tests con runner mockeado.
 - `python scripts/index_knowledge.py` — indexa `.docs/knowledge/` en
   `.docs/.storage/` (ChromaDB si está instalado; si no, índice JSON puro).
 - `python scripts/lessons_extractor.py [--check|--json]` — valida y exporta
