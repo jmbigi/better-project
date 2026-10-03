@@ -82,6 +82,23 @@ Se adopta la **alternativa C**, puente opcional, con estas reglas:
 - `strictdoc export` del `.sdoc` de dogfooding reproducible en ≤5 s en el
   entorno aislado documentado.
 
+## Actualizacion (2026-10-03)
+
+La regla 4 de la Decision (capa de export opcional y aislada) pasa de
+procedimiento manual a capa reproducible, sin cambiar la decision:
+
+- `requirements-strictdoc.lock`: lock con hashes (1645 lineas, 1419 hashes;
+  `uv pip compile --generate-hashes`).
+- `scripts/setup_strictdoc.sh`: instala en `.local/strictdoc-venv` (gitignored,
+  P0.5) con `--require-hashes` y audita con pip-audit hasta 0 vulnerabilidades;
+  remediacion del bootstrap documentada (pip 24.0/setuptools 65.5.0 vs pip
+  26.2.1/setuptools 84.0.0; LSN-059).
+- `scripts/strictdoc_export.py`: runner stdlib con `--check` (version == pin
+  0.30.1) y `--smoke` (export E2E a temporal); el export real del dogfood tarda
+  2.08 s y produce 5 HTML (17 MB) con SDOC-001 y Mermaid (PRUEBAS ronda 40).
+- El verificador (bash y Python) añade el check opcional "export HTML StrictDoc
+  (sonda E2E)" con `[SKIP]` si la capa no esta instalada.
+
 ## Pre-mortem (Análisis Prospectivo de Fallos)
 
 Es 2027 y la integración se considera fallida. Causas más probables:

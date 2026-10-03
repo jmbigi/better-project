@@ -170,6 +170,8 @@ hereda el ruleset determinista de better-ai: **304 patrones bash (218 `deny`, 85
 ├── scripts/
 │   ├── doc_validator.py     # trazabilidad REQ (REQ-001)
 │   ├── strictdoc_bridge.py  # trazabilidad .sdoc stdlib (REQ-032)
+│   ├── strictdoc_export.py # export HTML de .sdoc (REQ-032, capa opcional)
+│   ├── setup_strictdoc.sh  # instalacion aislada de la capa StrictDoc (REQ-032)
 │   ├── index_knowledge.py   # indice de conocimiento (REQ-002)
 │   ├── lessons_extractor.py # exportacion de lecciones (REQ-003)
 │   ├── mcp_server.py        # servidor MCP para agentes (REQ-004, endurecido REQ-007)
@@ -227,6 +229,9 @@ python3 scripts/doc_validator.py --strict
 
 # Validar documentos StrictDoc (.sdoc) sin instalar nada (REQ-032)
 python3 scripts/strictdoc_bridge.py
+
+# Exportar los .sdoc a HTML (capa opcional; antes: bash scripts/setup_strictdoc.sh)
+python3 scripts/strictdoc_export.py
 
 # Sonda runtime de los guardarrailes opencode (manual; gasta tokens, P0.19)
 python3 scripts/probar_policies.py all
@@ -301,6 +306,7 @@ Sin dependencias, el ecosistema funciona con stdlib (indice JSON TF-IDF). Los
 extras estan aislados: `requirements-vector.txt` (busqueda vectorial, REQ-002) y
 `requirements-tydm.txt` (motor MDT, REQ-011); `requirements-optional.txt` los
 incluye. El contrato reproducible es `requirements-optional.lock` (117 paquetes
+con hashes transitivos, generado con `uv pip compile --generate-hashes`).
 
 ### Capa StrictDoc (REQ-032, opcional y aislada)
 
@@ -308,12 +314,17 @@ Los documentos `.sdoc` de `.docs/requirements/` (requisitos enriquecidos con
 diagramas Mermaid) se validan con `scripts/strictdoc_bridge.py` **sin instalar
 nada** (stdlib; UIDs `SDOC-XXX`, sin colision con `REQ-XXX`, ADR-011). Solo para
 exportar HTML hace falta la capa pesada (`requirements-strictdoc.txt`,
-strictdoc==0.30.1, ~444 MB): instalacion aislada (venv o `pip --target`, P0.5)
-tras auditoria P0.18 documentada (pip-audit 0 vulns, 01-10-2026; PRUEBAS ronda
-38). El Markdown `REQ-XXX.md` sigue siendo la autoridad de trazabilidad.
-con hashes transitivos, generado con `uv pip compile --generate-hashes`).
+strictdoc==0.30.1, ~444 MB): instalacion aislada en `.local/strictdoc-venv`
+(gitignored, P0.5) desde `requirements-strictdoc.lock` (hashes) con doble
+confirmacion y auditoria P0.18 (pip-audit 0 vulnerabilidades, 03-10-2026;
+PRUEBAS ronda 40). El Markdown `REQ-XXX.md` sigue siendo la autoridad de
+trazabilidad.
 
 ```bash
+bash scripts/setup_strictdoc.sh              # instala la capa (venv aislado, hashes)
+python3 scripts/strictdoc_export.py          # HTML en .docs/.storage/strictdoc-html/
+python3 scripts/strictdoc_export.py --smoke  # sonda E2E (la usa el verificador)
+
 bash scripts/setup.sh    # instala el lock con --require-hashes, tras doble confirmacion
 ```
 

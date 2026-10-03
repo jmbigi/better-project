@@ -298,8 +298,10 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
   `.docs/requirements/`); `--root demo` valida un proyecto externo.
 - `python scripts/strictdoc_bridge.py [--root <carpeta>] [--json]` — valida los
   `.sdoc` de `.docs/requirements/` (estructura, UIDs `SDOC-XXX` únicos y
-  referencias en código) sin instalar strictdoc; la export HTML es capa
-  opcional aislada (`requirements-strictdoc.txt`, REQ-032, ADR-011).
+  referencias en código) sin instalar strictdoc. La export HTML es capa
+  opcional aislada (REQ-032, ADR-011): `bash scripts/setup_strictdoc.sh` la
+  instala (venv con hashes) y `python scripts/strictdoc_export.py` exporta
+  (`--check`/`--smoke`); el verificador la sondea con `[SKIP]` si no está.
 - `python scripts/probar_policies.py {provider|bash|all}` — sonda de
   comportamiento de los guardarraíles de opencode en runtime (REQ-031);
   ejecución MANUAL por coste de tokens (P0.19); 7 tests con runner mockeado.

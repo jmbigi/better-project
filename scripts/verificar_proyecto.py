@@ -82,6 +82,17 @@ def check_strictdoc() -> None:
         print("  [SKIP] trazabilidad StrictDoc (sin .sdoc; ver REQ-032)")
 
 
+def check_strictdoc_export() -> None:
+    # REQ-032: capa opcional de export (strictdoc real) con sonda E2E; [SKIP]
+    # si no esta instalada (paridad con el verificador bash).
+    binario = ROOT / ".local" / "strictdoc-venv" / "bin" / "strictdoc"
+    if binario.exists() or shutil.which("strictdoc"):
+        check("export HTML StrictDoc (sonda E2E, capa opcional)",
+              lambda: run_cmd([sys.executable, "scripts/strictdoc_export.py", "--smoke"]).returncode == 0)
+    else:
+        print("  [SKIP] export HTML StrictDoc (capa no instalada; scripts/setup_strictdoc.sh)")
+
+
 # == 1. Reglas ==
 def _check_p0_rules() -> bool:
     return len(re.findall(r"^### P0\.", (ROOT / "AGENTS.md").read_text(encoding="utf-8"), re.M)) == 20
@@ -182,7 +193,7 @@ def _check_mcp_tools() -> bool:
 def _check_pruebas_rondas() -> bool:
     txt = (ROOT / "docs/PRUEBAS.md").read_text(encoding="utf-8")
     rondas = set(int(m) for m in re.findall(r"Ronda (\d+)", txt))
-    return max(rondas) == 39 and len(rondas) == 36
+    return max(rondas) == 40 and len(rondas) == 37
 
 
 # == 2. Config ==
@@ -629,7 +640,7 @@ def main():
         check("conteo total reglas P0+P1+P2 = 62 (20 P0 + 37 P1 + 5 P2)", _check_total_reglas)
         check("README no dice '50 reglas P0/P1/P2' (son 61 reglas, 50 errores)", _check_readme_no_50_reglas)
         check("tools MCP habilitados = 4 (context7, gh_grep, sentry, better-project)", _check_mcp_tools)
-        check("rondas PRUEBAS.md = 36 (coherente en todo el doc)", _check_pruebas_rondas)
+        check("rondas PRUEBAS.md = 37 (coherente en todo el doc)", _check_pruebas_rondas)
 
     print("== 2. Config ==")
     check("kilo.json es JSON valido", lambda: json.loads((ROOT / "kilo.json").read_text(encoding="utf-8")))
@@ -663,6 +674,7 @@ def main():
         check("mutacion rapida batch critico (umbral 0.85)", _run_mutation_check)
     check("trazabilidad REQ valida (doc_validator --strict)", _run_doc_validator_strict)
     check_strictdoc()
+    check_strictdoc_export()
     check("lecciones validas (lessons_extractor --check)", _run_lessons_check)
     check("indice de conocimiento generable", _check_knowledge_index)
     check("retrieval quality recall@10 >= 0.7", _check_retrieval_quality)

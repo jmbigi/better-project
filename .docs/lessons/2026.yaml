@@ -514,3 +514,11 @@
   recomendacion: "Al cerrar un REQ en la misma entrega: estado Implementado + referencia REQ-XXX en codigo NO-test (script, docstring o comentario de implementacion) + suite verde antes de darlo por cerrado; las referencias en tests no cuentan como trazabilidad de implementacion."
   estado: Resuelta
   fecha: 2026-10-01
+- id: LSN-059
+  proyecto: "better-project"
+  fase: "Configuracion"
+  categoria: "Seguridad"
+  problema: "Al incorporar la capa de export StrictDoc (2026-10-03), python3 -m venv bootstrapeo pip 24.0 y setuptools 65.5.0 del sistema; pip-audit --path bloqueo la instalacion con 10 advisories en esos 2 paquetes (no en strictdoc ni su arbol, limpio desde la ronda 38)."
+  recomendacion: "Auditar el entorno virtual COMPLETO (bootstrap de pip/setuptools incluido), no solo las dependencias de la aplicacion; ante advisories, actualizar pip/setuptools a versiones con parche y re-auditar hasta 0 antes de usar (P0.18), codificando la remediacion en el instalador (scripts/setup_strictdoc.sh)."
+  estado: Resuelta
+  fecha: 2026-10-03

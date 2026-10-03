@@ -54,6 +54,11 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
   `.docs/requirements/puente-strictdoc.sdoc` (SDOC-001/002 con Mermaid),
   check `trazabilidad StrictDoc (.sdoc)` en ambos verificadores y
   `requirements-strictdoc.txt` aislado (pip-audit 0 vulns, 2026-10-01).
+- Capa de export StrictDoc reproducible (REQ-032, ADR-011):
+  `requirements-strictdoc.lock` (hashes), `scripts/setup_strictdoc.sh`
+  (venv aislado + auditoria P0.18), `scripts/strictdoc_export.py`
+  (export/`--check`/`--smoke`) y check opcional `export HTML StrictDoc (sonda
+  E2E)` con `[SKIP]` en ambos verificadores (2026-10-03).
 
 ### Cambiado
 

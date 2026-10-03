@@ -622,3 +622,36 @@ subproceso sin recolectar. Investigación con atribución por evidencia
 `doc_validator` excluye `tests/` del escaneo de referencias); método de
 atribución de fugas documentado en `docs/LECCIONES-APRENDIDAS.md` (tracemalloc
 + `/proc/self/fd` en `atexit` + bisección por clases).
+
+## Ronda 40 — Capa de export StrictDoc reproducible (REQ-032, ADR-011) (03-10-2026)
+
+Orden del programador: incorporar StrictDoc "de manera adecuada, consistente y
+coherente". La capa de export (opcional según ADR-011) pasa de procedimiento en
+prosa a entorno reproducible con lock de hashes, instalador guiado y runner
+verificado; el núcleo stdlib-first no cambia (la suite pasa sin strictdoc
+instalado).
+
+| # | Prueba | Resultado |
+|---|---|---|
+| 170 | **Lock con hashes (P0.18)**: `uv pip compile --generate-hashes requirements-strictdoc.txt -o requirements-strictdoc.lock` | ✅ 1645 líneas, 1419 hashes sha256, `strictdoc==0.30.1` presente (uv 0.11.14) |
+| 171 | **Instalación aislada + hallazgo P0.18**: `python3 -m venv .local/strictdoc-venv` + `pip install --require-hashes` + `pip-audit --path` | ⚠️ El bootstrap del venv (pip 24.0, setuptools 65.5.0) → **10 advisories en 2 paquetes** (no en strictdoc, limpio); remediado a pip 26.2.1 / setuptools 84.0.0 → re-audit **0 vulnerabilidades**. Codificado en `scripts/setup_strictdoc.sh`. LSN-059 |
+| 172 | **CLI real (P0.2)**: `strictdoc export --help` + export del directorio `.docs/requirements` vs `.sdoc` explícito | ⚠️ El directorio falla: intenta parsear también los `REQ-*.md` ("must start with an H1 heading"); solución: pasar los `.sdoc` explícitos (sin `strictdoc.toml`, P1.2). Export de 1 `.sdoc`: index + 4 vistas, 1.05 s |
+| 173 | **Runner `scripts/strictdoc_export.py`** (stdlib puro, guarda AST): `--check` / `--smoke` / export; exit 0/1/2 | ✅ check OK (0.30.1); smoke OK; sin capa → exit 2 con guía (`scripts/setup_strictdoc.sh`) |
+| 174 | **Tests**: `tests/test_strictdoc_export.py` (16: mocks de subprocess + E2E real con `skipIf`) y bridge sin regresión | ✅ 16/16 OK; `tests/test_strictdoc_bridge.py` 13/13 OK |
+| 175 | **Verificador (paridad bash/Python)**: check opcional `export HTML StrictDoc (sonda E2E, capa opcional)` con `[SKIP]` si no está instalada; rondas 39→40 y 36→37 en ambos | ✅ integrado en ambos verificadores; corrida final en la prueba 177 |
+| 176 | **Export real del dogfood**: `python3 scripts/strictdoc_export.py` | ✅ 2.08 s; 5 HTML (index + 4 vistas, 17 MB); `SDOC-001` y `<pre class="mermaid">` presentes |
+| 177 | **Verificación final completa**: `bash scripts/verificar-proyecto.sh --pre-commit` (cambios en stage; sin commit, P0.7) | ✅ **57 OK, 0 FALLOS** (incluye `export HTML StrictDoc (sonda E2E, capa opcional)` y `rondas PRUEBAS.md = 37`) |
+
+**Hallazgos**: LSN-059 (auditar el entorno virtual COMPLETO: el bootstrap
+pip/setuptools de `python3 -m venv` también entra en pip-audit; remediar a
+versiones con parche y re-auditar hasta 0, codificado en el instalador); el
+export de un directorio con `.md` mixtos falla en strictdoc 0.30.1 (se pasan
+los `.sdoc` explícitos, sin `strictdoc.toml`); la capa opcional queda
+sonda-verificada en runtime con `[SKIP]` cuando no está instalada (criterio 8
+de REQ-032 intacto: la suite pasa sin strictdoc).
+
+Nota de proceso: el re-stage de este documento durante la verificación dejó un
+blob inalcanzable transitorio (`git fsck`); se limpió con `git gc --prune=now`
+(autorizado por el programador) antes del commit. La verificación final del
+estado commiteado la ejecuta el propio hook pre-commit.
+

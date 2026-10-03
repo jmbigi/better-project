@@ -149,12 +149,12 @@ tools = [k for k, v in mcp.items() if v.get('enabled', True)]
 assert len(tools) == 4, f'tools MCP habilitados = {len(tools)}: {tools}'
 assert set(tools) == {'context7', 'gh_grep', 'sentry', 'better-project'}, tools
 "
-    check "rondas PRUEBAS.md = 36 (coherente en todo el doc)" python3 -c "
+    check "rondas PRUEBAS.md = 37 (coherente en todo el doc)" python3 -c "
 import re
 txt = open('docs/PRUEBAS.md').read()
 rondas = set(int(m) for m in re.findall(r'Ronda (\\d+)', txt))
-assert max(rondas) == 39, f'rondas max = {max(rondas)}, esperado 39'
-assert len(rondas) == 36, f'rondas únicas = {len(rondas)}, esperado 36 (faltan 32, 33, 34)'
+assert max(rondas) == 40, f'rondas max = {max(rondas)}, esperado 40'
+assert len(rondas) == 37, f'rondas únicas = {len(rondas)}, esperado 37 (faltan 32, 33, 34)'
 "
 fi
 otel_end_span "verificar.reglas"
@@ -385,6 +385,12 @@ if find .docs/requirements -name '*.sdoc' 2>/dev/null | grep -q .; then
     check "trazabilidad StrictDoc (.sdoc)" python3 scripts/strictdoc_bridge.py
 else
     echo "  [SKIP] trazabilidad StrictDoc (sin .sdoc; ver REQ-032)"
+fi
+# REQ-032: capa opcional de export (strictdoc real); SKIP si no esta instalada
+if [ -x .local/strictdoc-venv/bin/strictdoc ] || command -v strictdoc >/dev/null 2>&1; then
+    check "export HTML StrictDoc (sonda E2E, capa opcional)" python3 scripts/strictdoc_export.py --smoke
+else
+    echo "  [SKIP] export HTML StrictDoc (capa no instalada; scripts/setup_strictdoc.sh)"
 fi
 check "lecciones validas (lessons_extractor --check)" bash -c "python3 scripts/lessons_extractor.py --check"
 check "indice de conocimiento generable" bash -c "python3 scripts/index_knowledge.py --json && python3 scripts/index_knowledge.py --check"
