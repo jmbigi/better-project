@@ -55,6 +55,46 @@ class TestGenerateSbom(unittest.TestCase):
                 self.assertFalse(gsb.check_sbom(Path(tmp)))
                 gen.assert_called_once()
 
+    def test_normalizar_sbom_neutraliza_volatiles(self):
+        cd = {"serialNumber": "urn:uuid:aaaa",
+              "metadata": {"timestamp": "2026-01-01T00:00:00Z", "x": 1}}
+        out = gsb.normalizar_sbom(cd, "cyclonedx")
+        self.assertEqual(out["serialNumber"], gsb._SERIAL_NEUTRO)
+        self.assertEqual(out["metadata"]["timestamp"], gsb._FECHA_NEUTRA)
+        self.assertEqual(out["metadata"]["x"], 1)
+        spdx = {"documentNamespace": "https://anchore.com/syft/dir/abc",
+                "creationInfo": {"created": "algo", "creators": ["Tool: syft"]}}
+        out2 = gsb.normalizar_sbom(spdx, "spdx")
+        self.assertEqual(out2["documentNamespace"], gsb._NS_NEUTRO)
+        self.assertEqual(out2["creationInfo"]["created"], gsb._FECHA_NEUTRA)
+        self.assertEqual(out2["creationInfo"]["creators"], ["Tool: syft"])
+
+    def test_hash_normalizado_ignora_volatiles_y_detecta_contenido(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            base = {"serialNumber": "urn:uuid:a", "metadata": {"timestamp": "t1"},
+                    "components": [{"name": "x"}]}
+            volatil = {"serialNumber": "urn:uuid:b", "metadata": {"timestamp": "t2"},
+                       "components": [{"name": "x"}]}
+            distinto = {"serialNumber": "urn:uuid:a", "metadata": {"timestamp": "t1"},
+                        "components": [{"name": "y"}]}
+            (d / "a.json").write_text(json.dumps(base), encoding="utf-8")
+            (d / "b.json").write_text(json.dumps(volatil), encoding="utf-8")
+            (d / "c.json").write_text(json.dumps(distinto), encoding="utf-8")
+            self.assertEqual(gsb.hash_normalizado(d / "a.json", "cyclonedx"),
+                             gsb.hash_normalizado(d / "b.json", "cyclonedx"))
+            self.assertNotEqual(gsb.hash_normalizado(d / "a.json", "cyclonedx"),
+                                gsb.hash_normalizado(d / "c.json", "cyclonedx"))
+
+    @unittest.skipIf(gsb.check_syft() is None, "syft no instalado (REQ-020)")
+    def test_repro_real_con_syft(self):
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPTS / "generate_sbom.py"), "--repro"],
+            capture_output=True, text=True, timeout=300,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertIn("sha256 reproducible", proc.stdout)
+
 
 class TestAnalyzeShell(unittest.TestCase):
     """Cubre el analisis estatico de comandos shell (P0.8)."""

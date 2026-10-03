@@ -27,7 +27,7 @@
 | **Giskard** (v3) | Evals y red teaming de agentes LLM; calidad RAG; alineado a OWASP LLM | Apache-2.0 | Alto si se prueban agentes; pesado (Python 3.12+) |
 | **OpenSSF Scorecard** | Métricas de salud de seguridad de un repositorio | Apache-2.0 | Medio: requiere token y red; auditoría puntual |
 | **StrictDoc** (0.30.1) | Requisitos en texto plano con UIDs, diagramas Mermaid/PlantUML renderizados en local, export HTML estático | Apache-2.0 | Alto como capa opcional: puente Pilar 1 (REQ-032, ADR-011); pesada (~444 MB, ~100 paquetes) → aislada con lock de hashes; pip-audit 0 vulns (03-10-2026) |
-| **SLSA** | Niveles de integridad y procedencia de artefactos | Community Specification | Medio: guía para releases firmados (hoy no hay releases) |
+| **SLSA** | Niveles de integridad y procedencia de artefactos | Community Specification | Medio: guía para releases firmados (primera release v1.0.0 el 03-10-2026, sin firma: techo local Build L1) |
 
 ## 3. Herramientas candidatas (licencia/versión por verificar antes de adoptar)
 

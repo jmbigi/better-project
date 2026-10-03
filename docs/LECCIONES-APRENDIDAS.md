@@ -666,6 +666,14 @@ superviviente esperando (los equivalentes se documentan, los reales se cierran).
 ## 2026-10-03 - fsck: residuo de re-stage ≠ historia huérfana (LSN-062)
 
 **Contexto**: tras la ronda 41, el programador autorizó el endurecimiento propuesto: el check `git fsck` del hook bloqueaba commits por blobs inalcanzables dejados por el re-stage iterativo (2ª vez en el día, cada vez con `git gc --prune=now` manual).
-**Hallazgo**: el primer filtro usaba las palabras inglesas `unreachable|dangling`, pero el git del equipo está en español ("inalcanzable blob") — la sonda con la línea bash exacta lo cazó antes de entregar (P1.1). Corregido con `LC_ALL=C` + filtro por tipo (segundo token).
-**Evidencia** (03-10-2026): `tests.test_verificador.TestGitFsck` 2/2 (blob tolerado / commit huérfano falla); sonda manual: solo-blob → PASA, blob+commit → FALLA; pruebas 185-186 en `docs/PRUEBAS.md` ronda 41.
+**Hallazgo**: el primer filtro usaba las palabras inglesas `unreachable|dangling`, pero el git del equipo está en español ("inalcanzable blob") — la sonda con la línea bash exacta lo cazó antes de entregar (P1.1). Corregido con `LC_ALL=C` + filtro por tipo (segundo token). **Ampliación (misma ronda)**: un `git commit` abortado por el hook también deja *trees* inalcanzables; el filtro se amplió a `(blob|tree)` para no volver a bloquear por subproductos inertes (los commits/tags huérfanos siguen fallando).
+**Evidencia** (03-10-2026): `tests.test_verificador.TestGitFsck` 3/3 tras la ampliación (blob y tree tolerados / commit huérfano falla); sonda manual: solo-blob → PASA, blob+commit → FALLA; pruebas 185-186 y 191 en `docs/PRUEBAS.md`.
 **Lección**: los checks que comparan salidas de herramientas externas no deben depender del idioma del entorno (fijar locale o comparar por estructura), y todo endurecimiento se prototipa con una sonda que pueda fallar antes de integrarlo.
+
+## 2026-10-03 - Los temporales de test llenaron /tmp y tumbaron un commit verde (LSN-063)
+
+**Contexto**: el commit de release v1.0.0 falló el hook con la suite en rojo minutos después de una corrida verde idéntica. Reproducción: `rc=120` instantáneo → `/tmp` (tmpfs de 32 GB) al 100 %.
+**Hallazgo**: 51.733 directorios de temporales de test (~32 GB) en `/tmp/user/1000`, por `tempfile.mkdtemp()` sin limpieza (el test de integración copiaba el repo entero —~672 MB incluyendo `.local/`— en cada corrida; decenas de tests con `mkdtemp` suelto). El fallo era de entorno, no de código — y el mensaje de la suite no lo decía.
+**Fix**: sandbox de `TMPDIR` por corrida en `run_tests_isolated.py` (se elimina al final) + hooks de sesión en `tests/conftest.py` (pytest) + `addCleanup(shutil.rmtree)` y exclusión de `.local`/caches en las copias de integración. Limpieza de lo acumulado autorizada por el programador.
+**Evidencia** (03-10-2026): `/tmp` de 0 a ~32 GB libres (467 MB usados, 2 %); suite 561 OK / 0 FALLOS; corrida posterior sin residuos nuevos (`better-tests-tmp-*` = 0); prueba 190 en `docs/PRUEBAS.md` ronda 42.
+**Lección**: un fallo súbito de tests antes verdes puede ser del entorno (disco/temporales): comprobar `df -h` antes de depurar el código; y todo runner debe aislar y limpiar su TMPDIR — la limpieza por test individual no basta cuando hay `mkdtemp` dispersos.

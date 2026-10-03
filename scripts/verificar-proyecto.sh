@@ -85,8 +85,10 @@ check_ruff() {
 check_sbom() {
     if command -v syft >/dev/null 2>&1 || [ -x .local/bin/syft ] || [ -x .local/bin/syft.exe ]; then
         check "SBOM regenerable (Syft CycloneDX/SPDX)" python3 scripts/generate_sbom.py --check
+        check "SBOM reproducible (2 generaciones, sha256 normalizado)" python3 scripts/generate_sbom.py --repro
     else
         echo "  [SKIP] SBOM regenerable (syft no instalado; ver REQ-020)"
+        echo "  [SKIP] SBOM reproducible (syft no instalado; ver REQ-020)"
     fi
 }
 
@@ -149,12 +151,12 @@ tools = [k for k, v in mcp.items() if v.get('enabled', True)]
 assert len(tools) == 4, f'tools MCP habilitados = {len(tools)}: {tools}'
 assert set(tools) == {'context7', 'gh_grep', 'sentry', 'better-project'}, tools
 "
-    check "rondas PRUEBAS.md = 38 (coherente en todo el doc)" python3 -c "
+    check "rondas PRUEBAS.md = 39 (coherente en todo el doc)" python3 -c "
 import re
 txt = open('docs/PRUEBAS.md').read()
 rondas = set(int(m) for m in re.findall(r'Ronda (\\d+)', txt))
-assert max(rondas) == 41, f'rondas max = {max(rondas)}, esperado 41'
-assert len(rondas) == 38, f'rondas únicas = {len(rondas)}, esperado 38 (faltan 32, 33, 34)'
+assert max(rondas) == 42, f'rondas max = {max(rondas)}, esperado 42'
+assert len(rondas) == 39, f'rondas únicas = {len(rondas)}, esperado 39 (faltan 32, 33, 34)'
 "
 fi
 otel_end_span "verificar.reglas"
@@ -470,10 +472,11 @@ otel_start_span "verificar.repositorio"
 echo "== 5. Repositorio =="
 check "hook pre-commit instalado identico al script" bash -c "cmp -s scripts/hooks/pre-commit .git/hooks/pre-commit"
 check "hook commit-msg instalado identico al script" bash -c "cmp -s scripts/hooks/commit-msg .git/hooks/commit-msg"
-# LSN-062: los blobs inalcanzables son residuo normal del re-stage iterativo
-# (git los autopurga; nunca se empujan); el check falla solo con commits,
-# trees o tags huerfanos, que si delatan operaciones de historia.
-check "sin objetos huerfanos en git (fsck; blobs excluidos)" bash -c "test -z \"\$(LC_ALL=C git fsck --unreachable 2>&1 | grep -vE '^[^ ]+ blob ')\""
+# LSN-062: blobs y trees inalcanzables son residuo normal (re-stage iterativo
+# y trees de commits abortados; git los autopurga y nunca se empujan); el
+# check falla solo con commits o tags huerfanos, que si delatan operaciones
+# de historia.
+check "sin objetos huerfanos en git (fsck; blobs y trees excluidos)" bash -c "test -z \"\$(LC_ALL=C git fsck --unreachable 2>&1 | grep -vE '^[^ ]+ (blob|tree) ')\""
 if [ "$PRE_COMMIT_MODE" = "true" ]; then
     check "sin cambios sin stagear (solo staged permitido)" bash -c "test -z \"\$(git status --porcelain | grep '^ [^ ]')\""
     check "rama main sincronizada con origin" bash -c "test -z \"\$(git status --porcelain --branch | grep -E 'adelant|ahead|behind|adelanta')\""

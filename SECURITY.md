@@ -8,13 +8,13 @@
 ## Versiones soportadas
 
 El proyecto sigue Git como versionado; se da soporte de seguridad a la rama
-`main` y, cuando existan etiquetas publicadas, a la última (`v*`). Aún no hay
-etiquetas publicadas ni versiones LTS.
+`main` y a la última release etiquetada (`v1.0.0`, 2026-10-03). No hay
+versiones LTS.
 
 | Versión | Soporte |
 |---------|---------|
 | `main` (HEAD) | Sí |
-| Última etiqueta (`v*`), cuando exista | Sí |
+| `v1.0.0` (última etiqueta) | Sí |
 | Etiquetas anteriores | No |
 
 ## Cómo reportar una vulnerabilidad

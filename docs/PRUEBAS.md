@@ -679,4 +679,18 @@ periódicamente) y LSN-061 (strictdoc no era reproducible bit a bit: UUIDs,
 timestamp y orden de dict/valores; normalización + `--repro`, con
 `json.JSONDecoder().raw_decode` para el JSON embebido).
 
+## Ronda 42 — SBOM reproducible y primera release v1.0.0 (03-10-2026)
+
+Orden del programador: cortar v1.0.0 y extender la reproducibilidad al núcleo (SBOM).
+
+| # | Prueba | Resultado |
+|---|---|---|
+| 187 | **SBOM doble-build**: dos generaciones syft (~4 s cada una) y comparación por ruta de todo el JSON | ✅ Solo 4 campos volátiles entre corridas (`metadata.timestamp` y `serialNumber` en CycloneDX; `creationInfo.created` y `documentNamespace` en SPDX); neutralizados esos campos, la comparación es estable |
+| 188 | **`generate_sbom.py --repro`** (normaliza volátiles + sha256 canónico por formato) + check opcional nuevo en ambos verificadores (`[SKIP]` sin syft) + 3 tests (normalización, hash, E2E real) | ✅ `--repro` verde en ~7 s (cyclonedx `66aeee85…`, spdx `4342b633…`); tests OK |
+| 189 | **Primera release v1.0.0**: auditoría de historial (`git log --all -p` filtrado, P0.10) sin hallazgos (0 claves; único matiz: `pkg:pypi/python-dateutil@…` de un SBOM commiteado, falso positivo tipo purl); CHANGELOG `[Unreleased]` → `[1.0.0]`; `SECURITY.md` y HERRAMIENTAS coherentes | ✅ Materiales aplicados; tag anotado `v1.0.0` y push como cierre inmediato del commit de esta ronda |
+| 190 | **Hallazgo y fix de temporales (LSN-063)**: el hook falló la suite con `/tmp` al 100 %; causa: 51.733 temporales de test (~32 GB) por `mkdtemp()` sin limpieza y copias de integración de ~672 MB (incluían `.local/`); fix: sandbox de `TMPDIR` por corrida (`run_tests_isolated.py` + hooks en `conftest.py`), `addCleanup` y exclusión de `.local`/caches en las copias; limpieza de lo acumulado autorizada por el programador | ✅ `/tmp` a 2 %; suite **561 OK / 0 FALLOS**; corrida posterior sin residuos nuevos (`better-tests-tmp-*` = 0) |
+| 191 | **Refinamiento del filtro fsck (misma ronda)**: todo `git commit` abortado por el hook deja *trees* inalcanzables (`tests/`, `docs/`…), y el check volvía a bloquear; el filtro se amplía a `(blob|tree)` y el test pasa a 3 casos (blob y tree tolerados / commit huérfano falla) | ✅ Test 3/3; check en verde con trees y blobs presentes, sin `gc` manual |
+
+**Hallazgos**: LSN-063 (temporales de test sin limpieza llenaron `/tmp` y tumbaron el hook; sandbox por corrida); la normalización de LSN-061 se reutilizó para el SBOM (4 campos volátiles).
+
 

@@ -91,9 +91,11 @@ class TestVerificador(unittest.TestCase):
         if os.environ.get("BETTER_TEST_INTEGRACION"):
             self.skipTest("dentro de la copia temporal de integracion")
         tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         repo = tmp / "repo"
         ignore = shutil.ignore_patterns(
-            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", ".venv-audit", "venv"
+            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", ".venv-audit", "venv",
+            ".local", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".benchmarks",
         )
         shutil.copytree(ROOT, repo, ignore=ignore)
         subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
@@ -455,6 +457,16 @@ class TestGitFsck(unittest.TestCase):
                 ["git", "hash-object", "-w", "--stdin"], cwd=repo,
                 input="contenido huerfano", text=True, check=True, capture_output=True,
             )
+            self.assertTrue(vpy._check_git_fsck(repo))
+
+    def test_tree_innalcanzable_es_tolerado(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self._repo(tmp)
+            # Un cambio staged sin commit deja un tree inalcanzable (mismo
+            # subproducto que un `git commit` abortado por el hook).
+            (repo / "b.txt").write_text("nuevo", encoding="utf-8")
+            subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+            subprocess.run(["git", "write-tree"], cwd=repo, check=True, capture_output=True)
             self.assertTrue(vpy._check_git_fsck(repo))
 
     def test_commit_huerfano_es_fallo(self):

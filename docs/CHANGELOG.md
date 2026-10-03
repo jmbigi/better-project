@@ -7,11 +7,15 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
 (scripts y tools MCP) y CalVer (AAAA.MM) para reglas y documentación, según
 `GOVERNANCE.md`. Las entradas se derivan de los commits convencionales.
 
-> Estado: el proyecto **aún no ha cortado una release etiquetada**. Todo lo
-> listado bajo `Unreleased` está en `main` y verificado con
+> Estado: primera release etiquetada **v1.0.0** (2026-10-03). Todo lo listado
+> bajo `Unreleased` está en `main` y verificado con
 > `bash scripts/verificar-proyecto.sh`.
 
 ## [Unreleased]
+
+_(Sin cambios todavía.)_
+
+## [1.0.0] - 2026-10-03
 
 ### Añadido
 
@@ -63,14 +67,17 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
   evidencia por leccion, y 2 lecciones nuevas: LSN-060 (los KPIs `n/d`
   ocultaban que `ci.sh` nunca completaba) y LSN-061 (salida no determinista de
   strictdoc) (2026-10-03).
-- Check `git fsck` (hook pre-commit): ignora blobs inalcanzables (residuo de
-  re-stage; git los autopurga y nunca se empujan) y falla solo con
-  commits/trees/tags huerfanos; `LC_ALL=C` y filtro por tipo, con test de dos
-  casos (LSN-062).
+- Check `git fsck` (hook pre-commit): ignora blobs y trees inalcanzables
+  (residuo de re-stage y de commits abortados; git los autopurga y nunca se
+  empujan) y falla solo con commits/tags huerfanos; `LC_ALL=C` y filtro por
+  tipo, con test de tres casos (LSN-062).
 - Check `YAML valido (workflows, pre-commit, lecciones, vale)` en ambos
   verificadores (paridad; PyYAML opcional, LSN-048 resuelta).
 - Sonda `--repro` de `scripts/strictdoc_export.py`: dos exports normalizados y
   comparacion sha256 (102 archivos identicos en 2 corridas).
+- SBOM reproducible: `generate_sbom.py --repro` (dos generaciones + sha256
+  canonico con volatiles neutralizados) y check opcional equivalente en ambos
+  verificadores (2026-10-03).
 
 ### Cambiado
 
@@ -96,6 +103,10 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
 
 ### Corregido
 
+- Suite de tests: sandbox de `TMPDIR` por corrida (`run_tests_isolated.py` y
+  `tests/conftest.py`), `addCleanup` en los `mkdtemp` de integración y copias
+  sin `.local/` ni caches; los temporales habían acumulado 32 GB en `/tmp` y
+  tumbaron el hook pre-commit (LSN-063).
 - `SECURITY.md` ya no cita etiquetas inexistentes (`v*`) como soportadas.
 - mypy: parametro de tipo faltante en tests (`CompletedProcess[str]`),
   latente y visible solo al ejecutar `ci.sh` completo (LSN-060).

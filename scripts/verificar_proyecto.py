@@ -224,7 +224,7 @@ def _check_mcp_tools() -> bool:
 def _check_pruebas_rondas() -> bool:
     txt = (ROOT / "docs/PRUEBAS.md").read_text(encoding="utf-8")
     rondas = set(int(m) for m in re.findall(r"Ronda (\d+)", txt))
-    return max(rondas) == 41 and len(rondas) == 38
+    return max(rondas) == 42 and len(rondas) == 39
 
 
 # == 2. Config ==
@@ -528,22 +528,32 @@ def _run_diagnostico() -> bool:
     return run_cmd([sys.executable, "scripts/diagnostico.py", "--root", ".", "--min-score", "80"]).returncode == 0
 
 
-def _check_sbom() -> bool:
+def _syft_disponible() -> bool:
     # REQ-020: syft/grype no son dependencias obligatorias; requieren
-    # autorizacion para instalar (P0.5). El check se omite si no esta
-    # disponible (PATH o .local/bin), con la misma semantica que
+    # autorizacion para instalar (P0.5). Misma semantica que
     # verificar-proyecto.sh y generate_sbom.check_syft.
     syft_local = ROOT / ".local" / "bin" / "syft"
     syft_local_exe = ROOT / ".local" / "bin" / "syft.exe"
-    disponible = (
+    return (
         shutil.which("syft") is not None
         or os.access(syft_local, os.X_OK)
         or os.access(syft_local_exe, os.X_OK)
     )
-    if not disponible:
+
+
+def _check_sbom() -> bool:
+    if not _syft_disponible():
         print("  [SKIP] SBOM regenerable (syft no instalado; ver REQ-020)")
         return True
     return run_cmd([sys.executable, "scripts/generate_sbom.py", "--check"]).returncode == 0
+
+
+def _check_sbom_repro() -> bool:
+    # LSN-061 aplicada al SBOM: dos generaciones + sha256 normalizado.
+    if not _syft_disponible():
+        print("  [SKIP] SBOM reproducible (syft no instalado; ver REQ-020)")
+        return True
+    return run_cmd([sys.executable, "scripts/generate_sbom.py", "--repro"]).returncode == 0
 
 
 def _check_health_dashboard() -> bool:
@@ -620,17 +630,18 @@ def _check_hook_installed(name: str) -> bool:
 
 
 def _check_git_fsck(cwd: Path = ROOT) -> bool:
-    # LSN-062: se ignoran blobs inalcanzables (residuo normal de re-stage;
-    # git los autopurga y nunca se empujan); commits/trees/tags huerfanos si
-    # fallan (delatan operaciones de historia). LC_ALL=C fija el idioma de la
-    # salida y el filtro compara por tipo (2do token), no por palabra inglesa.
+    # LSN-062: se ignoran blobs y trees inalcanzables (residuo normal de
+    # re-stage y de commits abortados por el hook; git los autopurga y nunca
+    # se empujan); commits/tags huerfanos si fallan (delatan operaciones de
+    # historia). LC_ALL=C fija el idioma de la salida y el filtro compara por
+    # tipo (2do token), no por palabra inglesa.
     result = run_cmd(
         ["git", "fsck", "--unreachable"], cwd=cwd,
         env={**os.environ, "LC_ALL": "C"},
     )
     lineas = [
         linea for linea in (result.stdout + result.stderr).splitlines()
-        if not re.match(r"^\S+ blob ", linea.strip())
+        if not re.match(r"^\S+ (blob|tree) ", linea.strip())
     ]
     return result.returncode == 0 and not lineas
 
@@ -685,7 +696,7 @@ def main():
         check("conteo total reglas P0+P1+P2 = 62 (20 P0 + 37 P1 + 5 P2)", _check_total_reglas)
         check("README no dice '50 reglas P0/P1/P2' (son 61 reglas, 50 errores)", _check_readme_no_50_reglas)
         check("tools MCP habilitados = 4 (context7, gh_grep, sentry, better-project)", _check_mcp_tools)
-        check("rondas PRUEBAS.md = 38 (coherente en todo el doc)", _check_pruebas_rondas)
+        check("rondas PRUEBAS.md = 39 (coherente en todo el doc)", _check_pruebas_rondas)
 
     print("== 2. Config ==")
     check("kilo.json es JSON valido", lambda: json.loads((ROOT / "kilo.json").read_text(encoding="utf-8")))
@@ -726,6 +737,7 @@ def main():
     check("retrieval quality recall@10 >= 0.7", _check_retrieval_quality)
     check("suite de tests del ecosistema (aislada por proceso)", _run_tests_isolated)
     check("SBOM regenerable (Syft CycloneDX/SPDX)", _check_sbom)
+    check("SBOM reproducible (2 generaciones, sha256 normalizado)", _check_sbom_repro)
     check("dashboard de salud con 5 KPIs y metas (REQ-024)", _check_health_dashboard)
     check("coverage >= 30% en scripts/ (gate inicial)", _check_coverage)
     if not args.lite:
@@ -737,7 +749,7 @@ def main():
     print("== 5. Repositorio ==")
     check("hook pre-commit instalado identico al script", lambda: _check_hook_installed("pre-commit"))
     check("hook commit-msg instalado identico al script", lambda: _check_hook_installed("commit-msg"))
-    check("sin objetos huerfanos en git (fsck; blobs excluidos)", _check_git_fsck)
+    check("sin objetos huerfanos en git (fsck; blobs y trees excluidos)", _check_git_fsck)
     if args.pre_commit:
         check("sin cambios sin stagear (solo staged permitido)", _check_no_unstaged)
         check("rama main sincronizada con origin", _check_main_synced)

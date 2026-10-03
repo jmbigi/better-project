@@ -31,9 +31,11 @@ class TestIntegracionHook(unittest.TestCase):
             # la guarda evita recursion infinita de copias.
             self.skipTest("dentro de la copia temporal de integracion")
         self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.repo = self.tmp / "repo"
         ignore = shutil.ignore_patterns(
-            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", ".venv-audit", "venv"
+            ".git", "node_modules", "__pycache__", ".storage", "*.pyc", ".venv", ".venv-audit", "venv",
+            ".local", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".benchmarks",
         )
         shutil.copytree(ROOT, self.repo, ignore=ignore)
 

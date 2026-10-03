@@ -21,8 +21,10 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
 from pathlib import Path
@@ -105,60 +107,71 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Total: {len(test_ids)} tests")
         return 0
 
-    # Dentro de una copia temporal de integracion (REQ-010) no aplicar el
-    # aislamiento: cada test de integracion correria cientos de subprocesos
-    # anidados. La guarda ya omite esos tests; aqui se ejecuta el resto
-    # in-process, que es rapido y no acumula memoria de deps opcionales.
-    if os.environ.get("BETTER_TEST_INTEGRACION"):
-        print("run_tests_isolated: BETTER_TEST_INTEGRACION activo "
-              "(copia temporal): se ejecuta in-process")
-        return run_in_process(args.pattern)
+    # Sandbox de temporales (hallazgo 2026-10-03): los tests usan
+    # tempfile.mkdtemp() con limpieza desigual (las copias de integracion
+    # pesan cientos de MB); sin esto el /tmp del sistema acumulo 32 GB y el
+    # hook pre-commit fallo la suite por agotamiento de espacio. TMPDIR se
+    # aisla por corrida y se elimina al final.
+    base_tmp = Path(tempfile.mkdtemp(prefix="better-tests-tmp-"))
+    os.environ["TMPDIR"] = str(base_tmp)
+    tempfile.tempdir = None
+    try:
+        # Dentro de una copia temporal de integracion (REQ-010) no aplicar el
+        # aislamiento: cada test de integracion correria cientos de subprocesos
+        # anidados. La guarda ya omite esos tests; aqui se ejecuta el resto
+        # in-process, que es rapido y no acumula memoria de deps opcionales.
+        if os.environ.get("BETTER_TEST_INTEGRACION"):
+            print("run_tests_isolated: BETTER_TEST_INTEGRACION activo "
+                  "(copia temporal): se ejecuta in-process")
+            return run_in_process(args.pattern)
 
-    if not test_ids:
-        print(f"[FALLO] no se descubrieron tests con patron '{args.pattern}'")
-        return 1
+        if not test_ids:
+            print(f"[FALLO] no se descubrieron tests con patron '{args.pattern}'")
+            return 1
 
-    print(f"run_tests_isolated: {len(test_ids)} tests, un proceso por test "
-          f"(timeout {args.timeout}s)")
-    started = time.monotonic()
-    failures: list[tuple[str, str]] = []
-    passed = 0
+        print(f"run_tests_isolated: {len(test_ids)} tests, un proceso por test "
+              f"(timeout {args.timeout}s)")
+        started = time.monotonic()
+        failures: list[tuple[str, str]] = []
+        passed = 0
 
-    for index, test_id in enumerate(test_ids, start=1):
-        try:
-            proc = run_one(test_id, args.timeout)
-        except subprocess.TimeoutExpired:
-            failures.append((test_id, f"TIMEOUT: excedio {args.timeout}s"))
-            sys.stdout.write("T")
+        for index, test_id in enumerate(test_ids, start=1):
+            try:
+                proc = run_one(test_id, args.timeout)
+            except subprocess.TimeoutExpired:
+                failures.append((test_id, f"TIMEOUT: excedio {args.timeout}s"))
+                sys.stdout.write("T")
+                sys.stdout.flush()
+                if args.verbose:
+                    print(f" [{index}/{len(test_ids)}] TIMEOUT {test_id}")
+                continue
+
+            if proc.returncode == 0:
+                passed += 1
+                sys.stdout.write(".")
+                if args.verbose:
+                    print(f" [{index}/{len(test_ids)}] OK {test_id}")
+            else:
+                failures.append((test_id, proc.stdout + proc.stderr))
+                sys.stdout.write("F")
+                if args.verbose:
+                    print(f" [{index}/{len(test_ids)}] FALLO {test_id}")
             sys.stdout.flush()
-            if args.verbose:
-                print(f" [{index}/{len(test_ids)}] TIMEOUT {test_id}")
-            continue
 
-        if proc.returncode == 0:
-            passed += 1
-            sys.stdout.write(".")
-            if args.verbose:
-                print(f" [{index}/{len(test_ids)}] OK {test_id}")
-        else:
-            failures.append((test_id, proc.stdout + proc.stderr))
-            sys.stdout.write("F")
-            if args.verbose:
-                print(f" [{index}/{len(test_ids)}] FALLO {test_id}")
-        sys.stdout.flush()
-
-    elapsed = time.monotonic() - started
-    print()
-    print(f"Resultado: {passed} OK, {len(failures)} FALLOS de {len(test_ids)} "
-          f"en {elapsed:.1f}s")
-
-    if failures:
+        elapsed = time.monotonic() - started
         print()
-        for test_id, detail in failures:
-            print(f"--- FALLO: {test_id} ---")
-            print(detail.rstrip())
-        return 1
-    return 0
+        print(f"Resultado: {passed} OK, {len(failures)} FALLOS de {len(test_ids)} "
+              f"en {elapsed:.1f}s")
+
+        if failures:
+            print()
+            for test_id, detail in failures:
+                print(f"--- FALLO: {test_id} ---")
+                print(detail.rstrip())
+            return 1
+        return 0
+    finally:
+        shutil.rmtree(base_tmp, ignore_errors=True)
 
 
 if __name__ == "__main__":

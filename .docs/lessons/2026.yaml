@@ -543,6 +543,14 @@
   fase: "Verificacion"
   categoria: "Proceso"
   problema: "En dos ocasiones (rondas 40 y 41) el re-stage de un documento ya en stage durante la verificacion dejo un blob inalcanzable y el check 'sin objetos huerfanos (git fsck --unreachable)' del hook bloqueo el commit; hacia falta un gc --prune=now manual cada vez. Ademas, el git del equipo esta en espanol ('inalcanzable blob'), lo que rompio el primer filtro del endurecimiento (cazado por la sonda P1.1)."
-  recomendacion: "Distinguir residuo inerte de historia huerfana: el check ignora blobs inalcanzables (se autopurgan; nunca se empujan) y falla con commits/trees/tags huerfanos; forzar LC_ALL=C y filtrar por tipo (segundo token), no por palabra en ingles; cubrirlo con test de dos casos (blob tolerado / commit huerfano falla)."
+  recomendacion: "Distinguir residuo inerte de historia huerfana: el check ignora blobs y trees inalcanzables (subproductos normales de staging y de commits abortados; git los autopurga y nunca se empujan) y falla con commits/tags huerfanos; forzar LC_ALL=C y filtrar por tipo (segundo token), no por palabra en ingles; cubrirlo con test de tres casos (blob y tree tolerados / commit huerfano falla)."
+  estado: Resuelta
+  fecha: 2026-10-03
+- id: LSN-063
+  proyecto: "better-project"
+  fase: "Testing"
+  categoria: "Riesgo_Tecnico"
+  problema: "El hook pre-commit fallo la suite con /tmp al 100% (0 libre): la suite (y las corridas repetidas del verificador/ci.sh) habia acumulado 51.733 directorios de temporales de test (~32 GB) por decenas de tempfile.mkdtemp() sin limpieza, con copias de integracion de ~672 MB por corrida (incluian .local/). Minutos antes, la misma suite habia pasado en verde: el fallo era de entorno, no de codigo."
+  recomendacion: "Aislar TMPDIR por corrida de tests y limpiarlo al final (run_tests_isolated.py y pytest via conftest.py), usar addCleanup(shutil.rmtree) en los tests con mkdtemp y excluir .local/caches de las copias de integracion; comprobar df -h ante tests verdes que fallan de golpe (OSError de temporales)."
   estado: Resuelta
   fecha: 2026-10-03
