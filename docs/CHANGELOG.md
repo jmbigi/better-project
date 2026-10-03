@@ -63,6 +63,10 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
   evidencia por leccion, y 2 lecciones nuevas: LSN-060 (los KPIs `n/d`
   ocultaban que `ci.sh` nunca completaba) y LSN-061 (salida no determinista de
   strictdoc) (2026-10-03).
+- Check `git fsck` (hook pre-commit): ignora blobs inalcanzables (residuo de
+  re-stage; git los autopurga y nunca se empujan) y falla solo con
+  commits/trees/tags huerfanos; `LC_ALL=C` y filtro por tipo, con test de dos
+  casos (LSN-062).
 - Check `YAML valido (workflows, pre-commit, lecciones, vale)` en ambos
   verificadores (paridad; PyYAML opcional, LSN-048 resuelta).
 - Sonda `--repro` de `scripts/strictdoc_export.py`: dos exports normalizados y

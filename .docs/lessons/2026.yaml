@@ -538,3 +538,11 @@
   recomendacion: "Para estabilizar artefactos generados: normalizar explicitamente (mapeo determinista de ids por orden de aparicion, re-serializacion canonica del JSON), publicar solo el arbol final (sin caches con rutas absolutas) y verificar con dos exports + sha256 (--repro). Para extraer un JSON embebido en un texto mayor, usar json.JSONDecoder().raw_decode en vez de recortar por el ultimo ';'."
   estado: Resuelta
   fecha: 2026-10-03
+- id: LSN-062
+  proyecto: "better-project"
+  fase: "Verificacion"
+  categoria: "Proceso"
+  problema: "En dos ocasiones (rondas 40 y 41) el re-stage de un documento ya en stage durante la verificacion dejo un blob inalcanzable y el check 'sin objetos huerfanos (git fsck --unreachable)' del hook bloqueo el commit; hacia falta un gc --prune=now manual cada vez. Ademas, el git del equipo esta en espanol ('inalcanzable blob'), lo que rompio el primer filtro del endurecimiento (cazado por la sonda P1.1)."
+  recomendacion: "Distinguir residuo inerte de historia huerfana: el check ignora blobs inalcanzables (se autopurgan; nunca se empujan) y falla con commits/trees/tags huerfanos; forzar LC_ALL=C y filtrar por tipo (segundo token), no por palabra en ingles; cubrirlo con test de dos casos (blob tolerado / commit huerfano falla)."
+  estado: Resuelta
+  fecha: 2026-10-03

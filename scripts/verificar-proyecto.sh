@@ -470,7 +470,10 @@ otel_start_span "verificar.repositorio"
 echo "== 5. Repositorio =="
 check "hook pre-commit instalado identico al script" bash -c "cmp -s scripts/hooks/pre-commit .git/hooks/pre-commit"
 check "hook commit-msg instalado identico al script" bash -c "cmp -s scripts/hooks/commit-msg .git/hooks/commit-msg"
-check "sin objetos huerfanos en git (fsck)" bash -c "test -z \"\$(git fsck --unreachable 2>&1)\""
+# LSN-062: los blobs inalcanzables son residuo normal del re-stage iterativo
+# (git los autopurga; nunca se empujan); el check falla solo con commits,
+# trees o tags huerfanos, que si delatan operaciones de historia.
+check "sin objetos huerfanos en git (fsck; blobs excluidos)" bash -c "test -z \"\$(LC_ALL=C git fsck --unreachable 2>&1 | grep -vE '^[^ ]+ blob ')\""
 if [ "$PRE_COMMIT_MODE" = "true" ]; then
     check "sin cambios sin stagear (solo staged permitido)" bash -c "test -z \"\$(git status --porcelain | grep '^ [^ ]')\""
     check "rama main sincronizada con origin" bash -c "test -z \"\$(git status --porcelain --branch | grep -E 'adelant|ahead|behind|adelanta')\""

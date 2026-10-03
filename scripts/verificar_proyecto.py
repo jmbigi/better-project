@@ -60,8 +60,8 @@ def check(desc: str, fn) -> None:
         _TIEMPOS.append((desc, time.perf_counter() - t0))
 
 
-def run_cmd(cmd: list[str], cwd: Path = ROOT) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+def run_cmd(cmd: list[str], cwd: Path = ROOT, env: dict[str, str] | None = None) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
 
 
 def check_ruff() -> None:
@@ -619,9 +619,20 @@ def _check_hook_installed(name: str) -> bool:
     return hook_script.read_bytes() == hook_installed.read_bytes()
 
 
-def _check_git_fsck() -> bool:
-    result = run_cmd(["git", "fsck", "--unreachable"])
-    return result.returncode == 0 and not result.stdout.strip()
+def _check_git_fsck(cwd: Path = ROOT) -> bool:
+    # LSN-062: se ignoran blobs inalcanzables (residuo normal de re-stage;
+    # git los autopurga y nunca se empujan); commits/trees/tags huerfanos si
+    # fallan (delatan operaciones de historia). LC_ALL=C fija el idioma de la
+    # salida y el filtro compara por tipo (2do token), no por palabra inglesa.
+    result = run_cmd(
+        ["git", "fsck", "--unreachable"], cwd=cwd,
+        env={**os.environ, "LC_ALL": "C"},
+    )
+    lineas = [
+        linea for linea in (result.stdout + result.stderr).splitlines()
+        if not re.match(r"^\S+ blob ", linea.strip())
+    ]
+    return result.returncode == 0 and not lineas
 
 
 def _check_no_unstaged() -> bool:
@@ -726,7 +737,7 @@ def main():
     print("== 5. Repositorio ==")
     check("hook pre-commit instalado identico al script", lambda: _check_hook_installed("pre-commit"))
     check("hook commit-msg instalado identico al script", lambda: _check_hook_installed("commit-msg"))
-    check("sin objetos huerfanos en git (fsck)", _check_git_fsck)
+    check("sin objetos huerfanos en git (fsck; blobs excluidos)", _check_git_fsck)
     if args.pre_commit:
         check("sin cambios sin stagear (solo staged permitido)", _check_no_unstaged)
         check("rama main sincronizada con origin", _check_main_synced)

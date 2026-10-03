@@ -433,5 +433,47 @@ class TestHealthDashboard(unittest.TestCase):
         self.assertAlmostEqual(pct, 200.0 / 3, places=4)
 
 
+class TestGitFsck(unittest.TestCase):
+    """LSN-062: el check de fsck tolera blobs inalcanzables (residuo de
+    re-stage) pero falla con commits/trees huerfanos."""
+
+    def _repo(self, tmp: str) -> Path:
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "dummy@example.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "dummy"], cwd=repo, check=True)
+        (repo / "a.txt").write_text("hola", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-qm", "c"], cwd=repo, check=True)
+        return repo
+
+    def test_blob_innalcanzable_es_tolerado(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self._repo(tmp)
+            subprocess.run(
+                ["git", "hash-object", "-w", "--stdin"], cwd=repo,
+                input="contenido huerfano", text=True, check=True, capture_output=True,
+            )
+            self.assertTrue(vpy._check_git_fsck(repo))
+
+    def test_commit_huerfano_es_fallo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self._repo(tmp)
+            tree = subprocess.run(
+                ["git", "write-tree"], cwd=repo, capture_output=True, text=True, check=True,
+            ).stdout.strip()
+            env = {
+                **os.environ,
+                "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "dummy@example.com",
+                "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "dummy@example.com",
+            }
+            subprocess.run(
+                ["git", "commit-tree", tree, "-m", "huerfano"], cwd=repo,
+                check=True, capture_output=True, env=env,
+            )
+            self.assertFalse(vpy._check_git_fsck(repo))
+
+
 if __name__ == "__main__":
     unittest.main()
