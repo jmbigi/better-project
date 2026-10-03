@@ -301,7 +301,8 @@ herramientas; los agentes las consumen vía MCP (ver `scripts/mcp_server.py`).
   referencias en código) sin instalar strictdoc. La export HTML es capa
   opcional aislada (REQ-032, ADR-011): `bash scripts/setup_strictdoc.sh` la
   instala (venv con hashes) y `python scripts/strictdoc_export.py` exporta
-  (`--check`/`--smoke`); el verificador la sondea con `[SKIP]` si no está.
+  (`--check`/`--smoke`/`--repro`); el verificador la sondea con `[SKIP]` si no
+  está.
 - `python scripts/probar_policies.py {provider|bash|all}` — sonda de
   comportamiento de los guardarraíles de opencode en runtime (REQ-031);
   ejecución MANUAL por coste de tokens (P0.19); 7 tests con runner mockeado.

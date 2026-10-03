@@ -324,6 +324,7 @@ trazabilidad.
 bash scripts/setup_strictdoc.sh              # instala la capa (venv aislado, hashes)
 python3 scripts/strictdoc_export.py          # HTML en .docs/.storage/strictdoc-html/
 python3 scripts/strictdoc_export.py --smoke  # sonda E2E (la usa el verificador)
+python3 scripts/strictdoc_export.py --repro  # 2 exports + sha256 (reproducibilidad)
 
 bash scripts/setup.sh    # instala el lock con --require-hashes, tras doble confirmacion
 ```

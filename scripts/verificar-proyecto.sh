@@ -149,12 +149,12 @@ tools = [k for k, v in mcp.items() if v.get('enabled', True)]
 assert len(tools) == 4, f'tools MCP habilitados = {len(tools)}: {tools}'
 assert set(tools) == {'context7', 'gh_grep', 'sentry', 'better-project'}, tools
 "
-    check "rondas PRUEBAS.md = 37 (coherente en todo el doc)" python3 -c "
+    check "rondas PRUEBAS.md = 38 (coherente en todo el doc)" python3 -c "
 import re
 txt = open('docs/PRUEBAS.md').read()
 rondas = set(int(m) for m in re.findall(r'Ronda (\\d+)', txt))
-assert max(rondas) == 40, f'rondas max = {max(rondas)}, esperado 40'
-assert len(rondas) == 37, f'rondas únicas = {len(rondas)}, esperado 37 (faltan 32, 33, 34)'
+assert max(rondas) == 41, f'rondas max = {max(rondas)}, esperado 41'
+assert len(rondas) == 38, f'rondas únicas = {len(rondas)}, esperado 38 (faltan 32, 33, 34)'
 "
 fi
 otel_end_span "verificar.reglas"
@@ -220,6 +220,27 @@ assert '\"maxSteps\"' not in t, 'init.sh aun usa maxSteps (deprecado)'
 assert '\"seed\"' not in t, 'init.sh aun usa seed (no nativo)'
 assert t.count('\"steps\"') == 3, 'init.sh debe definir steps en build, plan y audit'
 "
+# LSN-048: todo YAML se valida con un parser antes de commitear (pyyaml
+# opcional: sin el, el check se omite, mismo patron que ruff/syft).
+if python3 -c 'import yaml' >/dev/null 2>&1; then
+    check "YAML valido (workflows, pre-commit, lecciones, vale)" python3 -c "
+import glob
+from pathlib import Path
+import yaml
+rutas = sorted(
+    glob.glob('.github/workflows/*.yml') + glob.glob('.github/workflows/*.yaml')
+    + glob.glob('.docs/lessons/*.yaml') + glob.glob('demo/.docs/lessons/*.yaml')
+    + glob.glob('.vale/styles/*/*.yml') + glob.glob('.vale/styles/*/*.yaml')
+    + ['.pre-commit-config.yaml']
+)
+rutas = [r for r in rutas if Path(r).exists()]
+assert rutas, 'sin YAML que validar'
+for ruta in rutas:
+    yaml.safe_load(Path(ruta).read_text(encoding='utf-8'))
+"
+else
+    echo "  [SKIP] YAML valido (PyYAML no instalado)"
+fi
 if [ "$LITE_MODE" = "false" ]; then
     check "conteos de patrones en README coherentes con la config" python3 -c "
 import json, re
@@ -312,7 +333,7 @@ pat_home = re.compile(r'/home/[A-Za-z0-9_.-]+/')
 excl = re.compile(r'(deny|patrones|claves SSH|no leas|comitees|dummy|BLOQUEADO|127\.0\.0\.1)')
 faltas = []
 for root, dirs, files in os.walk('.'):
-    dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '__pycache__', '.venv', '.venv-audit', 'venv', '.storage', '.local', 'sbom')]
+    dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules', '__pycache__', '.venv', '.venv-audit', 'venv', '.storage', '.local', 'sbom', '.mypy_cache', '.pytest_cache', '.ruff_cache', '.benchmarks')]
     for f in files:
         if not f.endswith(('.md', '.json', '.sh')):
             continue
@@ -336,8 +357,8 @@ for root, dirs, files in os.walk('.'):
                     faltas.append((ruta, i, 'IP: ' + m))
 assert not faltas, faltas
 "
-check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage --exclude-dir=.local --exclude-dir=sbom --exclude-dir=.venv-audit '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example|SBOM-|security@better-project\.local)'"
-check "sin formatos de claves API en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage --exclude-dir=.local --exclude-dir=sbom --exclude-dir=.venv-audit '(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/'"
+check "sin emails personales en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage --exclude-dir=.local --exclude-dir=sbom --exclude-dir=.venv-audit --exclude-dir=.mypy_cache --exclude-dir=.pytest_cache --exclude-dir=.ruff_cache --exclude-dir=.benchmarks '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/' | grep -qvE '(youremail@example|creativecommons|dummy@example|SBOM-|security@better-project\.local)'"
+check "sin formatos de claves API en archivos" bash -c "! grep -rnE --exclude-dir=node_modules --exclude-dir=__pycache__ --exclude-dir=.venv --exclude-dir=venv --exclude-dir=.storage --exclude-dir=.local --exclude-dir=sbom --exclude-dir=.venv-audit --exclude-dir=.mypy_cache --exclude-dir=.pytest_cache --exclude-dir=.ruff_cache --exclude-dir=.benchmarks '(sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{36,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{20,}|xox[baprs]-[0-9A-Za-z-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' --include='*.md' --include='*.json' --include='*.sh' . | grep -v '\\.git/'"
 # El unico 'eval'/'exec' esperado en scripts es el patron de este check en
 # verificar-proyecto.sh; el hook pre-commit no debe contener eval/exec.
 check "sin eval/exec en scripts" python3 -c "

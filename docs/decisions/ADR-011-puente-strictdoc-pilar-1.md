@@ -94,8 +94,11 @@ procedimiento manual a capa reproducible, sin cambiar la decision:
   remediacion del bootstrap documentada (pip 24.0/setuptools 65.5.0 vs pip
   26.2.1/setuptools 84.0.0; LSN-059).
 - `scripts/strictdoc_export.py`: runner stdlib con `--check` (version == pin
-  0.30.1) y `--smoke` (export E2E a temporal); el export real del dogfood tarda
-  2.08 s y produce 5 HTML (17 MB) con SDOC-001 y Mermaid (PRUEBAS ronda 40).
+  0.30.1), `--smoke` (export E2E a temporal) y `--repro` (dos exports +
+  comparacion sha256); la salida se normaliza (UUIDs/timestamp/orden del indice
+  de busqueda) y se publica solo `html/`. El export real del dogfood tarda
+  ~2.9 s y produce 5 HTML (17 MB) con SDOC-001 y Mermaid; `--repro` verifica
+  102 archivos identicos en 2 corridas (PRUEBAS ronda 41).
 - El verificador (bash y Python) añade el check opcional "export HTML StrictDoc
   (sonda E2E)" con `[SKIP]` si la capa no esta instalada.
 

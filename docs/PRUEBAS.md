@@ -655,3 +655,26 @@ blob inalcanzable transitorio (`git fsck`); se limpió con `git gc --prune=now`
 (autorizado por el programador) antes del commit. La verificación final del
 estado commiteado la ejecuta el propio hook pre-commit.
 
+## Ronda 41 — Mejoras de cierre: lecciones, CI medido, split de tests y strictdoc reproducible (03-10-2026)
+
+Orden del programador ("Hacer"): medir los 2 KPIs con `ci.sh`, cerrar las 11
+lecciones abiertas, corregir `SECURITY.md`, normalizar la salida de strictdoc
+y partir el monolito de tests.
+
+| # | Prueba | Resultado |
+|---|---|---|
+| 178 | **Cierre de las 11 lecciones abiertas**, verificando el remedio una a una: 045 (edición OWASP anotada en 4 refs), 046 (MCP async con PID+guarda), 047 (artifacts de CI producidos por el pipeline), 048 (check YAML nuevo, prueba 179), 049 (`--root` + demo + adopción), 050 (allow-list ollama en ambos verificadores), 051 (sonda REQ-031 + red-team runtime re-ejecutado en ronda 37), 052 (rúbrica normalizada), 053 (ALCANCE nombra backends), 054 (guard anti-zombie), 056 (mitigación institucionalizada: sonda + regla de texto + credenciales mínimas) | ✅ `lessons_extractor --check`: 61 lecciones, 0 errores, **0 abiertas**; diagnóstico sin sugerencias de cierre |
+| 179 | **Check YAML (LSN-048) en ambos verificadores (paridad)**: valida workflows, `.pre-commit-config.yaml`, lecciones y estilos vale; PyYAML opcional | ✅ [OK] en corrida local; [SKIP] sin PyYAML (patrón ruff/syft) |
+| 180 | **Split del monolito** `tests/test_ecosistema.py` (5126 LOC) → 6 módulos temáticos + `test_ecosistema` (integración del hook); consumidores actualizados (targets de mutación, IDs de coverage, `auto_audit` ampliado a todos los módulos); 7 patrones `assertEqual(f(x), f(x))` de determinismo reescritos con variable intermedia | ✅ 555 tests descubiertos (mismo total); imports y ruff OK; `auto_audit tests` 0 errores |
+| 181 | **Salida de strictdoc reproducible**: export a temporal + normalización (UUIDs→mapeo determinista por orden de aparición, timestamp→0, `static_html_search_index.js` re-serializado con `raw_decode` + claves/valores ordenados) + publicación solo de `html/`; sonda nueva `--repro` | ✅ `--repro`: **102 archivos, sha256 idéntico en 2 exports**; `tests/test_strictdoc_export.py` 20/20 |
+| 182 | **Coherencia y CI local**: `SECURITY.md` sin etiquetas inexistentes; error latente de mypy corregido (`CompletedProcess[str]` en `test_portabilidad.py`); launcher local `~/.local/bin/mypy` roto → medición con `python3 -m mypy` (shim temporal) | ✅ `mypy --config-file mypy.ini tests/`: 0 errores en 12 archivos |
+| 183 | **KPIs 1 y 4 medidos** con `bash scripts/ci.sh` sobre un clon simulado en /tmp (rsync sin caches; `git init`+commit; shim de mypy; mismo pipeline) — no se midió sobre el HEAD real porque su error latente de mypy se corrigió en el árbol de trabajo | ✅ CI local **VERDE**: onboarding **144 s** (≤600), CI **355 s** (≤1800), coverage 90.78 % (gate 85 %), mutación 1.0, suite 553 OK; `docs/health.md` con los 5 KPIs en OK |
+| 184 | **Verificación final real** (estado staged, sin commit, P0.7): `bash scripts/verificar-proyecto.sh --pre-commit` | ✅ **58 OK, 0 FALLOS** (incluye check YAML nuevo, rondas = 38 y sonda E2E de strictdoc) |
+
+**Hallazgos**: LSN-060 (un KPI `n/d` persistente ocultaba que `ci.sh` nunca
+completaba: error mypy latente + launcher roto; ejecutar el pipeline completo
+periódicamente) y LSN-061 (strictdoc no era reproducible bit a bit: UUIDs,
+timestamp y orden de dict/valores; normalización + `--repro`, con
+`json.JSONDecoder().raw_decode` para el JSON embebido).
+
+

@@ -93,6 +93,37 @@ def check_strictdoc_export() -> None:
         print("  [SKIP] export HTML StrictDoc (capa no instalada; scripts/setup_strictdoc.sh)")
 
 
+def check_yaml() -> None:
+    # LSN-048: todo YAML se valida con un parser antes de commitear (pyyaml
+    # opcional: sin el, el check se omite; paridad con el verificador bash).
+    try:
+        import yaml  # noqa: F401
+    except ImportError:
+        print("  [SKIP] YAML valido (PyYAML no instalado)")
+        return
+    check("YAML valido (workflows, pre-commit, lecciones, vale)", _check_yaml_files)
+
+
+def _check_yaml_files() -> bool:
+    import glob
+    import yaml
+    rutas = sorted(
+        glob.glob(str(ROOT / ".github" / "workflows" / "*.yml"))
+        + glob.glob(str(ROOT / ".github" / "workflows" / "*.yaml"))
+        + glob.glob(str(ROOT / ".docs" / "lessons" / "*.yaml"))
+        + glob.glob(str(ROOT / "demo" / ".docs" / "lessons" / "*.yaml"))
+        + glob.glob(str(ROOT / ".vale" / "styles" / "*" / "*.yml"))
+        + glob.glob(str(ROOT / ".vale" / "styles" / "*" / "*.yaml"))
+        + [str(ROOT / ".pre-commit-config.yaml")]
+    )
+    rutas = [ruta for ruta in rutas if Path(ruta).exists()]
+    if not rutas:
+        return False
+    for ruta in rutas:
+        yaml.safe_load(Path(ruta).read_text(encoding="utf-8"))
+    return True
+
+
 # == 1. Reglas ==
 def _check_p0_rules() -> bool:
     return len(re.findall(r"^### P0\.", (ROOT / "AGENTS.md").read_text(encoding="utf-8"), re.M)) == 20
@@ -193,7 +224,7 @@ def _check_mcp_tools() -> bool:
 def _check_pruebas_rondas() -> bool:
     txt = (ROOT / "docs/PRUEBAS.md").read_text(encoding="utf-8")
     rondas = set(int(m) for m in re.findall(r"Ronda (\d+)", txt))
-    return max(rondas) == 40 and len(rondas) == 37
+    return max(rondas) == 41 and len(rondas) == 38
 
 
 # == 2. Config ==
@@ -329,7 +360,7 @@ def _source_files() -> list[Path]:
     if result.returncode == 0:
         rutas = [ROOT / linea for linea in result.stdout.splitlines() if linea.strip()]
     else:
-        excl_dirs = (".git", "node_modules", "__pycache__", ".venv", ".venv-audit", "venv", ".storage", ".local", "sbom")
+        excl_dirs = (".git", "node_modules", "__pycache__", ".venv", ".venv-audit", "venv", ".storage", ".local", "sbom", ".mypy_cache", ".pytest_cache", ".ruff_cache", ".benchmarks")
         rutas = []
         for root, dirs, files in os.walk(ROOT):
             dirs[:] = [d for d in dirs if d not in excl_dirs]
@@ -546,11 +577,14 @@ def _check_coverage() -> bool:
         sys.executable, "-m", "coverage", "run",
         "--source=scripts",
         "-m", "unittest",
-        "tests.test_ecosistema.TestDocValidator",
-        "tests.test_ecosistema.TestIndexKnowledge",
-        "tests.test_ecosistema.TestMCPServer",
-        "tests.test_ecosistema.TestLessonsExtractor",
-        "tests.test_ecosistema.TestTyDMLlama",
+        "tests.test_pilares.TestDocValidator",
+        "tests.test_pilares.TestIndexKnowledge",
+        "tests.test_mcp_tui.TestMCPServer",
+        "tests.test_pilares.TestLessonsExtractor",
+        "tests.test_tydm.TestTyDMLlama",
+        "tests.test_cadena_suministro.TestAuditAdvisories",
+        "tests.test_portabilidad.TestPortableVerifier",
+        "tests.test_verificador.TestProbarPolicies",
         "-q"
     ])
     if result.returncode != 0:
@@ -640,7 +674,7 @@ def main():
         check("conteo total reglas P0+P1+P2 = 62 (20 P0 + 37 P1 + 5 P2)", _check_total_reglas)
         check("README no dice '50 reglas P0/P1/P2' (son 61 reglas, 50 errores)", _check_readme_no_50_reglas)
         check("tools MCP habilitados = 4 (context7, gh_grep, sentry, better-project)", _check_mcp_tools)
-        check("rondas PRUEBAS.md = 37 (coherente en todo el doc)", _check_pruebas_rondas)
+        check("rondas PRUEBAS.md = 38 (coherente en todo el doc)", _check_pruebas_rondas)
 
     print("== 2. Config ==")
     check("kilo.json es JSON valido", lambda: json.loads((ROOT / "kilo.json").read_text(encoding="utf-8")))
@@ -652,6 +686,7 @@ def main():
     check("experimental.policies en opencode.json: deny all + allow opencode, opencode-go, kilo, deepseek, ollama", _check_opencode_policies)
     check("agente determinista: temperature/top_p/steps (sin seed ni maxSteps deprecado)", _check_deterministic_agent)
     check("init.sh genera perfiles con steps (sin seed ni maxSteps)", _check_init_sh)
+    check_yaml()
     if not args.lite:
         check("conteos de patrones en README coherentes con la config", _check_readme_patterns)
         check("edit/read bloquean .env y permiten .env.example", _check_env_patterns)

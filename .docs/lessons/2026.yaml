@@ -408,7 +408,7 @@
   categoria: "Proceso"
   problema: "El mapeo OWASP del proyecto parecia desactualizado: la web genai.owasp.org muestra el Top 10 2025, mientras el repo cita la edicion 2026. Se estuvo a punto de \"corregir\" el mapeo a 2025, pero la URL citada (GenAI-Security-Project/GenAI-LLM-Top10/2026/final) existe y contiene la edicion 2026 con los mismos nombres usados por el proyecto (LLM03 Excessive Agency, LLM07 Misinformation, LLM08 Hidden Context Exposure)."
   recomendacion: "Antes de declarar desactualizada una fuente citada, verificar la URL exacta que cita el proyecto, no solo la pagina principal del organismo. Al citar taxonomias con numeracion versionada, anotar siempre la edicion (2025 vs 2026) para evitar ambiguedad."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-26
 - id: LSN-046
   proyecto: "better-project"
@@ -416,7 +416,7 @@
   categoria: "Riesgo_Tecnico"
   problema: "La herramienta MCP run_verification era sincrona con timeout de 300 s, menor que los ~357 s medidos de la verificacion completa: toda llamada fallaba siempre (el cliente devolvio -32001 Request timed out) y el agente no podia verificar el repo via MCP."
   recomendacion: "Ejecutar verificaciones largas en segundo plano (P1.34) devolviendo PID y ruta de log, con guarda de no duplicacion; cubrir el camino async con tests que mockeen Popen y no ejecuten la suite real."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-26
 - id: LSN-047
   proyecto: "better-project"
@@ -424,7 +424,7 @@
   categoria: "Proceso"
   problema: "La documentacion decia \"No se usa GitHub Actions\" mientras .github/workflows/ci.yml esta versionado, y ese workflow subia como artefacto .docs/.storage/tydm_review.json, un archivo que audit_advisories.py nunca genera (artefacto roto silencioso)."
   recomendacion: "Definir la politica en terminos verificables (\"sin cuenta, sin pagos; verificacion local como fuente de verdad\") en vez de prohibiciones absolutas que el repo contradice; validar que los artefactos de CI apunten a rutas que el pipeline realmente produce."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-26
 - id: LSN-048
   proyecto: "better-project"
@@ -432,7 +432,7 @@
   categoria: "Riesgo_Tecnico"
   problema: "Al editar .github/workflows/ci.yml, un ':' dentro de un valor sin comillas (name: Install syft (Linux: pin + SHA256, P0.18)) rompia el parseo YAML: ScannerError 'mapping values are not allowed here'. El archivo se habria subido roto al remoto sin ejecutar la verificacion local (que no parsea YAML)."
   recomendacion: "Validar todo YAML editado con un parser antes de commitear (python3 -c \"import yaml; yaml.safe_load(open(ruta))\") y citar los valores que contienen ':' u otros caracteres especiales."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-26
 - id: LSN-049
   proyecto: "better-project"
@@ -440,7 +440,7 @@
   categoria: "Riesgo_Tecnico"
   problema: "Copiar los validadores a scripts/tools/ del proyecto adoptado rompia su resolucion de raiz (ROOT = parent.parent = scripts/, no la raiz del proyecto): doc_validator buscaba .docs/ en el lugar equivocado, lessons_extractor validaba 0 lecciones y el verificador reportaba FALLO de trazabilidad con referencias del propio tooling."
   recomendacion: "Al copiar tooling portable, reutilizar el layout del framework (scripts/<tool>.py) para que cada modulo resuelva su raiz como parent.parent; excluir el tooling copiado del escaneo con --ignore explicito y verificar con un E2E en directorio temporal antes de entregar."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-26
 - id: LSN-050
   proyecto: "better-project"
@@ -448,7 +448,7 @@
   categoria: "Seguridad"
   problema: "Auditoria externa (2026-09-27): AGENTS.md documenta la excepcion de modelos locales gratuitos (matriz de pruebas P0/P1, 6 modelos ollama medidos el 2026-09-07) pero experimental.policies de opencode.json/kilo.json no incluia el proveedor ollama: el texto permitia lo que la config determinista bloqueaba (contradiccion P1.10). El verificador solo comprobaba la lista esperada, que tambien omitia ollama."
   recomendacion: "Cada excepcion documentada en las reglas debe tener contrapartida en la config determinista y un check del verificador (bash y Python) que la valide. Al portar reglas entre repos (better-ai -> better-project) revisar el texto que respalda cada entrada de la allow-list antes de eliminarla."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-27
 - id: LSN-051
   proyecto: "better-project"
@@ -456,7 +456,7 @@
   categoria: "Seguridad"
   problema: "Auditoria externa (2026-09-27): experimental.policies (deny all + allow list de proveedores) solo se valida estructuralmente (presencia y contenido de la lista); no existe test de comportamiento que confirme que un proveedor no permitido queda bloqueado en runtime. Tampoco hay prueba local del red-team de los 304 patrones bash: la evidencia de PRUEBAS.md es heredada de better-ai y no re-ejecutada en este repo."
   recomendacion: "Anadir un test de integracion aislado que lance opencode con config minima y verifique que un proveedor fuera de la allow-list es rechazado (prototipar aislado P1.21; puede requerir red/cuota). Mientras tanto, declarar explicitamente en PRUEBAS.md que la evidencia de red-team de denies es heredada hasta re-ejecutarla aqui."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-27
 - id: LSN-052
   proyecto: "better-project"
@@ -464,7 +464,7 @@
   categoria: "Proceso"
   problema: "Auditoria externa (2026-09-27): .docs/rubric-evaluacion.md declaraba \"Peso total: 100%\" pero los pesos por categoria suman 110 (15+20+15+10+15+20+10+5); cualquier nota global calculada quedaba ambigua (normalizada o no)."
   recomendacion: "Verificar la aritmetica de las rubricas con un calculo reproducible (suma de pesos) antes de publicar un score, y declarar la normalizacion explicitamente en el documento."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-27
 - id: LSN-053
   proyecto: "better-project"
@@ -472,7 +472,7 @@
   categoria: "Proceso"
   problema: "Auditoria externa (2026-09-27): docs/ALCANCE.md afirmaba \"MDT es experimental (accuracy 0.646)\" mientras README y docs/TDM-COMPETITIVO.md reportan 0.802 para el backend fast: 0.646 es el backend llama (Qwen3.5-4B). Una cifra unica sin nombrar el motor confundia ambos backends."
   recomendacion: "Al citar metricas de un sistema con multiples backends, nombrar el backend y el set de evaluacion junto a la cifra (p. ej. \"fast: 0.802 en set v18; llama: 0.646\")."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-27
 - id: LSN-054
   proyecto: "better-project"
@@ -480,7 +480,7 @@
   categoria: "Riesgo_Tecnico"
   problema: "Al cerrar la auditoria externa (2026-09-27), la verificacion lanzada via MCP quedo como proceso zombie (su padre no recolectaba al hijo) y os.kill(pid, 0) seguia respondiendo: el guard de idempotencia de run_verification bloqueaba nuevas verificaciones (\"ya habia una verificacion en curso\" con un PID <defunct>/Z)."
   recomendacion: "Tratar un proceso en estado Z/X como no activo: en el guard comprobar /proc/<pid>/stat y recolectar con waitpid(WNOHANG) si es hijo propio; ademas lanzar un hilo demonio proc.wait() tras Popen para no dejar zombies. Cubrir con un test que cree un hijo no recolectado y verifique que el guard lo ignora y recolecta."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-09-27
 - id: LSN-055
   proyecto: "better-project"
@@ -496,7 +496,7 @@
   categoria: "Seguridad"
   problema: "La sonda de runtime REQ-031 (2026-10-01, opencode 1.18.32) evidencio que experimental.policies NO impide usar un proveedor denegado: con deny provider.use * (aislado a nivel proyecto y tambien a nivel global) deepseek/deepseek-flash respondio igualmente (pruebas 146-148). El mismo red-team confirmo que permission.bash SI se cumple: rm -rf sobre un temporal fue bloqueado por la regla deny y el directorio sobrevivio (prueba 149)."
   recomendacion: "No fiar la seguridad a un guardarrail solo verificado estaticamente: cada control critico necesita su sonda de comportamiento en runtime (scripts/probar_policies.py, ejecucion manual por coste de tokens). Mientras opencode no haga cumplir policies, la restriccion de proveedores se apoya en credenciales minimas y en la regla de texto; re-probar tras cada actualizacion de opencode."
-  estado: Abierta
+  estado: Resuelta
   fecha: 2026-10-01
 - id: LSN-057
   proyecto: "better-project"
@@ -520,5 +520,21 @@
   categoria: "Seguridad"
   problema: "Al incorporar la capa de export StrictDoc (2026-10-03), python3 -m venv bootstrapeo pip 24.0 y setuptools 65.5.0 del sistema; pip-audit --path bloqueo la instalacion con 10 advisories en esos 2 paquetes (no en strictdoc ni su arbol, limpio desde la ronda 38)."
   recomendacion: "Auditar el entorno virtual COMPLETO (bootstrap de pip/setuptools incluido), no solo las dependencias de la aplicacion; ante advisories, actualizar pip/setuptools a versiones con parche y re-auditar hasta 0 antes de usar (P0.18), codificando la remediacion en el instalador (scripts/setup_strictdoc.sh)."
+  estado: Resuelta
+  fecha: 2026-10-03
+- id: LSN-060
+  proyecto: "better-project"
+  fase: "Verificacion"
+  categoria: "Proceso"
+  problema: "La medicion de KPIs (2026-10-03) destapo que scripts/ci.sh nunca completaba en este equipo: mypy --strict fallaba por un parametro de tipo faltante en tests (latente, no cubierto por el hook pre-commit) y el launcher ~/.local/bin/mypy estaba roto (shebang a un python sin el modulo). Los KPIs 'n/d' de docs/health.md llevaban dias ocultando ambos fallos."
+  recomendacion: "Un KPI 'n/d' persistente es una senal de fallo no investigada: ejecutar el pipeline completo (scripts/ci.sh) periodicamente, no solo el hook pre-commit; arreglar las herramientas del entorno (o invocar python -m X) antes de medir y registrar la metodologia de la medicion."
+  estado: Resuelta
+  fecha: 2026-10-03
+- id: LSN-061
+  proyecto: "better-project"
+  fase: "Implementacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "La salida de strictdoc 0.30.1 no era reproducible bit a bit (sondeo 2026-10-03): UUIDs aleatorios por nodo (data-nodeid, turbo-frame, _LINK), timestamp del indice de busqueda y orden no determinista del dict/valores de static_html_search_index.js. Un primer intento de normalizacion quedo inerte en silencio porque el parseo del indice usaba rfind(';') sobre el resto del archivo y json.loads fallaba (el archivo lleva mas JS tras el objeto)."
+  recomendacion: "Para estabilizar artefactos generados: normalizar explicitamente (mapeo determinista de ids por orden de aparicion, re-serializacion canonica del JSON), publicar solo el arbol final (sin caches con rutas absolutas) y verificar con dos exports + sha256 (--repro). Para extraer un JSON embebido en un texto mayor, usar json.JSONDecoder().raw_decode en vez de recortar por el ultimo ';'."
   estado: Resuelta
   fecha: 2026-10-03

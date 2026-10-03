@@ -34,7 +34,7 @@ DOCS_DIR = ROOT / "docs"
 REQ_DIR = ROOT / ".docs" / "requirements"
 ADR_DIR = ROOT / "docs" / "decisions"
 SCRIPTS_DIR = ROOT / "scripts"
-TEST_FILE = ROOT / "tests" / "test_ecosistema.py"
+TESTS_DIR = ROOT / "tests"
 
 DOCS_SESGOS = (
     ROOT / "README.md",
@@ -254,20 +254,24 @@ def _tautologia(node: ast.AST) -> str | None:
     return None
 
 
-def auditar_tests(test_file: Path = TEST_FILE, scripts_dir: Path = SCRIPTS_DIR) -> tuple[list[str], list[str]]:
+def auditar_tests(test_file: Path | None = None, scripts_dir: Path = SCRIPTS_DIR) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
-    tree = ast.parse(Path(test_file).read_text(encoding="utf-8"))
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.FunctionDef) or not node.name.startswith("test_"):
-            continue
-        aserciones = [n for n in ast.walk(node) if _es_asercion(n)]
-        if not aserciones:
-            warnings.append(f"{node.name}: test sin asercion (P1.1)")
-        for n in aserciones:
-            taut = _tautologia(n)
-            if taut:
-                errors.append(f"{node.name}: asercion tautologica {taut} (P1.1)")
+    # Sin ruta explicita se auditan todos los modulos de tests (la suite se
+    # dividio en modulos tematicos; ver tests/).
+    rutas = [Path(test_file)] if test_file is not None else sorted(TESTS_DIR.glob("test_*.py"))
+    for ruta in rutas:
+        tree = ast.parse(ruta.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef) or not node.name.startswith("test_"):
+                continue
+            aserciones = [n for n in ast.walk(node) if _es_asercion(n)]
+            if not aserciones:
+                warnings.append(f"{node.name}: test sin asercion (P1.1)")
+            for n in aserciones:
+                taut = _tautologia(n)
+                if taut:
+                    errors.append(f"{node.name}: asercion tautologica {taut} (P1.1)")
     for script in sorted(Path(scripts_dir).glob("*.py")):
         stree = ast.parse(script.read_text(encoding="utf-8"))
         for handler in [n for n in ast.walk(stree) if isinstance(n, ast.ExceptHandler)]:

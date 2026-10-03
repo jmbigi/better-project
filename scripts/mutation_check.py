@@ -17,7 +17,7 @@ Uso:
     python3 scripts/mutation_check.py --batch [--json] [--strict] [--umbral 0.8]
     python3 scripts/mutation_check.py --all [--max-mutantes 20] [--json]
     python3 scripts/mutation_check.py --module scripts/auto_audit.py \\
-        --test test_ecosistema.TestAutoAudit --max-mutantes 20 [--json] [--strict]
+        --test test_pilares.TestAutoAudit --max-mutantes 20 [--json] [--strict]
 """
 
 from __future__ import annotations
@@ -34,34 +34,34 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MODULE = "scripts/adr_validator.py"
-DEFAULT_TEST = "test_ecosistema.TestADRValidator"
+DEFAULT_TEST = "test_pilares.TestADRValidator"
 DEFAULT_MAX = 40
 DEFAULT_TIMEOUT = 60
 DEFAULT_UMBRAL = 0.85
 
 # Modulos con test acotado y rapido para el modo --batch (fuerza global).
 DEFAULT_BATCH: list[tuple[str, str]] = [
-    ("scripts/adr_validator.py", "test_ecosistema.TestADRValidator"),
-    ("scripts/doc_validator.py", "test_ecosistema.TestDocValidator"),
-    ("scripts/lessons_extractor.py", "test_ecosistema.TestLessonsExtractor"),
-    ("scripts/index_knowledge.py", "test_ecosistema.TestIndexKnowledge"),
-    ("scripts/auto_audit.py", "test_ecosistema.TestAutoAudit"),
-    ("scripts/diagnostico.py", "test_ecosistema.TestDiagnostico"),
-    ("scripts/mcp_server.py", "test_ecosistema.TestMCPServer"),
+    ("scripts/adr_validator.py", "test_pilares.TestADRValidator"),
+    ("scripts/doc_validator.py", "test_pilares.TestDocValidator"),
+    ("scripts/lessons_extractor.py", "test_pilares.TestLessonsExtractor"),
+    ("scripts/index_knowledge.py", "test_pilares.TestIndexKnowledge"),
+    ("scripts/auto_audit.py", "test_pilares.TestAutoAudit"),
+    ("scripts/diagnostico.py", "test_pilares.TestDiagnostico"),
+    ("scripts/mcp_server.py", "test_mcp_tui.TestMCPServer"),
 ]
 
 # Modo --all: todos los modulos con test acoplado (mas lento; a demanda).
 # Se excluye mutation_check.py (se mutaria a si mismo durante la ejecucion).
 ALL_BATCH: list[tuple[str, str]] = DEFAULT_BATCH + [
-    ("scripts/analyze_shell.py", "test_ecosistema.TestAnalyzeShell"),
-    ("scripts/audit_advisories.py", "test_ecosistema.TestAuditAdvisories"),
-    ("scripts/download_tydm_model.py", "test_ecosistema.TestDownloadTyDMModel"),
-    ("scripts/tydm_calibration.py", "test_ecosistema.TestTyDMCalibration"),
-    ("scripts/tydm_calibration_merge.py", "test_ecosistema.TestTyDMCalibrationMerge"),
-    ("scripts/tydm_llama.py", "test_ecosistema.TestTyDMLlama"),
-    ("scripts/tydm_pillars.py", "test_ecosistema.TestTyDMPillars"),
-    ("scripts/tydm_review.py", "test_ecosistema.TestTyDMReview"),
-    ("scripts/tui.py", "test_ecosistema.TestTUI"),
+    ("scripts/analyze_shell.py", "test_cadena_suministro.TestAnalyzeShell"),
+    ("scripts/audit_advisories.py", "test_cadena_suministro.TestAuditAdvisories"),
+    ("scripts/download_tydm_model.py", "test_tydm.TestDownloadTyDMModel"),
+    ("scripts/tydm_calibration.py", "test_tydm.TestTyDMCalibration"),
+    ("scripts/tydm_calibration_merge.py", "test_tydm.TestTyDMCalibrationMerge"),
+    ("scripts/tydm_llama.py", "test_tydm.TestTyDMLlama"),
+    ("scripts/tydm_pillars.py", "test_tydm.TestTyDMPillars"),
+    ("scripts/tydm_review.py", "test_tydm.TestTyDMReview"),
+    ("scripts/tui.py", "test_mcp_tui.TestTUI"),
 ]
 
 OP_MAP: dict[type, type] = {

@@ -83,6 +83,54 @@ class TestFunciones(unittest.TestCase):
                 externos.add(n.module.split(".")[0])
         self.assertLessEqual(externos, set(sys.stdlib_module_names), externos)
 
+    def test_normalizar_arbol_mapea_uuid_de_forma_consistente(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            raiz = Path(tmp)
+            uuid = "12310813c36b49e78c7d92f2cd99b864"
+            (raiz / "a.html").write_text(
+                '<meta name="strictdoc-search-index-timestamp" content="1791044876.02">\n'
+                f'<li data-nodeid="{uuid}">', encoding="utf-8")
+            (raiz / "b.js").write_text(
+                f'{{"_LINK":"{uuid}","x":"42c3dea3a81145d68164637e1b4407f2"}}', encoding="utf-8")
+            n = se.normalizar_arbol(raiz)
+            self.assertEqual(n, 2)
+            a = (raiz / "a.html").read_text(encoding="utf-8")
+            b = (raiz / "b.js").read_text(encoding="utf-8")
+            self.assertIn('content="0"', a)
+            self.assertNotIn(uuid, a + b)
+            reemplazo = a.split('data-nodeid="')[1].split('"')[0]
+            self.assertIn(reemplazo, b)
+
+    def test_normalizar_arbol_es_idempotente(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            raiz = Path(tmp)
+            (raiz / "a.html").write_text(
+                'data-nodeid="12310813c36b49e78c7d92f2cd99b864"', encoding="utf-8")
+            se.normalizar_arbol(raiz)
+            primera = (raiz / "a.html").read_text(encoding="utf-8")
+            se.normalizar_arbol(raiz)
+            self.assertEqual((raiz / "a.html").read_text(encoding="utf-8"), primera)
+
+    def test_normalizar_arbol_no_toca_texto_sin_patrones(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            raiz = Path(tmp)
+            (raiz / "a.txt").write_text("texto normal sin uuid", encoding="utf-8")
+            self.assertEqual(se.normalizar_arbol(raiz), 0)
+            self.assertEqual((raiz / "a.txt").read_text(encoding="utf-8"), "texto normal sin uuid")
+
+    def test_normalizar_search_index_ordena_y_preserva_sufijo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            raiz = Path(tmp)
+            js = raiz / "static_html_search_index.js"
+            js.write_text(
+                'window.StrictDoc.search.index = {"b":[2,1],"a":{"x":";"}};\n'
+                'window.StrictDoc.search.extra = 1;\n', encoding="utf-8")
+            se.normalizar_arbol(raiz)
+            self.assertEqual(
+                js.read_text(encoding="utf-8"),
+                'window.StrictDoc.search.index = {"a":{"x":";"},"b":[1,2]};\n'
+                'window.StrictDoc.search.extra = 1;\n')
+
 
 class TestCLI(unittest.TestCase):
     def _main(self, argv: list[str]) -> tuple[int, str, str]:
@@ -156,8 +204,8 @@ class TestE2EReal(unittest.TestCase):
     """E2E con el binario real; se omite si la capa no está instalada."""
 
     @unittest.skipIf(se.localizar() is None, "capa StrictDoc no instalada (REQ-032)")
-    def test_check_y_smoke_con_binario_real(self):
-        for modo in ("--check", "--smoke"):
+    def test_check_smoke_y_repro_con_binario_real(self):
+        for modo in ("--check", "--smoke", "--repro"):
             proc = subprocess.run(
                 [sys.executable, str(SCRIPTS / "strictdoc_export.py"), modo],
                 capture_output=True, text=True, timeout=300,

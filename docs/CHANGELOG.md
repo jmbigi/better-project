@@ -59,6 +59,14 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
   (venv aislado + auditoria P0.18), `scripts/strictdoc_export.py`
   (export/`--check`/`--smoke`) y check opcional `export HTML StrictDoc (sonda
   E2E)` con `[SKIP]` en ambos verificadores (2026-10-03).
+- Cierre verificado de las 11 lecciones abiertas (LSN-045..054 y 056), con
+  evidencia por leccion, y 2 lecciones nuevas: LSN-060 (los KPIs `n/d`
+  ocultaban que `ci.sh` nunca completaba) y LSN-061 (salida no determinista de
+  strictdoc) (2026-10-03).
+- Check `YAML valido (workflows, pre-commit, lecciones, vale)` en ambos
+  verificadores (paridad; PyYAML opcional, LSN-048 resuelta).
+- Sonda `--repro` de `scripts/strictdoc_export.py`: dos exports normalizados y
+  comparacion sha256 (102 archivos identicos en 2 corridas).
 
 ### Cambiado
 
@@ -75,8 +83,20 @@ el versionado es [SemVer](https://semver.org/lang/es/) para la API pública
   inglés): módulos `scripts/tydm_*.py`, variables de entorno `TYDM_*` y
   artefactos `tydm_*.json` (ADR-010). Los nombres propios de terceros
   (OpenJev, https://github.com/razorback16/openjev) se conservan.
+- Suite de tests dividida en modulos tematicos (`tests/test_pilares.py`,
+  `test_verificador.py`, `test_mcp_tui.py`, `test_tydm.py`,
+  `test_cadena_suministro.py`, `test_portabilidad.py`); `test_ecosistema.py`
+  queda como integracion del hook. Consumidores actualizados (targets de
+  mutacion, coverage, `auto_audit`) y 7 patrones `assertEqual(f(x), f(x))`
+  reescritos con variable intermedia.
 
 ### Corregido
+
+- `SECURITY.md` ya no cita etiquetas inexistentes (`v*`) como soportadas.
+- mypy: parametro de tipo faltante en tests (`CompletedProcess[str]`),
+  latente y visible solo al ejecutar `ci.sh` completo (LSN-060).
+- Salida de strictdoc normalizada (UUIDs, timestamp e indice de busqueda
+  ordenado) para reproducibilidad byte a byte (LSN-061).
 
 - Verificador: el check de SBOM con syft se omite cuando la herramienta no
   está disponible (REQ-020) y verifica regeneración real en directorio

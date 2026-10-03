@@ -136,19 +136,26 @@ class TestDeterminismWithoutModel(unittest.TestCase):
         probs = [0.7, 0.3]
         # softmax
         for _ in range(10):
-            self.assertEqual(jc.softmax(probs, 1.0), jc.softmax(probs, 1.0))
-            self.assertEqual(jc.softmax(probs, 0.5), jc.softmax(probs, 0.5))
+            primera = jc.softmax(probs, 1.0)
+            self.assertEqual(primera, jc.softmax(probs, 1.0))
+            primera = jc.softmax(probs, 0.5)
+            self.assertEqual(primera, jc.softmax(probs, 0.5))
 
         # temperature_scale
         for _ in range(10):
-            self.assertEqual(jc.temperature_scale(probs, 1.0), jc.temperature_scale(probs, 1.0))
-            self.assertEqual(jc.temperature_scale(probs, 2.0), jc.temperature_scale(probs, 2.0))
+            primera = jc.temperature_scale(probs, 1.0)
+            self.assertEqual(primera, jc.temperature_scale(probs, 1.0))
+            primera = jc.temperature_scale(probs, 2.0)
+            self.assertEqual(primera, jc.temperature_scale(probs, 2.0))
 
         # nll, brier, ece - toman lista de floats, no records
         for _ in range(10):
-            self.assertEqual(jc.nll(probs, 0), jc.nll(probs, 0))
-            self.assertEqual(jc.brier(probs, 0), jc.brier(probs, 0))
-            self.assertEqual(jc.ece([probs], [0], 10), jc.ece([probs], [0], 10))
+            primera = jc.nll(probs, 0)
+            self.assertEqual(primera, jc.nll(probs, 0))
+            primera = jc.brier(probs, 0)
+            self.assertEqual(primera, jc.brier(probs, 0))
+            primera = jc.ece([probs], [0], 10)
+            self.assertEqual(primera, jc.ece([probs], [0], 10))
 
 
 if __name__ == "__main__":
