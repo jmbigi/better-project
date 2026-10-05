@@ -103,7 +103,7 @@ class TestFlujoEcosistema(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
 
-    def _doc_validator(self, root: Path) -> subprocess.CompletedProcess:
+    def _doc_validator(self, root: Path) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [sys.executable, str(SCRIPTS / "doc_validator.py"), "--root", str(root)],
             capture_output=True,

@@ -59,7 +59,9 @@ BETTER_TEST_INTEGRACION=1 bash scripts/verificar-proyecto.sh --pre-commit \
 ONBOARDING_SECONDS=$(( $(date +%s) - CI_START_TS ))  # KPI 1: clone -> verifier verde
 
 echo "== CI local: type checking (mypy strict on tests) =="
-mypy --config-file mypy.ini tests/ || fail "mypy --strict en tests en rojo"
+# LSN-060/LSN-066: invocar como modulo (python3 -m mypy): el launcher
+# ~/.local/bin/mypy se rompe cuando su shebang apunta a un python sin el modulo.
+python3 -m mypy --config-file mypy.ini tests/ || fail "mypy --strict en tests en rojo"
 
 echo "== CI local: coverage gate 85% (objetivo >=85%, medido 88% el 23-09-2026) =="
 # .coveragerc omite los runners que invocan subprocesos (medirlos distorsiona

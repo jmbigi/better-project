@@ -570,3 +570,11 @@
   recomendacion: "Un check que consulta un artefacto generado debe garantizar la frescura de ESE artefacto concreto, no de otro (el manifest cubria al backend principal, no al JSON). Si un artefacto respalda un check, reconstruirlo en cada corrida del generador junto al backend principal y forzar una reconstruccion (--all) para sanear el estado ya degradado; sondear el check con consultas sobre el contenido mas reciente (P1.1: probar tambien lo que el check deberia detectar)."
   estado: Resuelta
   fecha: 2026-10-05
+- id: LSN-066
+  proyecto: "better-project"
+  fase: "Verificacion"
+  categoria: "Proceso"
+  problema: "Recurrencia de LSN-060 (2a vez): el launcher ~/.local/bin/mypy volvio a romperse (shebang a un python sin el modulo) y scripts/ci.sh aborto en el paso de type checking antes de registrar el run de KPIs; la leccion anterior se cerro arreglando el entorno, pero el entorno se degrada solo (actualizaciones de python/pipx) y ci.sh seguia invocando el launcher desnudo. Ademas, mypy --strict en tests/ cazo un error real nuevo (CompletedProcess sin parametro de tipo) que el hook pre-commit no ve (no corre mypy)."
+  recomendacion: "Regla endurecida (2+ fallos, P1.20): en scripts del repo, toda herramienta Python se invoca como modulo ('python3 -m X'), nunca por su launcher de ~/.local/bin — la invocacion por modulo es inmune a shebangs rotos. Y un pipe a tail/head enmascara el exit code del pipeline: capturar el codigo real (set -o pipefail o variable) antes de reportar verde."
+  estado: Resuelta
+  fecha: 2026-10-05
