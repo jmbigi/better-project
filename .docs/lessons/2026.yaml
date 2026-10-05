@@ -554,3 +554,19 @@
   recomendacion: "Aislar TMPDIR por corrida de tests y limpiarlo al final (run_tests_isolated.py y pytest via conftest.py), usar addCleanup(shutil.rmtree) en los tests con mkdtemp y excluir .local/caches de las copias de integracion; comprobar df -h ante tests verdes que fallan de golpe (OSError de temporales)."
   estado: Resuelta
   fecha: 2026-10-03
+- id: LSN-064
+  proyecto: "better-project"
+  fase: "Verificacion"
+  categoria: "Proceso"
+  problema: "Una evaluacion externa del proyecto (2026-10-05) encontro un fallo real de lint (F841, variable sin usar) en demo/src/notas.py que el verificador no veia: el check de ruff solo cubria 'scripts tests'. Un verificador 59/59 en verde convivia con un fallo de lint en una parte del repo fuera del alcance del check."
+  recomendacion: "El alcance de un check debe ser todo el repo o una exclusion explicita y justificada en el propio check; al anadir codigo versionado nuevo (p. ej. demo/), extender los checks existentes. Mantener paridad de alcance entre verificar-proyecto.sh y verificar_proyecto.py."
+  estado: Resuelta
+  fecha: 2026-10-05
+- id: LSN-065
+  proyecto: "better-project"
+  fase: "Verificacion"
+  categoria: "Riesgo_Tecnico"
+  problema: "El check 'retrieval quality recall@10' daba 1.00 en verde consultando un index.json desactualizado (artefacto de una corrida antigua): al indexar con backend SQLite/Chroma, index_all() no reconstruia el indice JSON, y la condicion de 'sin cambios' retornaba sin exigir que el JSON existiera/fuese fresco. Documentos nuevos de knowledge eran irrecuperables via search_json sin que ningun check lo detectara."
+  recomendacion: "Un check que consulta un artefacto generado debe garantizar la frescura de ESE artefacto concreto, no de otro (el manifest cubria al backend principal, no al JSON). Si un artefacto respalda un check, reconstruirlo en cada corrida del generador junto al backend principal y forzar una reconstruccion (--all) para sanear el estado ya degradado; sondear el check con consultas sobre el contenido mas reciente (P1.1: probar tambien lo que el check deberia detectar)."
+  estado: Resuelta
+  fecha: 2026-10-05

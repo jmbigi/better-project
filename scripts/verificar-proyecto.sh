@@ -73,7 +73,8 @@ check() {
 # ejecuta con ruff.toml; si no, se omite sin marcar fallo.
 check_ruff() {
     if command -v ruff >/dev/null 2>&1; then
-        check "lint ruff (ruff.toml)" bash -c "ruff check scripts tests"
+        # REQ-034: el alcance cubre todo el Python versionado (scripts, tests y demo/src)
+        check "lint ruff (ruff.toml)" bash -c "ruff check scripts tests demo/src"
     else
         echo "  [SKIP] lint ruff (no instalado; ver docs/HERRAMIENTAS-Y-FUENTES.md)"
     fi

@@ -75,6 +75,7 @@ Jerarquía de prioridades:
 | Onboarding guiado (`setup.sh`) | ✅ Hecho | Maintainer |
 | **Buscar co-maintainer** | ⏳ Pendiente | Maintainer |
 | **Documentar patrones deny** (lecciones 3, 4, 8, 28) | ✅ En `docs/PRUEBAS.md` | Maintainer |
+| **Conocimiento tribal en knowledge base indexable** (guardarraíles, verificación local-first) | ✅ En `.docs/knowledge/` (2026-10-05) | Maintainer |
 | **Automatizar más checks** (reducir conocimiento tribal) | 🔄 En curso | Maintainer |
 
 ### Sucesión de emergencia

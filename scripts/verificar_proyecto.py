@@ -68,7 +68,8 @@ def check_ruff() -> None:
     # REQ-029: disponibilidad sin excepción (shutil.which), paridad con el
     # verificador bash (`command -v ruff`): sin ruff se omite con [SKIP].
     if shutil.which("ruff") is not None:
-        check("lint ruff (ruff.toml)", lambda: run_cmd(["ruff", "check", "scripts", "tests"]).returncode == 0)
+        # REQ-034: el alcance cubre todo el Python versionado (scripts, tests y demo/src)
+        check("lint ruff (ruff.toml)", lambda: run_cmd(["ruff", "check", "scripts", "tests", "demo/src"]).returncode == 0)
     else:
         print("  [SKIP] lint ruff (no instalado; ver docs/HERRAMIENTAS-Y-FUENTES.md)")
 

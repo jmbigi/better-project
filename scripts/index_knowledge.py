@@ -446,7 +446,7 @@ def index_all(force: bool = False, backend: str | None = None) -> None:
     ):
         # El backend JSON debe existir aunque el manifest este fresco: es el
         # indice que usa el check de retrieval quality (determinista y stdlib).
-        if backend != "json" or JSON_INDEX.exists():
+        if JSON_INDEX.exists():
             print(f"index_knowledge: sin cambios ({len(files)} archivos)")
             return
 
@@ -467,6 +467,11 @@ def index_all(force: bool = False, backend: str | None = None) -> None:
             f"index_knowledge: indice JSON TF-IDF ({n_files} archivos, {n_chunks} chunks). "
             "Instala chromadb+sentence-transformers para busqueda vectorial."
         )
+        return
+    # REQ-002: el check de retrieval quality consulta el indice JSON
+    # (determinista, stdlib): reconstruirlo junto al backend principal,
+    # si no queda desactualizado en silencio con cada cambio de conocimiento.
+    build_json_index()
 
 
 def check_fresh() -> bool:

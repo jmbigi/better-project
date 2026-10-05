@@ -80,7 +80,7 @@ def main() -> int:
     sub = parser.add_subparsers(dest="comando", required=True)
     p_add = sub.add_parser("add", help="anadir nota")
     p_add.add_argument("texto")
-    p_list = sub.add_parser("list", help="listar notas")
+    sub.add_parser("list", help="listar notas")
     p_done = sub.add_parser("done", help="marcar nota como hecha")
     p_done.add_argument("id", type=int)
     args = parser.parse_args()
